@@ -1,0 +1,229 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+</head>
+<body>
+<h1>Free Flight Prediction</h1>
+<br>
+A system that shall predict good days and locations for cross country
+free flying such as paragliding by comparing current weather
+predictions with statistics about past weather predictions and flights
+from online contests.<br>
+<h5>Short description</h5>
+To do so, we collect weather prediction data from the past, and match
+them with the flights that were uploaded to online competitions. Using
+these data, we train a self learning system. Training will probably be
+done per flight area. Then, when we want to predict the upcoming days,
+we fetch the current weather predictions, feed them to the system and
+create a ranking of which areas have the best xc potential for the
+upcoming days. <br>
+<h4>Input</h4>
+<h5>Weather Data</h5>
+Weather prediction systems calculate various parameters for points on a
+grid at various altitudes. These values can be <a
+ href="http://www.cpc.noaa.gov/products/wesley/fast_downloading_grib.html">downloaded</a>
+as <a
+ href="http://weather.mailasail.com/Franks-Weather/Grib-Files-Explained">grib
+files</a>. At the beginning we will use data from the <a
+ href="http://en.wikipedia.org/wiki/Global_Forecast_System">GFS model</a>
+run by the <a href="http://www.noaa.gov/">noaa</a>, as it is easily
+accessible Once we have some results, we might also want to look for
+data from a high quality meso scale model.<br>
+To train our system, we have to extract some meaningful features at
+some grid positions that are sensible for the flight area for which we
+want to train. We will have to evaluate how many grid points and
+altitude (or pressure) steps are feasible.<br>
+These features could be:<br>
+<ul>
+  <li>year</li>
+  <li>day of year</li>
+  <li>per selected grid point and altitude step:</li>
+  <ul>
+    <li>temperature difference to the next step (more important for
+thermals than the bare temperature [to be prooved])<br>
+    </li>
+    <li>wind speed</li>
+    <li>pressure (or altitude if the grid is pressure based)</li>
+    <li>humidity (or skew)<br>
+    </li>
+  </ul>
+</ul>
+It looks like the <a href="http://sourceforge.net/projects/wdb/">"weather
+database system"</a> could help in handling the grib data, so we will
+give it a try.<br>
+<h5>Actual Flights from the online competitions</h5>
+The measures that we want to predict have to be known for the past. So,
+we will calculate these measures from the flights on the online
+competitions such as <a href="http://www.xcontest.org">xcontest.org</a>
+or <a href="http://www.onlinecontest.org">onlinecontest.org</a>
+possibly also from Leonardo or others.<br>
+The measures will be calculated (for the past) and predicted (for the
+future) per flight area and could include:<br>
+<ul>
+  <li>maximum distance</li>
+  <li>number of flights</li>
+  <li>average distance</li>
+  <li>number of pilots having the best flight of the season.</li>
+</ul>
+<h4>The self learning system</h4>
+At first, we will use a <a
+ href="http://en.wikipedia.org/wiki/Support_vector_machine">support
+vector machine</a> possibly from <a href="http://www.torch.ch">torch</a>
+but may later also experiment with <a
+ href="http://en.wikipedia.org/wiki/Neural_network">neural networks</a>
+or with voting of both systems. The engine shall be pluggable to easily
+experiment with different systems.<br>
+Depending if the machine can handle multiple outputs, we willl generate
+one training sample per day or as many as we have figures to predict.
+Each training sample consists of all the extracted features from the
+weather predictions and the desired result.<br>
+<h4>Platform</h4>
+The main development is in C++ on linux, specifically debian based
+systems such as ubuntu or voyage. The code is open so it should be easy
+to port to other platforms such as mac os x or Windows, but the actual
+porting will come later, if at all.<br>
+<h4>Output</h4>
+A possible output could look like this at the beginning, with some
+graphical enhancements later:<br>
+<table style="text-align: left;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; font-weight: bold;"><br>
+      </td>
+      <td style="vertical-align: top;">max km<br>
+      </td>
+      <td style="vertical-align: top;">avg km<br>
+      </td>
+      <td style="vertical-align: top;">flights<br>
+      </td>
+      <td style="vertical-align: top;">pers best<br>
+      </td>
+    </tr>
+    <tr style="font-weight: bold;">
+      <td colspan="5" rowspan="1" style="vertical-align: top;">Predictions
+for 31. July 2009</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Fiesch<br>
+      </td>
+      <td style="vertical-align: top;">251<br>
+      </td>
+      <td style="vertical-align: top;">98.5<br>
+      </td>
+      <td style="vertical-align: top;">78<br>
+      </td>
+      <td style="vertical-align: top;">10<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Scuol<br>
+      </td>
+      <td style="vertical-align: top;">163<br>
+      </td>
+      <td style="vertical-align: top;">60<br>
+      </td>
+      <td style="vertical-align: top;">9<br>
+      </td>
+      <td style="vertical-align: top;">1<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Grindelwald<br>
+      </td>
+      <td style="vertical-align: top;">88<br>
+      </td>
+      <td style="vertical-align: top;">55<br>
+      </td>
+      <td style="vertical-align: top;">15<br>
+      </td>
+      <td style="vertical-align: top;">0<br>
+      </td>
+    </tr>
+    <tr style="font-weight: bold;">
+      <td colspan="5" rowspan="1" style="vertical-align: top;">Predictions
+for 1. Aug 2009</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Gana<br>
+      </td>
+      <td style="vertical-align: top;">120<br>
+      </td>
+      <td style="vertical-align: top;">72<br>
+      </td>
+      <td style="vertical-align: top;">5<br>
+      </td>
+      <td style="vertical-align: top;">1<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Bassano<br>
+      </td>
+      <td style="vertical-align: top;">135<br>
+      </td>
+      <td style="vertical-align: top;">52<br>
+      </td>
+      <td style="vertical-align: top;">34<br>
+      </td>
+      <td style="vertical-align: top;">6<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Fanas<br>
+      </td>
+      <td style="vertical-align: top;">63<br>
+      </td>
+      <td style="vertical-align: top;">32<br>
+      </td>
+      <td style="vertical-align: top;">23<br>
+      </td>
+      <td style="vertical-align: top;">2<br>
+      </td>
+    </tr>
+    <tr style="font-weight: bold;">
+      <td colspan="5" rowspan="1" style="vertical-align: top;">Predictions
+for 2. Aug 2009</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Haldigrat<br>
+      </td>
+      <td style="vertical-align: top;">88<br>
+      </td>
+      <td style="vertical-align: top;">48<br>
+      </td>
+      <td style="vertical-align: top;">21<br>
+      </td>
+      <td style="vertical-align: top;">5<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Rothenflue<br>
+      </td>
+      <td style="vertical-align: top;">79<br>
+      </td>
+      <td style="vertical-align: top;">21<br>
+      </td>
+      <td style="vertical-align: top;">9<br>
+      </td>
+      <td style="vertical-align: top;">1<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Weissenstein<br>
+      </td>
+      <td style="vertical-align: top;">52<br>
+      </td>
+      <td style="vertical-align: top;">26<br>
+      </td>
+      <td style="vertical-align: top;">26<br>
+      </td>
+      <td style="vertical-align: top;">3<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+Once the results have a certain quality, it would be nice if email or
+sms alerts could be configured for good xc days in areas of interest.<br>
+<br>
+</body>
+</html>
