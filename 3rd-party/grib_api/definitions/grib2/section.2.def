@@ -1,0 +1,26 @@
+# Copyright 2005-2007 ECMWF
+# 
+# Licensed under the GNU Lesser General Public License which
+# incorporates the terms and conditions of version 3 of the GNU
+# General Public License.
+# See LICENSE and gpl-3.0.txt for details.
+
+position offsetSection2;
+length[4] section2Length ;
+
+meta section2Pointer section_pointer(offsetSection2,section2Length,2);
+unsigned[1] numberOfSection = 2 :read_only;
+
+if (emptySection2==0 and ( section2Length>5 or new() )) {
+  template_nofail local "grib2/local.[centre:l].def";
+}
+
+#if(productionStatusOfProcessedData == 3 || productionStatusOfProcessedData == 4) {
+# lookup()
+# include  "tigge...";
+#}
+
+section_padding section2Padding : read_only;
+
+
+

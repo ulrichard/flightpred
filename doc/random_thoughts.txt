@@ -1,0 +1,10 @@
+
+
+wdb documentation
+ http://wdb.met.no/0.7/html/user/index.html
+ http://wdb.met.no/0.7/html/load/re01.html
+ http://wdb.met.no/0.7/html/wci/index.html
+
+Parsing json in C++
+ http://www.highscore.de/cpp/boost/parser.html
+ http://www.codeproject.com/KB/recipes/JSON_Spirit.aspx

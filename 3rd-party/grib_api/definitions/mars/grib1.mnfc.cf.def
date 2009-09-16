@@ -1,0 +1,3 @@
+alias mars.system = systemNumber;
+alias mars.method = methodNumber;
+alias mars.origin = identificationOfOriginatingGeneratingCentre;

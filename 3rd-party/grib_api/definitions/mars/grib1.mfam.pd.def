@@ -1,0 +1,13 @@
+alias mars.origin = identificationOfOriginatingGeneratingCentre;
+
+meta    forecastperiod    g1fcperiod(P1,P2,timeRangeIndicator,indicatorOfUnitOfTimeRange) : no_copy;
+alias   mars.fcperiod = forecastperiod;
+
+meta marsQuantile sprintf("%d:%d",perturbationNumber,numberOfForecastsInEnsemble);
+alias   mars.quantile = marsQuantile;
+
+# TODO: Check why they are set in the first place
+unalias mars.step;
+unalias mars.number;
+alias mars.system = systemNumber;
+alias mars.method = methodNumber;

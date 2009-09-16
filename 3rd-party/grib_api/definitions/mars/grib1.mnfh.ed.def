@@ -1,0 +1,7 @@
+alias mars.number  = perturbationNumber;
+alias mars.refdate = referenceDate;
+alias mars.origin  = identificationOfOriginatingGeneratingCentre;
+unalias mars.date;
+
+alias mars.system = systemNumber;
+alias mars.method = methodNumber;

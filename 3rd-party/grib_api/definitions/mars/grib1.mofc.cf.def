@@ -1,0 +1,2 @@
+alias mars.system = systemNumber;
+alias mars.method = methodNumber;

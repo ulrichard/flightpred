@@ -1,0 +1,6 @@
+#local section ECMWF
+
+codetable[2] grib2LocalSectionNumber 'grib2/grib2LocalSectionNumber.98.table' = 1 : dump;
+
+template  localSection  "grib2/local.98.[grib2LocalSectionNumber:l].def";
+

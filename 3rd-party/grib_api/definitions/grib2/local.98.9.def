@@ -1,0 +1,50 @@
+# Copyright 2005-2007 ECMWF
+#
+# Licensed under the GNU Lesser General Public License which
+# incorporates the terms and conditions of version 3 of the GNU
+# General Public License.
+# See LICENSE and gpl-3.0.txt for details.
+
+
+codetable[2] marsClass   "mars/class.table" = "od" : dump;
+codetable[2] marsType   "mars/type.table" = "an" : dump;
+codetable[2] marsStream "mars/stream.table" = "oper" : dump ;
+ksec1expver[4] experimentVersionNumber = "0001" : dump;
+
+alias ls.dataType = marsType;
+
+alias mars.class  = marsClass;
+alias mars.type   = marsType;
+alias mars.stream = marsStream;
+alias mars.expver = experimentVersionNumber;
+
+constant globalDomain = "g";
+constant typeDefault="af";
+alias    mars.domain  =  globalDomain; # For now...
+
+concept_nofail marsTypeConcept (typeDefault,"marsTypeConcept.def",marsDir) : hidden;
+
+when (changed(marsType)) {set typeOfProcessedData=marsTypeConcept;}
+
+unsigned[2] forecastOrSingularVectorNumber  : dump;
+
+constant perturbedType = 60;
+
+if(type != perturbedType)
+{
+  unsigned[2] numberOfIterations : dump;
+  unsigned[2] numberOfSingularVectorsComputed  : dump;
+  unsigned[1] normAtInitialTime : dump ;
+  unsigned[1] normAtFinalTime : dump ;
+  unsigned[4] multiplicationFactorForLatLong  : dump;
+  signed[4] northWestLatitudeOfLPOArea : dump ;
+  signed[4] northWestLongitudeOfLPOArea  : dump;
+  signed[4] southEastLatitudeOfLPOArea  : dump;
+  signed[4] southEastLongitudeOfLPOArea  : dump;
+  unsigned[4] accuracyMultipliedByFactor  : dump;
+  unsigned[2] numberOfSingularVectorsEvolved  : dump;
+  # Ritz numbers:
+  signed[4] NINT_LOG10_RITZ : dump ;
+  signed[4] NINT_RITZ_EXP : dump ;
+}
+

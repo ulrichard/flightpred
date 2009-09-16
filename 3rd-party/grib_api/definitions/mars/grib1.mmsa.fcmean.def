@@ -1,0 +1,7 @@
+alias mars.origin = identificationOfOriginatingGeneratingCentre;
+alias mars.fcmonth = marsForecastMonth;
+unalias mars.step;
+alias mars.number = perturbationNumber;
+
+alias mars.system = systemNumber;
+alias mars.method = methodNumber;

@@ -1,0 +1,9 @@
+alias mars.number = perturbationNumber;
+alias mars.origin = identificationOfOriginatingGeneratingCentre;
+
+meta    forecastperiod    g1fcperiod(P1,P2,timeRangeIndicator,indicatorOfUnitOfTimeRange) : no_copy;
+alias   mars.fcperiod = forecastperiod;
+unalias mars.step;
+
+alias mars.system = systemNumber;
+alias mars.method = methodNumber;

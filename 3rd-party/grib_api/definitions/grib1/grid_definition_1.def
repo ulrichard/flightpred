@@ -1,0 +1,46 @@
+# Copyright 2005-2007 ECMWF
+#
+# Licensed under the GNU Lesser General Public License which
+# incorporates the terms and conditions of version 3 of the GNU
+# General Public License.
+# See LICENSE and gpl-3.0.txt for details.
+
+# GRID DEFINITION Mercator
+# grib 1 -> 2
+constant gridDefinitionTemplateNumber     = 20;
+
+signed[2] Ni : dump;
+alias numberOfPointsAlongAParallel= Ni ;
+alias Nx =Ni;
+
+signed[2] Nj : dump;
+alias numberOfPointsAlongAMeridian=Nj;
+alias Nx=Nj;
+
+include "grid_first_last_resandcomp.def";
+
+signed[3] latitudeAtWhichTheMercatorProjectionCylinderIntersectsTheEarth ;
+meta geography.latitudeAtWhichTheMercatorProjectionCylinderIntersectsTheEarthInDegrees scale(latitudeAtWhichTheMercatorProjectionCylinderIntersectsTheEarth,oneConstant,grib1divider,truncateDegrees) : dump;
+alias Latin=latitudeAtWhichTheMercatorProjectionCylinderIntersectsTheEarth;
+
+pad padding_grid1_1(1);
+
+# for change_scanning_direction
+alias yFirst=latitudeOfFirstGridPointInDegrees;
+alias yLast=latitudeOfLastGridPointInDegrees;
+alias xFirst=longitudeOfFirstGridPointInDegrees;
+alias xLast=longitudeOfLastGridPointInDegrees;
+
+include "scanning_mode.def";
+
+signed[3] longitudinalDirectionGridLength  : dump;
+
+signed[3] latitudinalDirectionGridLength  : dump;
+
+pad padding_grid1_2(8);
+
+meta numberOfDataPoints number_of_points(Ni,Nj) : dump;
+alias numberOfPoints=numberOfDataPoints;
+meta numberOfValues number_of_values(values,bitsPerValue,numberOfDataPoints,bitmapPresent,bitmap,numberOfCodedValues) : dump;
+alias ls.valuesCount=numberOfValues;
+

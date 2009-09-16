@@ -1,0 +1,21 @@
+# mars labeling
+
+codetable[2] marsClass   "mars/class.table" = "od" : dump;
+codetable[2] marsType   "mars/type.table" = "an" : dump;
+codetable[2] marsStream "mars/stream.table" = "oper" : dump ;
+ksec1expver[4] experimentVersionNumber = "0001" : dump;
+
+alias ls.dataType = marsType;
+
+alias mars.class  = marsClass;
+alias mars.type   = marsType;
+alias mars.stream = marsStream;
+alias mars.expver = experimentVersionNumber;
+
+constant globalDomain = "g";
+constant typeDefault="af";
+alias    mars.domain  =  globalDomain; # For now...
+
+concept_nofail marsTypeConcept (typeDefault,"marsTypeConcept.def",marsDir) : hidden;
+
+when (changed(marsType)) {set typeOfProcessedData=marsTypeConcept;}

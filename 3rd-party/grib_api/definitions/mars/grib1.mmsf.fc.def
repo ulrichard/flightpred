@@ -1,0 +1,5 @@
+alias mars.step   = endStep;
+alias mars.system = systemNumber;
+alias mars.number = perturbationNumber;
+alias mars.method = methodNumber;
+alias mars.origin = identificationOfOriginatingGeneratingCentre;

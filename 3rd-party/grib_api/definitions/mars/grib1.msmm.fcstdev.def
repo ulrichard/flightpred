@@ -1,0 +1,9 @@
+# assert(16);
+alias mars.fcmonth = marsForecastMonth;
+alias mars.number  = perturbationNumber;
+alias mars.origin = identificationOfOriginatingGeneratingCentre;
+
+unalias mars.step;
+
+alias mars.method = methodNumber;
+alias mars.system = systemNumber;
