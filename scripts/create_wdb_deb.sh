@@ -1,7 +1,7 @@
 #!/bin/sh
 # create debian pakage for the wdb
 
-sudo apt-get install svn-buildpackage
+sudo apt-get install svn-buildpackage libgeos-dev
 
 cd ../3rd-party/wdb/src/wdb
 ./autogen.sh
