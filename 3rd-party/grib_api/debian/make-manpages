@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Autogenerate manpages from grib_api tools
+
+# Where are the executables (default, use the path)
+PREFIX=${PREFIX:-""}
+
+for cmd in `cat libgribapi-tools.install`
+do
+	cmd=`basename $cmd`
+	$cmd --help | ./postprocess-help $cmd > $cmd.1
+done

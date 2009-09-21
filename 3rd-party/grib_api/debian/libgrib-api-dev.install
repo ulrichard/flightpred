@@ -1,0 +1,4 @@
+usr/include/*.h
+usr/include/*.mod
+usr/lib/*.a
+usr/lib/*.so

@@ -1,0 +1,48 @@
+grib-api (1.8.0-1) unstable; urgency=low
+
+  * libgrib-api-tools: changed to section utils.
+  * New Upstream Version.  Closes: #540801.
+  * Ported patches to new upstream version
+  * Added Vcs-Git: and Vcs-Browser:
+
+ -- Enrico Zini <enrico@debian.org>  Tue, 18 Aug 2009 12:44:03 +0100
+
+grib-api (1.7.0-3) unstable; urgency=low
+
+  * Limit Architecture: field to only those that work.
+  * Updated Standards-Version. No changes needed.
+
+ -- Enrico Zini <enrico@debian.org>  Sat, 04 Jul 2009 16:21:42 +0200
+
+grib-api (1.7.0-2) unstable; urgency=low
+
+  * Point README.source to the version provided by quilt
+  * Update debian/copyright to reflect that the perl bindings follow perl's
+    license
+
+ -- Enrico Zini <enrico@debian.org>  Sun, 17 May 2009 18:58:01 +0100
+
+grib-api (1.7.0-1) unstable; urgency=low
+
+  * New Upstream Version.  Closes: #519184
+  * Ported patches to new upstream version
+  * Rebuild the build system in debian/rules
+  * debian/rules clean: delete files modified by autotools
+  * Added debian-specific release to the library name, so we will not conflict
+    with upstream once they will start shipping shared libraries.
+  * Updated Standards-Version
+     - Renamed libgribapi-bin to libgribapi-tools as suggested by policy
+  * Use debhelper 7
+  * Added manpages for those commands that have any documentation
+
+ -- Enrico Zini <enrico@debian.org>  Wed, 22 Apr 2009 15:47:53 +0100
+
+grib-api (1.6.4-1) unstable; urgency=low
+
+  * Initial Debian release
+  * Patches:
+     - amconditional: Use automake conditionals to exclude subdirectories
+     - libtool: Create a shared library
+     - fortran: Fixes for fortran packaging
+
+ -- Enrico Zini <enrico@debian.org>  Tue, 18 Nov 2008 11:15:52 +0000

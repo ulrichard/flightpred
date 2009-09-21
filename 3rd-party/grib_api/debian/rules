@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+include /usr/share/cdbs/1/rules/patchsys-quilt.mk
+
+CFLAGS += -fPIC
+
+DEB_MAKE_CHECK_TARGET := check
+DEB_MAKE_CLEAN_TARGET := clean distclean maintainer-clean
+
+clean::
+	find . -name Makefile.in -delete
+	rm -f src/config.h.in aclocal.m4 config/depcomp config/install-sh config/ltmain.sh config/missing configure INSTALL
+
+post-patches::
+	libtoolize -c -f
+	autoreconf -if
+
+# Store build information
+common-binary-post-install-arch common-binary-post-install-indep::
+	dh_buildinfo
