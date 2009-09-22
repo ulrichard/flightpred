@@ -3,14 +3,16 @@ CONFIGURE_DEPENDENCIES = $(top_srcdir)/version.sh
 
 $(top_srcdir)/configure: $(top_srcdir)/version.sh
 
-if WITH_PERL
-  PERL_OPT = @PERLDIR@
-else
-  PERL_OPT =
+SUBDIRS = src tools definitions samples ifs_samples/grib1 ifs_samples/grib1_mlgrib2 tests tigge examples/C
+if FORTRAN_MOD
+SUBDIRS += fortran 
 endif
-
-
-SUBDIRS = src tools definitions samples ifs_samples/grib1 ifs_samples/grib1_mlgrib2 tests tigge $(FORTRAN_MOD) examples/C $(F90_CHECK) $(PERL_OPT) 
+if F90_CHECK
+SUBDIRS += examples/F90
+endif
+if WITH_PERL
+SUBDIRS += perl
+endif
 
 EXTRA_DIST = README AUTHORS LICENSE gpl-3.0.txt ChangeLog version.sh html \
                 src/extrules.am \

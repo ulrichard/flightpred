@@ -2,14 +2,18 @@
 
 AM_CFLAGS =  @WARN_PEDANTIC@
 
-lib_LIBRARIES = libgrib_api_f77.a libgrib_api_f90.a
+BUILT_SOURCES = grib_kinds.h
+
+lib_LTLIBRARIES = libgrib_api_f77.la libgrib_api_f90.la
 include_HEADERS = grib_api_f77.h
 
-libgrib_api_f77_a_SOURCES= grib_fortran.c grib_f77.c 
-libgrib_api_f77_a_DEPENDENCIES = $(top_builddir)/src/libgrib_api.a
+libgrib_api_f77_la_SOURCES= grib_fortran.c grib_f77.c 
+libgrib_api_f77_la_LDFLAGS = @GRIBAPI_LIBTOOL_VERSIONING@
+libgrib_api_f77_la_DEPENDENCIES = $(top_builddir)/src/libgrib_api.la
 
-libgrib_api_f90_a_SOURCES= grib_fortran.c grib_f90.f90 
-libgrib_api_f90_a_DEPENDENCIES = $(top_builddir)/src/libgrib_api.a grib_api_externals.h grib_api_visibility.h grib_api_constants.h grib_kinds.h
+libgrib_api_f90_la_SOURCES= grib_fortran.c grib_f90.f90 
+libgrib_api_f90_la_LDFLAGS = @GRIBAPI_LIBTOOL_VERSIONING@
+libgrib_api_f90_la_DEPENDENCIES = $(top_builddir)/src/libgrib_api.la grib_api_externals.h grib_api_visibility.h grib_api_constants.h grib_kinds.h
 
 libgrib_api_fortran_prototypes= grib_fortran.c
 
@@ -26,7 +30,7 @@ INCLUDES=  -I$(top_builddir)/src
 
 ## Make sure these will be cleaned even when they're not built by
 ## default.
-CLEANFILES = libgrib_api_f77.a libgrib_api_f90.a grib_f90.f90 *.mod grib_types grib_kinds.h
+CLEANFILES = libgrib_api_f77.a libgrib_api_f77.la libgrib_api_f90.a libgrib_api_f90.la grib_f90.f90 *.mod grib_types grib_kinds.h
 
 #noinst_HEADERS = 
 

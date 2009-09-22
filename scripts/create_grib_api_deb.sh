@@ -2,10 +2,8 @@
 # compile and install grib_api (maybe create a deb package later)
 
 sudo apt-get install libjasper-dev
+sudo apt-get install cdbs dh-buildinfo gfortran flex bison
 
-sudo mkdir /usr/local/grib_api
 cd ../3rd-party/grib_api
-./configure --prefix=/usr/local/grib_api
-make
-make check
-sudo make install
+dpkg-buildpackage -rfakeroot
+

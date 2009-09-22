@@ -12,5 +12,5 @@ tigge_accumulations_SOURCES      =  tigge_accumulations.c
 
 INCLUDES =  -I$(top_builddir)/src
 
-LDADD = $(top_builddir)/src/libgrib_api.a
+LDADD = $(top_builddir)/src/libgrib_api.la
 DEPENDENCIES = $(LDADD)

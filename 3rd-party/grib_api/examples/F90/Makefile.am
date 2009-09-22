@@ -32,7 +32,7 @@ INCLUDES =  -I$(top_builddir)/src
 
 AM_FCFLAGS = -I$(top_builddir)/fortran
 
-LDADD = $(top_builddir)/fortran/libgrib_api_f90.a $(top_builddir)/src/libgrib_api.a
+LDADD = $(top_builddir)/fortran/libgrib_api_f90.la $(top_builddir)/src/libgrib_api.la
 DEPENDENCIES = $(LDADD)
 
 EXTRA_DIST =$(TESTS) include.sh

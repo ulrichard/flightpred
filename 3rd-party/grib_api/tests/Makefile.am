@@ -23,7 +23,7 @@
 	 julian_SOURCES = julian.c
 	 index_SOURCES = index.c
 
-     LDADD = $(top_builddir)/src/libgrib_api.a $(EMOS_LIB)
+     LDADD = $(top_builddir)/src/libgrib_api.la $(EMOS_LIB)
 
      INCLUDES   = -I$(top_builddir)/src
 
