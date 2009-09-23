@@ -14,14 +14,16 @@ using std::endl;
 
 int main(int argc, char* argv[])
 {
-	string place_name, place_position;
+	string name, position;
 
 	// Declare the supported options.
 	po::options_description desc("Allowed options");
 	desc.add_options()
         ("help",		   "produce help message")
-		("name",	   po::value<string>(&place_name)->default_value("Fiesch"), "name of the area")
-		("position", po::value<string>(&place_position)->default_value("N 46° 24' 42.96\" O 8° 6' 52.32\""), "geographic position")
+        ("get-flights",	   "get flights from online competition")
+        ("train",		   "train the system for an area")
+		("name",	   po::value<string>(&name)->default_value("Fiesch"), "name of the area or competition")
+		("position",   po::value<string>(&position)->default_value("N 46° 24' 42.96\" O 8° 6' 52.32\""), "geographic position")
 		;
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -34,6 +36,8 @@ int main(int argc, char* argv[])
     }
 
 
+    if(vm.count("train"))
+    {
     // first step : download the grib files
 
     // second step : load the grib files into the database
@@ -43,6 +47,12 @@ int main(int argc, char* argv[])
     // fourth step : filter the flight information
 
     // fifth step : train the learning system
+    }
+
+    if(vm.count("get-flights"))
+    {
+
+    }
 
     return 0;
 }

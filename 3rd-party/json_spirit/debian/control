@@ -1,0 +1,20 @@
+Source: json_spirit
+Section: libdevel
+Priority: optional
+Maintainer: Richard Ulrich <richi@paraeasy.ch>
+Build-Depends: 
+Standards-Version: 3.8.2.0
+Homepage: http://www.codeproject.com/KB/recipes/JSON_Spirit.aspx
+
+Package: json_spirit
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Read and write json files in C++
+
+Package: json_spirit-dev
+Section: libdevel
+Architecture: any
+Depends: ${misc:Depends}
+Description: Read and write json files in C++ (development)
+ 
