@@ -11,11 +11,19 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="--get-flights" />
 				<Compiler>
 					<Add option="-g" />
+					<Add option="-D__DEBUG" />
+					<Add directory="../../3rd-party/json_spirit/json_spirit" />
 				</Compiler>
 				<Linker>
-					<Add library="libboost_program_options-mt-d" />
+					<Add library="boost_program_options-mt-d" />
+					<Add library="boost_filesystem-mt-d" />
+					<Add library="boost_date_time-mt-d" />
+					<Add library="boost_system-mt-d" />
+					<Add library="json_spirit" />
+					<Add directory="../../3rd-party/json_spirit/build/json_spirit" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -25,10 +33,16 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="../../3rd-party/json_spirit/json_spirit" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="libboost_program_options-mt" />
+					<Add library="boost_program_options-mt" />
+					<Add library="boost_filesystem-mt" />
+					<Add library="boost_date_time-mt" />
+					<Add library="boost_system-mt" />
+					<Add library="json_spirit" />
+					<Add directory="../../3rd-party/json_spirit/build/json_spirit" />
 				</Linker>
 			</Target>
 		</Build>
@@ -36,6 +50,8 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="grab_flights.cpp" />
+		<Unit filename="grab_flights.h" />
 		<Unit filename="grab_grib.cpp" />
 		<Unit filename="grab_grib.h" />
 		<Unit filename="main.cpp" />
