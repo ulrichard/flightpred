@@ -34,3 +34,5 @@ CREATE TABLE flights
 );
 
 ALTER TABLE flights ADD CONSTRAINT FK_pilot_id   FOREIGN KEY(pilot_id)   REFERENCES pilots   (pilot_id)   ON DELETE CASCADE;ALTER TABLE flights ADD CONSTRAINT FK_contest_id FOREIGN KEY(contest_id) REFERENCES contests (contest_id) ON DELETE CASCADE;ALTER TABLE flights ADD CONSTRAINT FK_site_id    FOREIGN KEY(site_id)    REFERENCES sites    (site_id);
+
+INSERT INTO contests (contest_name, website) values ("onlinecontest", "http://www.onlinecontest.org");INSERT INTO contests (contest_name, website) values ("xcontest",      "http://www.xcontest.org");

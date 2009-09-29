@@ -15,31 +15,36 @@ namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct flight
 {
-    size_t      id;
-    std::string pilot;
-    std::string takeoff;
-    std::string country;
-    double      distance;
-    size_t      score;
+    size_t                  id;
+    std::string             pilot;
+    std::string             takeoff;
+    std::string             country;
+    double                  distance;
+    size_t                  score;
+    boost::gregorian::date  day;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 class flight_grabber
 {
 public:
-    flight_grabber();
-    ~flight_grabber() {}
-
     enum Contest
     {
         OLC,
         XCONTEST
     };
-    void grab_flights(Contest cont, const boost::gregorian::date &from, const boost::gregorian::date &to);
+
+    flight_grabber(Contest cont);
+    ~flight_grabber() {}
+
+    std::string get_contest_name(Contest cont);
+    void grab_flights(const boost::gregorian::date &from, const boost::gregorian::date &to);
 
 private:
     void read_json(const boost::filesystem::path &jsonfile);
     void read_flight(const json_spirit::mObject &flObj);
     void write_flight_to_db(const flight &fl);
+
+    const Contest cont_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 }; // namespace flightpred

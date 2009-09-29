@@ -67,8 +67,8 @@ int main(int argc, char* argv[])
 
     if(vm.count("get-flights"))
     {
-        flight_grabber gr;
-        gr.grab_flights(flight_grabber::XCONTEST, dtstart, dtend);
+        flight_grabber gr(flight_grabber::XCONTEST);
+        gr.grab_flights(dtstart, dtend);
     }
 
     return 0;
