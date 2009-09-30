@@ -16,11 +16,13 @@ namespace flightpred
 struct flight
 {
     size_t                  id;
-    std::string             pilot;
-    std::string             takeoff;
-    std::string             country;
+    std::string             pilot_name;
+    std::string             pilot_country;
+    std::string             takeoff_name;
+    std::string             takeoff_country;
+    double                  lat, lon;  // todo : use position class
     double                  distance;
-    size_t                  score;
+    double                  score;
     boost::gregorian::date  day;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -36,7 +38,7 @@ public:
     flight_grabber(Contest cont);
     ~flight_grabber() {}
 
-    std::string get_contest_name(Contest cont);
+    static std::string get_contest_name(Contest cont);
     void grab_flights(const boost::gregorian::date &from, const boost::gregorian::date &to);
 
 private:
