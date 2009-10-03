@@ -6,6 +6,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/timer.hpp>
 // standard library
 #include <iostream>
 #include <stdexcept>
@@ -38,24 +39,36 @@ string flight_grabber::get_contest_name(Contest cont)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::grab_flights(const bgreg::date &from, const bgreg::date &to)
 {
-    const bfs::path testfile(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "flights/xcontest_org/flights.sample.json");
 
-    read_json(testfile);
+    // for the moment we only work on testfiles
+    const bfs::path testfiledir(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "flights/xcontest_org");
+
+    bfs::directory_iterator end_itr; // default construction yields past-the-end
+    for(bfs::directory_iterator itr(testfiledir); itr != end_itr; ++itr)
+        if(!bfs::is_directory(itr->status()))
+            if(itr->path().extension() == ".json")
+                read_json(itr->path());
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::read_json(const bfs::path &jsonfile)
 {
+    std::cout << "Reading json file : " << jsonfile << std::endl;
     assert(bfs::exists(jsonfile));
+    boost::timer btim;
     bfs::ifstream is(jsonfile);
     json_spirit::mValue val;
     json_spirit::read(is, val);
 
+    std::cout << "json file read in " << btim.elapsed() << "sec" << std::endl;
     const json_spirit::mArray flights = val.get_obj().find("items")->second.get_array();
+    btim.reset();
+    std::cout << "start processing " << flights.size() << " records (flights)" << std::endl;
 //    std::for_each(flights.begin(), flights.end(),
 //        boost::bind(&flight_grabber::read_flight, boost::bind(&json_spirit::mValue::get_obj, ::_1)));
     for(json_spirit::mArray::const_iterator it = flights.begin(); it != flights.end(); ++it)
         read_flight(it->get_obj());
+     std::cout << std::endl << "processed in " << btim.elapsed() << "sec" << std::endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::read_flight(const json_spirit::mObject &flObj)
@@ -68,19 +81,31 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
         fl.pilot_country    = flObj.find("pilot")->second.get_obj().find("countryIso")->second.get_str();
         fl.takeoff_name     = flObj.find("takeoff")->second.get_obj().find("name")->second.get_str();
         fl.takeoff_country  = flObj.find("takeoff")->second.get_obj().find("countryIso")->second.get_str();
-        string link = flObj.find("takeoff")->second.get_obj().find("link")->second.get_str();
-        const string srchstr = "filter[point]=";
-        const size_t pos = link.find(srchstr);
-        if(string::npos == pos)
-            throw std::runtime_error("could not evaluate geographic position of takeoff");
-        link = link.substr(pos + srchstr.length(), link.length());
-        std::stringstream sstr(link);
-        sstr >> fl.lat >> fl.lon;
+        if(flObj.find("pointStart") == flObj.end())
+        {
+            fl.lat          = flObj.find("pointStart")->second.get_obj().find("latitude")->second.get_real();
+            fl.lon          = flObj.find("pointStart")->second.get_obj().find("longitude")->second.get_real();
+        }
+        else
+        {
+            string link = flObj.find("takeoff")->second.get_obj().find("link")->second.get_str();
+            const string srchstr = "filter[point]=";
+            const size_t pos = link.find(srchstr);
+            if(string::npos == pos)
+                throw std::runtime_error("could not evaluate geographic position of takeoff");
+            link = link.substr(pos + srchstr.length(), link.length());
+            std::stringstream sstr(link);
+            sstr >> fl.lat >> fl.lon;
+        }
         fl.distance         = flObj.find("league")->second.get_obj().find("route")->second.get_obj().find("distance")->second.get_real();
         fl.score            = flObj.find("league")->second.get_obj().find("route")->second.get_obj().find("points")->second.get_real();
         fl.day              = bgreg::from_string(flObj.find("pointStart")->second.get_obj().find("time")->second.get_str().substr(0, 10));
 
         write_flight_to_db(fl);
+
+        static size_t counter = 0;
+        if((++counter % 100) == 0)
+            std::cout << "|";
 
     }
     catch(std::exception &ex)

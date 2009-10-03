@@ -33,7 +33,6 @@ To train our system, we have to extract some meaningful features at
 some grid positions that are sensible for the flight area for which we
 want to train. We will have to evaluate how many grid points and
 altitude (or pressure) steps are feasible.<br>
-It might be interesting to use <a href="http://en.wikipedia.org/wiki/Genetic_algorithms">genetic algorithms</a> to explore possible sets of features.<br>
 These features could be:<br>
 <ul>
   <li>year</li>
@@ -57,7 +56,8 @@ The measures that we want to predict have to be known for the past. So,
 we will calculate these measures from the flights on the online
 competitions such as <a href="http://www.xcontest.org">xcontest.org</a>
 or <a href="http://www.onlinecontest.org">onlinecontest.org</a>
-possibly also from Leonardo or others.<br>
+possibly also from Leonardo or others. Xcontest.org have kindly
+provided us with all the data required.<br>
 The measures will be calculated (for the past) and predicted (for the
 future) per flight area and could include:<br>
 <ul>
@@ -74,6 +74,11 @@ but may later also experiment with <a
  href="http://en.wikipedia.org/wiki/Neural_network">neural networks</a>
 or with voting of both systems. The engine shall be pluggable to easily
 experiment with different systems.<br>
+It might be interesting to use <a
+ href="http://en.wikipedia.org/wiki/Genetic_algorithms">genetic
+algorithms</a> to explore possible sets of features (grid point
+location, altitude, parameters).&nbsp; We might use the <a
+ href="http://lancet.mit.edu/ga/">ga library</a> for that.<br>
 Depending if the machine can handle multiple outputs, we willl generate
 one training sample per day or as many as we have figures to predict.
 Each training sample consists of all the extracted features from the

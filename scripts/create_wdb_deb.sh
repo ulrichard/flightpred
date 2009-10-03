@@ -4,19 +4,15 @@
 sudo apt-get install svn-buildpackage libgeos-dev postgresql-8.3-postgis xmlto
 
 #build the core wdb
-cd ../3rd-party/wdb/src/wdb
+cd ../3rd-party/wdb/wdb
 ./autogen.sh
-./configure
+./configure --with-boost-date-time=mt --with-boost-regex=mt --with-boost-filesystem=mt --with-boost-thread=mt
 make
 #make dist
 # build the deb package for the core wdb
-mv debian_files debian
+rm -r debian
+cp debian_files debian
 dpkg-buildpackage -rfakeroot
-#cd ../../deb
-#mkdir tarballs
-#cp ../src/wdb/wdb-0.9.4.tar.gz tarballs/wdb.0.9.4.orig.tar.gz
-#cd wdb
-#svn-buildpackage -us -uc -rfakeroot
 
 #build the loader base
 cd ../loader/loaderBase
