@@ -18,8 +18,8 @@ namespace bgreg = boost::gregorian;
 using boost::bind;
 using std::string;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-flight_grabber::flight_grabber(flight_grabber::Contest cont)
-    : cont_(cont)
+flight_grabber::flight_grabber(flight_grabber::Contest cont, const std::string &db_conn_str)
+    : cont_(cont), db_conn_str_(db_conn_str)
 {
 
 }
@@ -62,7 +62,7 @@ void flight_grabber::read_json(const bfs::path &jsonfile)
 
     std::cout << "json file read in " << btim.elapsed() << "sec" << std::endl;
     const json_spirit::mArray flights = val.get_obj().find("items")->second.get_array();
-    btim.reset();
+    btim.restart();
     std::cout << "start processing " << flights.size() << " records (flights)" << std::endl;
 //    std::for_each(flights.begin(), flights.end(),
 //        boost::bind(&flight_grabber::read_flight, boost::bind(&json_spirit::mValue::get_obj, ::_1)));
@@ -116,7 +116,7 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::write_flight_to_db(const flight &fl)
 {
-    pqxx::connection conn("host=localhost dbname=flightpred user=postgres password=postgres");
+    pqxx::connection conn(db_conn_str_);
     pqxx::transaction<> trans(conn, "insert flight");
     // contest
     string sqls = "SELECT contest_id FROM contests WHERE contest_name='" + get_contest_name(cont_) + "'";

@@ -37,3 +37,15 @@ CREATE TABLE flights
 ALTER TABLE flights ADD CONSTRAINT FK_pilot_id   FOREIGN KEY(pilot_id)   REFERENCES pilots   (pilot_id)   ON DELETE CASCADE;ALTER TABLE flights ADD CONSTRAINT FK_contest_id FOREIGN KEY(contest_id) REFERENCES contests (contest_id) ON DELETE CASCADE;ALTER TABLE flights ADD CONSTRAINT FK_site_id    FOREIGN KEY(site_id)    REFERENCES sites    (site_id);
 
 INSERT INTO contests (contest_name, website) values ('onlinecontest', 'http://www.onlinecontest.org');INSERT INTO contests (contest_name, website) values ('xcontest',      'http://www.xcontest.org');
+
+CREATE TABLE weather_pred
+(
+	weather_pred_id SERIAL PRIMARY KEY,
+	location    point                     NOT NULL,
+	pred_run    timestamp  with time zone NOT NULL,
+	pred_ahead  time                      NOT NULL,
+	level       real                      NOT NULL,
+	parameter   varchar(10)               NOT NULL,
+	value       real                      NOT NULL
+
+);

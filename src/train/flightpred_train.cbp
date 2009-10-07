@@ -11,11 +11,12 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--get-flights" />
+				<Option parameters='--get-weather --position &quot;N 46 E 8&quot;' />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />
 					<Add directory="../../3rd-party/json_spirit/json_spirit" />
+					<Add directory="../../3rd-party/ggl/boost/ggl" />
 				</Compiler>
 				<Linker>
 					<Add library="boost_program_options-mt-d" />
@@ -35,6 +36,7 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add directory="../../3rd-party/json_spirit/json_spirit" />
+					<Add directory="../../3rd-party/ggl/boost/ggl" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -52,6 +54,8 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="geo_parser.cpp" />
+		<Unit filename="geo_parser.h" />
 		<Unit filename="grab_flights.cpp" />
 		<Unit filename="grab_flights.h" />
 		<Unit filename="grab_grib.cpp" />
