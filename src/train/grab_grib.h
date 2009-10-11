@@ -2,15 +2,19 @@
 #define GRAB_GRIB_H_INCLUDED
 
 // flightpred
-
+#include "grib_pred_model.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
 // boost
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 // standard library
 #include <string>
+#include <vector>
+#include <map>
+#include <set>
 
 namespace flightpred
 {

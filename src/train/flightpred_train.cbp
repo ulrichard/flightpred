@@ -54,12 +54,15 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="../../scripts/create_flightpred_db.sql" />
 		<Unit filename="geo_parser.cpp" />
 		<Unit filename="geo_parser.h" />
 		<Unit filename="grab_flights.cpp" />
 		<Unit filename="grab_flights.h" />
 		<Unit filename="grab_grib.cpp" />
 		<Unit filename="grab_grib.h" />
+		<Unit filename="grib_pred_model.cpp" />
+		<Unit filename="grib_pred_model.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<envvars />

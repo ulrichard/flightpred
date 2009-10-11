@@ -8,11 +8,21 @@
 #include <geometry/io/wkt/streamwkt.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace flightpred;
 using geometry::point_ll_deg;
 namespace bfs = boost::filesystem;
 namespace bgreg = boost::gregorian;
+namespace bpt = boost::posix_time;
+using boost::posix_time::ptime;
+using boost::posix_time::time_duration;
+using boost::lexical_cast;
+using std::string;
+using std::vector;
+using std::map;
+using std::set;
 
 // a description of the grib data fields can be found at:
 // http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2f00.shtml
