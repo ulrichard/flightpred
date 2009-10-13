@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters='--get-weather --position &quot;N 46 E 8&quot;' />
+				<Option parameters='--get-weather --position &quot;N 47 E 8&quot;' />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />

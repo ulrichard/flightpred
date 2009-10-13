@@ -22,7 +22,7 @@ namespace flightpred
 class grib_grabber : public boost::noncopyable
 {
 public:
-    grib_grabber(const std::string &db_conn_str);
+    grib_grabber(const std::string &db_conn_str, const std::string &model);
     ~grib_grabber() { }
 
     void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to, const geometry::point_ll_deg &pos);
@@ -30,7 +30,7 @@ public:
 
 private:
     const std::string db_conn_str_;
-    const std::string grib_fields_;
+    grib_pred_model   *model_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 }; // namespace flightpred

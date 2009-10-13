@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 {
     try
     {
-        string name, position, start_date, end_date;
+        string name, position, start_date, end_date, pred_model;
         string db_host, db_name, db_user, db_password;
 
         bgreg::date dtend(bgreg::day_clock::local_day());
@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
             ("train",		"train the system for an area")
             ("name",	    po::value<string>(&name)->default_value("Fiesch"), "name of the area or competition")
             ("position",    po::value<string>(&position)->default_value("N 46 24 42.96 E 8 6 52.32"), "geographic position")
+            ("pred_model",  po::value<string>(&pred_model)->default_value("GFS"), "name of the numeric weather prediction model")
             ("start_date",  po::value<string>(&start_date)->default_value(start_date), "start date (yyyy/mm/dd)")
             ("end_date",    po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
             ("db_host",     po::value<string>(&db_host)->default_value("localhost"), "name or ip of the database server")
@@ -72,7 +73,7 @@ int main(int argc, char* argv[])
 
         if(vm.count("get-weather"))
         {
-            grib_grabber gr(db_conn_str);
+            grib_grabber gr(db_conn_str, pred_model);
             gr.grab_grib(dtstart, dtend, pos);
         }
 

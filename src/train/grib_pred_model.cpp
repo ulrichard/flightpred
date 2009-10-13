@@ -6,6 +6,11 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/array.hpp>
+#include <boost/foreach.hpp>
+// standard library
+#include <utility>
+#include <algorithm>
 
 using namespace flightpred;
 using geometry::point_ll_deg;
@@ -14,9 +19,13 @@ namespace bpt = boost::posix_time;
 using boost::posix_time::ptime;
 using boost::posix_time::time_duration;
 using boost::lexical_cast;
+using boost::array;
 using std::string;
 using std::map;
 using std::set;
+using std::vector;
+using std::pair;
+using std::make_pair;
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const map<string, string> & grib_pred_model::getMeasNames() const
@@ -106,24 +115,57 @@ const set<time_duration> & grib_pred_model_gfs::getFutureTimes() const
     return futimes;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+vector<pair<size_t, string> >  grib_pred_model_gfs::getStandardProperties() const
+{
+    vector<pair<size_t, string> > vprop;
+
+    vprop.push_back(make_pair(0,   "PRES")); // surface pressure
+    vprop.push_back(make_pair(0,   "TMP"));  // surface temperature
+    array<size_t, 3> levels = {850, 700, 500};
+    BOOST_FOREACH(size_t lvl, levels)
+    {
+        vprop.push_back(make_pair(lvl, "HGT"));
+        vprop.push_back(make_pair(lvl, "TMP"));
+        vprop.push_back(make_pair(lvl, "UGRD"));
+        vprop.push_back(make_pair(lvl, "VGRD"));
+        vprop.push_back(make_pair(lvl, "ABSV"));
+        vprop.push_back(make_pair(lvl, "RH"));
+        vprop.push_back(make_pair(lvl, "VVEL"));
+        vprop.push_back(make_pair(lvl, "CLWMR"));
+    }
+
+    return vprop;
+}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-grib_measure::grib_measure(const grib_pred_model &pred_model, const geometry::point_ll_deg &pos,
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+grib_measure::grib_measure(const grib_pred_model *pred_model, const geometry::point_ll_deg &pos,
       size_t lvl, const std::string &prop, double val, const ptime &pred_start, const time_duration &pred_future)
     : pred_model_(pred_model), pos_(pos), level_(lvl), prop_(prop), pred_start_(pred_start), pred_future_(pred_future), val_(val)
 {
-    const map<string, string> &menam = pred_model_.getMeasNames();
+    const map<string, string> &menam = pred_model_->getMeasNames();
     if(menam.find(prop) == menam.end())
         throw std::invalid_argument("Invalid property : " + prop);
-    const set<size_t> &lev = pred_model_.getPressureLevels();
+    const set<size_t> &lev = pred_model_->getPressureLevels();
     if(lev.find(lvl) == lev.end())
         throw std::invalid_argument("Invalid pressure level : " + lexical_cast<string>(lvl));
-    const set<time_duration> &runtimes = pred_model_.getPredRunTimes();
+    const set<time_duration> &runtimes = pred_model_->getPredRunTimes();
     time_duration runtime = pred_start_.time_of_day();
     if(runtimes.find(runtime) == runtimes.end())
         throw std::invalid_argument("Invalid prediction run time : " + bpt::to_simple_string(pred_start_));
-    const set<time_duration> &futimes = pred_model_.getFutureTimes();
+    const set<time_duration> &futimes = pred_model_->getFutureTimes();
     if(futimes.find(pred_future_) == futimes.end())
         throw std::invalid_argument("Invalid prediction future time : " + bpt::to_simple_string(pred_future_));
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+grib_pred_model * flightpred::get_grib_pred_model(const std::string &name)
+{
+    static grib_pred_model_gfs *gfs = new grib_pred_model_gfs();
+
+    if(name == "GFS")
+        return gfs;
+
+    throw std::invalid_argument("weather prediction model not supported.");
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+
