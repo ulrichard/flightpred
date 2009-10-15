@@ -15,6 +15,7 @@
 // standard library
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 
 using namespace flightpred;
@@ -77,17 +78,17 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
     for(bgreg::date mon(from.year(), from.month(), 1); mon <= to; mon += bgreg::months(1))
     {
         // first, get the inventory
-        std::stringstream sstr;
-        sstr << baseurl << std::setfill('0') << std::setw(4) << static_cast<int>(mon.year())
-             << std::setw(2) << static_cast<int>(mon.month()) << ".inv";
+        std::stringstream ssurl;
+        ssurl << baseurl << std::setfill('0') << std::setw(4) << static_cast<int>(mon.year())
+             << std::setw(2) << static_cast<int>(mon.month());
 
 
-        std::stringstream buf;
-        download_file(sstr.str(), buf);
+        std::stringstream buf_inv;
+        download_file(ssurl.str() + ".inv", buf_inv);
 
         size_t lastpos = 0;
         string line;
-        while(std::getline(buf, line))
+        while(std::getline(buf_inv, line))
         {
             boost::char_separator<char> sep(":");
             boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
@@ -95,17 +96,26 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
             std::copy(tokens.begin(), tokens.end(), back_inserter(vtokens));
             if(vtokens.size() < 7)
                 continue;
-            if(sel_levels.find(vtokens[4]) == sel_levels.end())
-                continue;
             // todo : grib2 has a range field
             const size_t pos = lexical_cast<size_t>(vtokens[1]);
+            if(vtokens[2].length() != 12 || vtokens[2].substr(0, 2) != "d=")
+                continue;
+            bpt::ptime pred_start(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
+                                  bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
 
-            // download the data
-            std::cout << "download " << lastpos << " to " << pos << std::endl;
+            if(sel_levels.find(vtokens[4]) != sel_levels.end())
+            {
+                // download the data
+                std::cout << "download " << lastpos << " to " << pos << std::endl;
 
-            //system("curl -f -v -s -r \"$range\" $url -o $file.tmp");
+                std::stringstream buf_grib;
 
+                download_file(ssurl.str(), buf_grib, std::make_pair(lastpos, pos - 1));
 
+//                std::cout << buf_grib.str() << std::endl;
+//                return;
+
+            }
             lastpos = pos;
         }
 
@@ -117,7 +127,7 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void grib_grabber::download_file(const string &url, std::ostream &ostr)
+void grib_grabber::download_file(const string &url, std::ostream &ostr, std::pair<size_t, size_t> range)
 {
     std::cout << "downloading : " << url << std::endl;
 
@@ -151,9 +161,11 @@ void grib_grabber::download_file(const string &url, std::ostream &ostr)
     // allow us to treat all data up until the EOF as the content.
     boost::asio::streambuf request;
     std::ostream request_stream(&request);
-    request_stream << "GET " << path << " HTTP/1.0\r\n";
+    request_stream << "GET " << path << " HTTP/1.1\r\n";
     request_stream << "Host: " << hostname << "\r\n";
     request_stream << "Accept: */*\r\n";
+    if(range.second - range.first > 0)
+        request_stream << "Range: bytes=" << range.first << "-" << range.second << "\r\n";
     request_stream << "Connection: close\r\n\r\n";
 
     // Send the request.
@@ -173,7 +185,7 @@ void grib_grabber::download_file(const string &url, std::ostream &ostr)
     std::getline(response_stream, status_message);
     if(!response_stream || http_version.substr(0, 5) != "HTTP/")
         throw std::runtime_error("Invalid response");
-    if(status_code != 200)
+    if(status_code != 200 && status_code != 206)
         throw std::runtime_error("Response returned with status code " + lexical_cast<string>(status_code));
 
     // Read the response headers, which are terminated by a blank line.

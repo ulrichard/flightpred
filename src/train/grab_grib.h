@@ -16,6 +16,7 @@
 #include <map>
 #include <set>
 #include <ostream>
+#include <utility>
 
 namespace flightpred
 {
@@ -27,7 +28,7 @@ public:
     ~grib_grabber() { }
 
     void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to, const geometry::point_ll_deg &pos);
-    void download_file(const std::string &url, std::ostream &ostr);
+    void download_file(const std::string &url, std::ostream &ostr, std::pair<size_t, size_t> range = std::make_pair(0, 0));
 
 private:
     const std::string db_conn_str_;
