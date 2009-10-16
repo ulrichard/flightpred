@@ -25,6 +25,7 @@
 					<Add library="boost_system-mt-d" />
 					<Add library="json_spirit" />
 					<Add library="pqxx" />
+					<Add library="grib_api" />
 					<Add directory="../../3rd-party/json_spirit/build/json_spirit" />
 				</Linker>
 			</Target>
@@ -46,6 +47,7 @@
 					<Add library="boost_system-mt" />
 					<Add library="json_spirit" />
 					<Add library="pqxx" />
+					<Add library="grib_api" />
 					<Add directory="../../3rd-party/json_spirit/build/json_spirit" />
 				</Linker>
 			</Target>

@@ -55,11 +55,10 @@ INSERT INTO pred_sites (site_name, location, country) values ('Engelberg',   Geo
 CREATE TABLE weather_pred
 (
 	weather_pred_id SERIAL PRIMARY KEY,
-	pred_run    timestamp  with time zone NOT NULL,
-	pred_ahead  time                      NOT NULL,
-	level       real                      NOT NULL,
-	parameter   varchar(10)               NOT NULL,
-	value       real                      NOT NULL
+	pred_time   timestamp  without time zone NOT NULL,
+	level       real                         NOT NULL,
+	parameter   varchar(10)                  NOT NULL,
+	value       real                         NOT NULL
 );
 SELECT AddGeometryColumn('weather_pred','location',-1,'POINT',2);
 

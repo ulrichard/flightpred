@@ -1,6 +1,8 @@
 // flightpred
 #include "grab_grib.h"
 #include "geo_parser.h"
+// grib api
+#include "grib_api.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -16,6 +18,10 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <cstdio>
+#include <cstdlib>
+//#include <cstring>
+
 
 
 using namespace flightpred;
@@ -51,22 +57,7 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
         throw std::invalid_argument("Requested position doesn't match the prediction model's grid.");
     if(lon100 % grid100)
         throw std::invalid_argument("Requested position doesn't match the prediction model's grid.");
-    // check if we already have the data
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "import grib data");
-    // contest
-    std::stringstream sstr;
-    sstr << "SELECT weather_pred_id FROM weather_pred "
-         << "WHERE location = GeomFromText('POINT(" << pos.lat() << " " << pos.lon() << ")', -1) "
-         << "AND pred_run='" << bgreg::to_iso_extended_string(from) << "'";
-    pqxx::result res = trans.exec(sstr.str());
-    if(res.size())
-    {
-        std::cout << "The requested data is already present in the database. No need to download." << std::endl;
-        return;
-    }
-    // download the grib files
-    const string baseurl = "nomad3.ncep.noaa.gov/pub/reanalysis-2/6hr/pgb/pgb.";
+
 
     set<string> sel_levels;
     sel_levels.insert("surface");
@@ -74,53 +65,71 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
     sel_levels.insert("750 mb");
     sel_levels.insert("500 mb");
 
+    // download the grib files
+    const string baseurl = "nomad3.ncep.noaa.gov/pub/reanalysis-2/6hr/pgb/pgb.";
+
+    pqxx::connection conn(db_conn_str_);
+    pqxx::transaction<> trans(conn, "import grib data");
 
     for(bgreg::date mon(from.year(), from.month(), 1); mon <= to; mon += bgreg::months(1))
     {
-        // first, get the inventory
-        std::stringstream ssurl;
-        ssurl << baseurl << std::setfill('0') << std::setw(4) << static_cast<int>(mon.year())
-             << std::setw(2) << static_cast<int>(mon.month());
-
-
-        std::stringstream buf_inv;
-        download_file(ssurl.str() + ".inv", buf_inv);
-
-        size_t lastpos = 0;
-        string line;
-        while(std::getline(buf_inv, line))
+        for(size_t hour = 0; hour < 24; hour += 3)
         {
-            boost::char_separator<char> sep(":");
-            boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
-            vector<string> vtokens;
-            std::copy(tokens.begin(), tokens.end(), back_inserter(vtokens));
-            if(vtokens.size() < 7)
+            // contest
+            std::stringstream sstr;
+            sstr << "SELECT weather_pred_id FROM weather_pred "
+                 << "WHERE location = GeomFromText('POINT(" << pos.lat() << " " << pos.lon() << ")', -1) "
+                 << "AND pred_time='" << bgreg::to_iso_extended_string(from) << " "
+                 << std::setfill('0') << std::setw(2) << hour << ":00:00'";
+            pqxx::result res = trans.exec(sstr.str());
+            if(res.size())
                 continue;
-            // todo : grib2 has a range field
-            const size_t pos = lexical_cast<size_t>(vtokens[1]);
-            if(vtokens[2].length() != 12 || vtokens[2].substr(0, 2) != "d=")
-                continue;
-            bpt::ptime pred_start(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
-                                  bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
 
-            if(sel_levels.find(vtokens[4]) != sel_levels.end())
+            // first, get the inventory
+            std::stringstream ssurl;
+            ssurl << baseurl << std::setfill('0') << std::setw(4) << static_cast<int>(mon.year())
+                 << std::setw(2) << static_cast<int>(mon.month());
+
+
+            std::stringstream buf_inv;
+            download_file(ssurl.str() + ".inv", buf_inv);
+
+            size_t lastpos = 0;
+            string line;
+            while(std::getline(buf_inv, line))
             {
-                // download the data
-                std::cout << "download " << lastpos << " to " << pos << std::endl;
+                boost::char_separator<char> sep(":");
+                boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
+                vector<string> vtokens;
+                std::copy(tokens.begin(), tokens.end(), back_inserter(vtokens));
+                if(vtokens.size() < 7)
+                    continue;
+                // todo : grib2 has a range field
+                const size_t pos = lexical_cast<size_t>(vtokens[1]);
+                if(vtokens[2].length() != 12 || vtokens[2].substr(0, 2) != "d=")
+                    continue;
+                bpt::ptime pred_time(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
+                                      bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
 
-                std::stringstream buf_grib;
+                if(sel_levels.find(vtokens[4]) != sel_levels.end())
+                {
+                    // download the data
+                    std::cout << "download " << lastpos << " to " << pos << std::endl;
 
-                download_file(ssurl.str(), buf_grib, std::make_pair(lastpos, pos - 1));
+                    std::stringstream buf_grib;
 
-//                std::cout << buf_grib.str() << std::endl;
-//                return;
+                    download_file(ssurl.str(), buf_grib, std::make_pair(lastpos, pos - 1));
 
-            }
-            lastpos = pos;
-        }
+                    read_grib_data(buf_grib, pred_time, atoi(vtokens[4].c_str()), vtokens[3]);
 
+    //                std::cout << buf_grib.str() << std::endl;
+    //                return;
 
-    }
+                }
+                lastpos = pos;
+            } // while getline
+        } // for hour
+    } // for day
 
 
     // add the data to the database
@@ -208,5 +217,68 @@ void grib_grabber::download_file(const string &url, std::ostream &ostr, std::pai
         throw boost::system::system_error(error);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void grib_grabber::read_grib_data(std::istream &istr, const bpt::ptime &pred_time, size_t level, const string &param)
+{
+    std::ofstream ofs("/tmp/temp_weather.grib");
+
+    while(!istr.eof())
+        ofs << static_cast<char>(istr.get());
+    ofs.close();
+
+    FILE* infile = fopen("/tmp/temp_weather.grib", "r");
+    if(!infile)
+        throw std::runtime_error("could not open temp grib file for reading.");
+
+    int err = 0, count = 0;
+    err = grib_count_in_file(0, infile, &count);
+    if(err != GRIB_SUCCESS)
+            throw std::runtime_error("failed to open count the grib messages in the file - error code: " + lexical_cast<string>(err));
+    std::cout << count << " grib messages in the file" << std::endl;
+
+    pqxx::connection conn(db_conn_str_);
+    pqxx::transaction<> trans(conn, "insert grib data");
+
+    grib_handle *h = NULL; // Message handle. Required in all the grib_api calls acting on a message.
+    // Loop on all the messages in a file.
+    while(h = grib_handle_new_from_file(0, infile, &err))
+    {
+        // Check for errors after reading a message.
+        if(err != GRIB_SUCCESS)
+            throw std::runtime_error("failed to open grib_handle - error code: " + lexical_cast<string>(err));
+
+        // Get the double representing the missing value in the field.
+        double missingValue = 0.0;
+        err = grib_get_double(h, "missingValue", &missingValue);
+        if(err)
+            throw std::runtime_error("failed to get grib missing value - error code: " + lexical_cast<string>(err));
+
+        // A new iterator on lat/lon/values is created from the message handle h.
+        grib_iterator *iter = grib_iterator_new(h, 0, &err);
+        if(err != GRIB_SUCCESS)
+            throw std::runtime_error("failed to create grib iterator - error code: " + lexical_cast<string>(err));
+
+        double lat, lon, value;
+        // Loop on all the lat/lon/values.
+        while(grib_iterator_next(iter, &lat, &lon, &value))
+            if(value != missingValue)
+            {
+                std::stringstream sstr;
+                sstr << "INSERT INTO weather_pred (pred_time, level, parameter, location, value) "
+                     << "values ('" << bgreg::to_iso_extended_string(pred_time.date()) << " "
+                     << std::setfill('0') << std::setw(2) << pred_time.time_of_day().hours()
+                     << ":00:00', " << level << ", '" << param
+                     << "', GeomFromText('POINT(" << lat << " " << lon << ")', -1), "
+                     << value << ")";
+                pqxx::result res = trans.exec(sstr.str());
+            }
+
+        grib_iterator_delete(iter);
+        grib_handle_delete(h);
+    }
+
+    trans.commit();
+
+    fclose(infile);
+}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
