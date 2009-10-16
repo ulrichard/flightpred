@@ -37,6 +37,9 @@ using std::string;
 using std::vector;
 using std::map;
 using std::set;
+using std::ios_base;
+using std::cout;
+using std::endl;
 
 // a description of the grib data fields can be found at:
 // http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2f00.shtml
@@ -68,28 +71,14 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
     // download the grib files
     const string baseurl = "nomad3.ncep.noaa.gov/pub/reanalysis-2/6hr/pgb/pgb.";
 
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "import grib data");
-
     for(bgreg::date mon(from.year(), from.month(), 1); mon <= to; mon += bgreg::months(1))
     {
         for(size_t hour = 0; hour < 24; hour += 3)
         {
-            // contest
-            std::stringstream sstr;
-            sstr << "SELECT weather_pred_id FROM weather_pred "
-                 << "WHERE location = GeomFromText('POINT(" << pos.lat() << " " << pos.lon() << ")', -1) "
-                 << "AND pred_time='" << bgreg::to_iso_extended_string(from) << " "
-                 << std::setfill('0') << std::setw(2) << hour << ":00:00'";
-            pqxx::result res = trans.exec(sstr.str());
-            if(res.size())
-                continue;
-
             // first, get the inventory
             std::stringstream ssurl;
             ssurl << baseurl << std::setfill('0') << std::setw(4) << static_cast<int>(mon.year())
                  << std::setw(2) << static_cast<int>(mon.month());
-
 
             std::stringstream buf_inv;
             download_file(ssurl.str() + ".inv", buf_inv);
@@ -114,26 +103,16 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
                 if(sel_levels.find(vtokens[4]) != sel_levels.end())
                 {
                     // download the data
-                    std::cout << "download " << lastpos << " to " << pos << std::endl;
-
-                    std::stringstream buf_grib;
-
+                    std::stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
                     download_file(ssurl.str(), buf_grib, std::make_pair(lastpos, pos - 1));
 
+                    // decode the grib data and write into the database
                     read_grib_data(buf_grib, pred_time, atoi(vtokens[4].c_str()), vtokens[3]);
-
-    //                std::cout << buf_grib.str() << std::endl;
-    //                return;
-
                 }
                 lastpos = pos;
             } // while getline
         } // for hour
     } // for day
-
-
-    // add the data to the database
-
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber::download_file(const string &url, std::ostream &ostr, std::pair<size_t, size_t> range)
@@ -219,66 +198,67 @@ void grib_grabber::download_file(const string &url, std::ostream &ostr, std::pai
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber::read_grib_data(std::istream &istr, const bpt::ptime &pred_time, size_t level, const string &param)
 {
-    std::ofstream ofs("/tmp/temp_weather.grib");
-
+    vector<char> buf;
     while(!istr.eof())
-        ofs << static_cast<char>(istr.get());
-    ofs.close();
+        buf.push_back(istr.get());
 
-    FILE* infile = fopen("/tmp/temp_weather.grib", "r");
-    if(!infile)
-        throw std::runtime_error("could not open temp grib file for reading.");
+    grib_handle *h = grib_handle_new_from_message(0, &buf[0], buf.size());
 
-    int err = 0, count = 0;
-    err = grib_count_in_file(0, infile, &count);
+    int err = 0;
+    // Get the double representing the missing value in the field.
+    double missingValue = 0.0;
+    err = grib_get_double(h, "missingValue", &missingValue);
+    if(err)
+        throw std::runtime_error("failed to get grib missing value - error code: " + lexical_cast<string>(err));
+
+    // A new iterator on lat/lon/values is created from the message handle h.
+    grib_iterator *iter = grib_iterator_new(h, 0, &err);
     if(err != GRIB_SUCCESS)
-            throw std::runtime_error("failed to open count the grib messages in the file - error code: " + lexical_cast<string>(err));
-    std::cout << count << " grib messages in the file" << std::endl;
+        throw std::runtime_error("failed to create grib iterator - error code: " + lexical_cast<string>(err));
 
     pqxx::connection conn(db_conn_str_);
     pqxx::transaction<> trans(conn, "insert grib data");
 
-    grib_handle *h = NULL; // Message handle. Required in all the grib_api calls acting on a message.
-    // Loop on all the messages in a file.
-    while(h = grib_handle_new_from_file(0, infile, &err))
-    {
-        // Check for errors after reading a message.
-        if(err != GRIB_SUCCESS)
-            throw std::runtime_error("failed to open grib_handle - error code: " + lexical_cast<string>(err));
+    int count = 0;
+    double lat, lon, value;
+    // Loop on all the lat/lon/values.
+    while(grib_iterator_next(iter, &lat, &lon, &value))
+        if(value != missingValue)
+        {
+            if(lat < 40.0 || lat > 55.0 || lon < -5.0 || lon > 20.0)
+                continue; // for the moment we collect only data from central europe
 
-        // Get the double representing the missing value in the field.
-        double missingValue = 0.0;
-        err = grib_get_double(h, "missingValue", &missingValue);
-        if(err)
-            throw std::runtime_error("failed to get grib missing value - error code: " + lexical_cast<string>(err));
+            std::stringstream sstr;
+            sstr << bgreg::to_iso_extended_string(pred_time.date()) << " " << std::setfill('0')
+                 << std::setw(2) << pred_time.time_of_day().hours() << ":00:00";
+            const string dati(sstr.str());
 
-        // A new iterator on lat/lon/values is created from the message handle h.
-        grib_iterator *iter = grib_iterator_new(h, 0, &err);
-        if(err != GRIB_SUCCESS)
-            throw std::runtime_error("failed to create grib iterator - error code: " + lexical_cast<string>(err));
+            sstr.str("");
+            sstr << "SELECT weather_pred_id FROM weather_pred "
+                 << "WHERE location = GeomFromText('POINT(" << lat << " " << lon << ")', -1) "
+                 << "AND pred_time='" << dati << "' "
+                 << "AND level=" << level
+                 << "AND parameter='" << param << "'";
+            pqxx::result res = trans.exec(sstr.str());
+            if(res.size())
+                continue; // the record is already in the database
 
-        double lat, lon, value;
-        // Loop on all the lat/lon/values.
-        while(grib_iterator_next(iter, &lat, &lon, &value))
-            if(value != missingValue)
-            {
-                std::stringstream sstr;
-                sstr << "INSERT INTO weather_pred (pred_time, level, parameter, location, value) "
-                     << "values ('" << bgreg::to_iso_extended_string(pred_time.date()) << " "
-                     << std::setfill('0') << std::setw(2) << pred_time.time_of_day().hours()
-                     << ":00:00', " << level << ", '" << param
-                     << "', GeomFromText('POINT(" << lat << " " << lon << ")', -1), "
-                     << value << ")";
-                pqxx::result res = trans.exec(sstr.str());
-            }
-
-        grib_iterator_delete(iter);
-        grib_handle_delete(h);
-    }
+            sstr.str("");
+            sstr << "INSERT INTO weather_pred (pred_time, level, parameter, location, value) "
+                 << "values ('" << dati<< "', " << level << ", '" << param
+                 << "', GeomFromText('POINT(" << lat << " " << lon << ")', -1), "
+                 << value << ")";
+            res = trans.exec(sstr.str());
+            cout << "|";
+            ++count;
+        }
 
     trans.commit();
 
-    fclose(infile);
+    grib_iterator_delete(iter);
+    grib_handle_delete(h);
+
+    cout << endl << "imported " << count << " records." << endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
