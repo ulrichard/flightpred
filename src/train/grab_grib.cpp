@@ -14,12 +14,15 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/asio.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
 // standard library
 #include <sstream>
 #include <iomanip>
 #include <fstream>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 //#include <cstring>
 
 
@@ -33,19 +36,24 @@ using boost::posix_time::ptime;
 using boost::posix_time::time_duration;
 using boost::lexical_cast;
 using boost::asio::ip::tcp;
+using namespace boost::lambda;
 using std::string;
 using std::vector;
+using std::list;
 using std::map;
 using std::set;
+using std::pair;
+using std::make_pair;
 using std::ios_base;
 using std::cout;
 using std::endl;
+using std::stringstream;
 
 // a description of the grib data fields can be found at:
 // http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2f00.shtml
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-grib_grabber::grib_grabber(const std::string &db_conn_str, const std::string &model)
-    : db_conn_str_(db_conn_str), model_(get_grib_pred_model(model))
+grib_grabber::grib_grabber(const std::string &db_conn_str, const std::string &model, size_t download_pack)
+    : db_conn_str_(db_conn_str), model_(get_grib_pred_model(model)), download_pack_(download_pack)
 {
 
 }
@@ -63,9 +71,9 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
 
 
     set<string> sel_levels;
-    sel_levels.insert("surface");
+    sel_levels.insert("sfc");
     sel_levels.insert("850 mb");
-    sel_levels.insert("750 mb");
+    sel_levels.insert("700 mb");
     sel_levels.insert("500 mb");
 
     // download the grib files
@@ -73,49 +81,70 @@ void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, con
 
     for(bgreg::date mon(from.year(), from.month(), 1); mon <= to; mon += bgreg::months(1))
     {
-        for(size_t hour = 0; hour < 24; hour += 3)
+        // first, get the inventory
+        std::stringstream ssurl;
+        ssurl << baseurl << std::setfill('0') << std::setw(4) << static_cast<int>(mon.year())
+              << std::setw(2) << static_cast<int>(mon.month());
+
+        std::stringstream buf_inv;
+        download_data(ssurl.str() + ".inv", buf_inv, list<request>());
+
+        list<request> requests;
+        string line;
+        while(std::getline(buf_inv, line))
         {
-            // first, get the inventory
-            std::stringstream ssurl;
-            ssurl << baseurl << std::setfill('0') << std::setw(4) << static_cast<int>(mon.year())
-                 << std::setw(2) << static_cast<int>(mon.month());
-
-            std::stringstream buf_inv;
-            download_file(ssurl.str() + ".inv", buf_inv);
-
-            size_t lastpos = 0;
-            string line;
-            while(std::getline(buf_inv, line))
+            boost::char_separator<char> sep(":");
+            boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
+            vector<string> vtokens;
+            std::copy(tokens.begin(), tokens.end(), back_inserter(vtokens));
+            if(vtokens.size() < 7)
+                continue;
+            // todo : grib2 has a range field
+            request req;
+            req.range_start = lexical_cast<size_t>(vtokens[1]);
+            req.range_end   = 0;
+            if(requests.size() && !requests.back().range_end)
+                requests.back().range_end = req.range_start;
+            if(vtokens[2].length() == 12 && vtokens[2].substr(0, 2) == "d=")
             {
-                boost::char_separator<char> sep(":");
-                boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
-                vector<string> vtokens;
-                std::copy(tokens.begin(), tokens.end(), back_inserter(vtokens));
-                if(vtokens.size() < 7)
-                    continue;
-                // todo : grib2 has a range field
-                const size_t pos = lexical_cast<size_t>(vtokens[1]);
-                if(vtokens[2].length() != 12 || vtokens[2].substr(0, 2) != "d=")
-                    continue;
-                bpt::ptime pred_time(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
-                                      bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
+                req.pred_time = bpt::ptime(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
+                                           bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
+                if(req.pred_time.date() >=from && req.pred_time.date() <= to)
+                    if(sel_levels.find(vtokens[4]) != sel_levels.end())
+                    {
+                        req.level = atoi(vtokens[4].c_str());
+                        req.param = vtokens[3];
 
-                if(sel_levels.find(vtokens[4]) != sel_levels.end())
-                {
-                    // download the data
-                    std::stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
-                    download_file(ssurl.str(), buf_grib, std::make_pair(lastpos, pos - 1));
+                        if(requests.size() >= download_pack_)
+                        {
+                            // download the data
+                            stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
+                            download_data(ssurl.str(), buf_grib, requests);
 
-                    // decode the grib data and write into the database
-                    read_grib_data(buf_grib, pred_time, atoi(vtokens[4].c_str()), vtokens[3]);
-                }
-                lastpos = pos;
-            } // while getline
-        } // for hour
+                            // decode the grib data and write into the database
+                            dispatch_grib_data(buf_grib, requests);
+
+                            requests.clear();
+                        }
+
+                        requests.push_back(req);
+                    }
+            }
+        } // while getline
+
+        if(requests.size())
+        {
+            // download the data
+            stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
+            download_data(ssurl.str(), buf_grib, requests);
+
+            // decode the grib data and write into the database
+            dispatch_grib_data(buf_grib, requests);
+        }
     } // for day
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void grib_grabber::download_file(const string &url, std::ostream &ostr, std::pair<size_t, size_t> range)
+void grib_grabber::download_data(const string &url, std::ostream &ostr, const list<request> &requests)
 {
     std::cout << "downloading : " << url << std::endl;
 
@@ -144,6 +173,7 @@ void grib_grabber::download_file(const string &url, std::ostream &ostr, std::pai
     if(error)
         throw boost::system::system_error(error);
 
+
     // Form the request. We specify the "Connection: close" header so that the
     // server will close the socket after transmitting the response. This will
     // allow us to treat all data up until the EOF as the content.
@@ -152,8 +182,19 @@ void grib_grabber::download_file(const string &url, std::ostream &ostr, std::pai
     request_stream << "GET " << path << " HTTP/1.1\r\n";
     request_stream << "Host: " << hostname << "\r\n";
     request_stream << "Accept: */*\r\n";
-    if(range.second - range.first > 0)
-        request_stream << "Range: bytes=" << range.first << "-" << range.second << "\r\n";
+    if(requests.size())
+    {
+        request_stream << "Range: bytes=";
+        for(list<grib_grabber::request>::const_iterator it = requests.begin(); it != requests.end(); ++it)
+        {
+            if(it != requests.begin())
+                request_stream << ",";
+            request_stream << it->range_start << "-";
+            if(it->range_end)
+                request_stream << it->range_end - 1;
+        }
+        request_stream << "\r\n";
+    }
     request_stream << "Connection: close\r\n\r\n";
 
     // Send the request.
@@ -196,11 +237,90 @@ void grib_grabber::download_file(const string &url, std::ostream &ostr, std::pai
         throw boost::system::system_error(error);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void grib_grabber::read_grib_data(std::istream &istr, const bpt::ptime &pred_time, size_t level, const string &param)
+size_t grib_grabber::read_until(std::istream &istr, const string &srchstr)
 {
-    vector<char> buf;
+    const size_t srchlen = srchstr.length();
+    size_t moved = 0;
+
+    std::deque<char> buf;
     while(!istr.eof())
+    {
         buf.push_back(istr.get());
+        ++moved;
+        if(buf.size() >= srchlen)
+            if(std::equal(buf.end() - srchlen, buf.end(), srchstr.begin()))
+                break;
+        if(buf.size() > 3 * srchlen)
+        {
+            std::deque<char>::iterator eit = buf.begin();
+            std::advance(eit, srchlen * 2);
+            buf.erase(buf.begin(), eit);
+        }
+    }
+    return moved;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void grib_grabber::dispatch_grib_data(std::istream &istr, list<request> &requests)
+{
+    if(requests.size() == 1)
+    {
+        read_grib_data(istr, requests.front());
+        return;
+    }
+
+    while(!istr.eof() && requests.size())
+    {
+        const size_t moved = read_until(istr, "Content-range: bytes ");
+        if(istr.eof())
+            throw std::runtime_error("invalid range response: search string not found: 'Content-range: bytes '");
+
+        string line;
+        std::getline(istr, line);
+
+        const size_t posm = line.find('-');
+        if(posm == string::npos)
+            throw std::runtime_error("invalid range response: '-' not found");
+        const size_t poss = line.find('/');
+        if(poss == string::npos)
+            throw std::runtime_error("invalid range response: '/' not found");
+        const size_t rng_start = lexical_cast<size_t>(line.substr(0, posm));
+        const size_t rng_end   = lexical_cast<size_t>(line.substr(posm + 1, poss - posm - 1));
+
+        read_until(istr, "\r\n");
+
+        // find the request that matches the byte position of the response
+        list<request>::iterator fit = std::find_if(requests.begin(), requests.end(),
+                                                     rng_start == bind(&request::range_start, _1));
+        if(fit == requests.end())
+        {
+            cout << "requested : " << endl;
+            std::transform(requests.begin(), requests.end(), std::ostream_iterator<size_t>(cout, "/"), bind(&request::range_start, _1));
+            cout << endl << "found range: " << rng_start << " - " << rng_end << endl;
+
+            throw std::runtime_error("returned range was not requested.");
+        }
+
+        read_grib_data(istr, *fit);
+
+        requests.erase(fit);
+    }
+
+    if(requests.size())
+    {
+        cout << requests.size() << " requests remaining!" << endl;
+    }
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void grib_grabber::read_grib_data(std::istream &istr, const request &req)
+{
+    const size_t len = (req.range_end > req.range_start ?
+                        req.range_end - req.range_start :
+                        std::numeric_limits<size_t>::max());
+    vector<char> buf;
+    for(size_t i=0; i<len && !istr.eof(); ++i)
+        buf.push_back(istr.get());
+
+    cout << req.pred_time << " " << req.level << " " << req.param << " ";
 
     grib_handle *h = grib_handle_new_from_message(0, &buf[0], buf.size());
 
@@ -229,28 +349,29 @@ void grib_grabber::read_grib_data(std::istream &istr, const bpt::ptime &pred_tim
                 continue; // for the moment we collect only data from central europe
 
             std::stringstream sstr;
-            sstr << bgreg::to_iso_extended_string(pred_time.date()) << " " << std::setfill('0')
-                 << std::setw(2) << pred_time.time_of_day().hours() << ":00:00";
+            sstr << bgreg::to_iso_extended_string(req.pred_time.date()) << " " << std::setfill('0')
+                 << std::setw(2) << req.pred_time.time_of_day().hours() << ":00:00";
             const string dati(sstr.str());
 
             sstr.str("");
             sstr << "SELECT weather_pred_id FROM weather_pred "
                  << "WHERE location = GeomFromText('POINT(" << lat << " " << lon << ")', -1) "
                  << "AND pred_time='" << dati << "' "
-                 << "AND level=" << level
-                 << "AND parameter='" << param << "'";
+                 << "AND level=" << req.level
+                 << "AND parameter='" << req.param << "'";
             pqxx::result res = trans.exec(sstr.str());
             if(res.size())
                 continue; // the record is already in the database
 
             sstr.str("");
             sstr << "INSERT INTO weather_pred (pred_time, level, parameter, location, value) "
-                 << "values ('" << dati<< "', " << level << ", '" << param
+                 << "values ('" << dati<< "', " << req.level << ", '" << req.param
                  << "', GeomFromText('POINT(" << lat << " " << lon << ")', -1), "
                  << value << ")";
             res = trans.exec(sstr.str());
             cout << "|";
-            ++count;
+            if(++count % 10 == 0)
+                cout.flush();
         }
 
     trans.commit();

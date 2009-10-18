@@ -26,29 +26,34 @@ int main(int argc, char* argv[])
     try
     {
         string name, position, start_date, end_date, pred_model;
+        double area_radius = 5.0;
+        size_t download_pack = 100;
         string db_host, db_name, db_user, db_password;
 
         bgreg::date dtend(bgreg::day_clock::local_day());
-        bgreg::date dtstart(dtend - bgreg::months(6));
+        bgreg::date dtstart(dtend - bgreg::months(5));
         start_date = bgreg::to_iso_extended_string(dtstart);
         end_date   = bgreg::to_iso_extended_string(dtend);
 
         // Declare the supported options.
         po::options_description desc("Allowed options");
         desc.add_options()
-            ("help",		"produce help message")
-            ("get-flights",	"get flights from online competition")
-            ("get-weather", "get weather prediction grib data")
-            ("train",		"train the system for an area")
-            ("name",	    po::value<string>(&name)->default_value("Fiesch"), "name of the area or competition")
-            ("position",    po::value<string>(&position)->default_value("N 46 24 42.96 E 8 6 52.32"), "geographic position")
-            ("pred_model",  po::value<string>(&pred_model)->default_value("GFS"), "name of the numeric weather prediction model")
-            ("start_date",  po::value<string>(&start_date)->default_value(start_date), "start date (yyyy/mm/dd)")
-            ("end_date",    po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
-            ("db_host",     po::value<string>(&db_host)->default_value("localhost"), "name or ip of the database server")
-            ("db_name",     po::value<string>(&db_name)->default_value("flightpred"), "name of the database")
-            ("db_user",     po::value<string>(&db_user)->default_value("postgres"), "name of the database user")
-            ("db_password", po::value<string>(&db_password)->default_value("postgres"), "password of the database user")
+            ("help",		  "produce help message")
+            ("get-flights",	  "get flights from online competition")
+            ("register-area", "register a flight area for prediction (name, position, area_radius[km])")
+            ("get-weather",   "get weather prediction grib data for all registered areas (start_date, end_date)")
+            ("train",		  "train the system for an area")
+            ("name",	      po::value<string>(&name)->default_value("Fiesch"), "name of the area or competition")
+            ("position",      po::value<string>(&position)->default_value("N 46 24 42.96 E 8 6 52.32"), "geographic position")
+            ("area_radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training")
+            ("pred_model",    po::value<string>(&pred_model)->default_value("GFS"), "name of the numeric weather prediction model")
+            ("start_date",    po::value<string>(&start_date)->default_value(start_date), "start date (yyyy/mm/dd)")
+            ("end_date",      po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
+            ("download_pack", po::value<size_t>(&download_pack)->default_value(download_pack), "how many grib messages to download at once")
+            ("db_host",       po::value<string>(&db_host)->default_value("localhost"), "name or ip of the database server")
+            ("db_name",       po::value<string>(&db_name)->default_value("flightpred"), "name of the database")
+            ("db_user",       po::value<string>(&db_user)->default_value("postgres"), "name of the database user")
+            ("db_password",   po::value<string>(&db_password)->default_value("postgres"), "password of the database user")
             ;
         po::variables_map vm;
         po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -73,7 +78,7 @@ int main(int argc, char* argv[])
 
         if(vm.count("get-weather"))
         {
-            grib_grabber gr(db_conn_str, pred_model);
+            grib_grabber gr(db_conn_str, pred_model, download_pack);
             gr.grab_grib(dtstart, dtend, pos);
         }
 

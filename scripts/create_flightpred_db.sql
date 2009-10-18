@@ -52,6 +52,7 @@ INSERT INTO pred_sites (site_name, location, country) values ('Grindelwald', Geo
 INSERT INTO pred_sites (site_name, location, country) values ('Niesen',      GeomFromText('POINT(46.644222222434202 7.6476388888888902)', -1), 'CH');
 INSERT INTO pred_sites (site_name, location, country) values ('Rothenflue',  GeomFromText('POINT(47.018337296086003 8.7019931164065607)', -1), 'CH');
 INSERT INTO pred_sites (site_name, location, country) values ('Engelberg',   GeomFromText('POINT(46.840041666560701 8.4053166664971304)', -1), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Uetliberg',   GeomFromText('POINT()', -1), 'CH');
 CREATE TABLE weather_pred
 (
 	weather_pred_id SERIAL PRIMARY KEY,
