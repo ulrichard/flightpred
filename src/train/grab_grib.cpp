@@ -7,7 +7,6 @@
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
 #include <geometry/geometry.hpp>
-//#include <geometry/io/wkt/streamwkt.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -58,18 +57,8 @@ grib_grabber::grib_grabber(const std::string &db_conn_str, const std::string &mo
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to, const point_ll_deg &pos)
+void grib_grabber::grab_grib(const bgreg::date &from, const bgreg::date &to)
 {
-    // validate that the requested location falls within the grid of the prediction model
-    int lat100  = pos.lat() * 100.0;
-    int lon100  = pos.lon() * 100.0;
-    int grid100 = model_->getGridResolution() * 100;
-    if(lat100 % grid100)
-        throw std::invalid_argument("Requested position doesn't match the prediction model's grid.");
-    if(lon100 % grid100)
-        throw std::invalid_argument("Requested position doesn't match the prediction model's grid.");
-
-
     set<string> sel_levels;
     sel_levels.insert("sfc");
     sel_levels.insert("850 mb");
@@ -369,9 +358,11 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req)
                  << "', GeomFromText('POINT(" << lat << " " << lon << ")', -1), "
                  << value << ")";
             res = trans.exec(sstr.str());
-            cout << "|";
             if(++count % 10 == 0)
+            {
+                cout << "|";
                 cout.flush();
+            }
         }
 
     trans.commit();

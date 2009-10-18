@@ -2,6 +2,7 @@
 // flightpred
 #include "grab_grib.h"
 #include "grab_flights.h"
+#include "area_mgr.h"
 #include "geo_parser.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
@@ -26,7 +27,7 @@ int main(int argc, char* argv[])
     try
     {
         string name, position, start_date, end_date, pred_model;
-        double area_radius = 5.0;
+        double area_radius = 5000.0;
         size_t download_pack = 100;
         string db_host, db_name, db_user, db_password;
 
@@ -39,13 +40,13 @@ int main(int argc, char* argv[])
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help",		  "produce help message")
-            ("get-flights",	  "get flights from online competition")
+            ("get-flights",	  "get flights from online competition (import from local files at the moment)")
             ("register-area", "register a flight area for prediction (name, position, area_radius[km])")
             ("get-weather",   "get weather prediction grib data for all registered areas (start_date, end_date)")
             ("train",		  "train the system for an area")
             ("name",	      po::value<string>(&name)->default_value("Fiesch"), "name of the area or competition")
             ("position",      po::value<string>(&position)->default_value("N 46 24 42.96 E 8 6 52.32"), "geographic position")
-            ("area_radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training")
+            ("area_radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training [m]")
             ("pred_model",    po::value<string>(&pred_model)->default_value("GFS"), "name of the numeric weather prediction model")
             ("start_date",    po::value<string>(&start_date)->default_value(start_date), "start date (yyyy/mm/dd)")
             ("end_date",      po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
@@ -62,7 +63,7 @@ int main(int argc, char* argv[])
         dtstart = bgreg::from_string(start_date);
         dtend   = bgreg::from_string(end_date);
         const string db_conn_str = "host=" + db_host + " dbname=" + db_name + " user=" + db_user + " password=" + db_password;
-        const geometry::point_ll_deg &pos = parse_position(position);
+        const geometry::point_ll_deg pos = parse_position(position);
 
         if(vm.count("help"))
         {
@@ -76,10 +77,16 @@ int main(int argc, char* argv[])
             gr.grab_flights(dtstart, dtend);
         }
 
+        if(vm.count("register-area"))
+        {
+            area_mgr am(db_conn_str);
+            am.add_area(name, pos, area_radius);
+        }
+
         if(vm.count("get-weather"))
         {
             grib_grabber gr(db_conn_str, pred_model, download_pack);
-            gr.grab_grib(dtstart, dtend, pos);
+            gr.grab_grib(dtstart, dtend);
         }
 
 

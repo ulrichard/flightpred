@@ -21,6 +21,7 @@ CREATE TABLE sites
 	country      varchar(5)  NOT NULL
 );
 SELECT AddGeometryColumn('sites','location',-1,'POINT',2);
+CREATE INDEX sites_by_location ON sites USING GIST ( location );
 
 CREATE TABLE flights
 (
@@ -39,12 +40,24 @@ CREATE TABLE pred_sites
 (
 	pred_site_id SERIAL PRIMARY KEY,
 	site_name    varchar(50) NOT NULL,
-	country      varchar(5)  NOT NULL
+	country      varchar(5)
 );
 SELECT AddGeometryColumn('pred_sites','location',-1,'POINT',2);
+CREATE UNIQUE INDEX predSitesByName ON pred_sites (site_name);
+
+CREATE TABLE svn_features
+(
+    svn_feat_if    SERIAL PRIMARY KEY,
+    pred_site_id   int,
+    params         varchar(2048),
+    score          real,
+    generation     int
+);
 
 ALTER TABLE sites   ADD CONSTRAINT FK_pred_site_id FOREIGN KEY(pred_site_id) REFERENCES pred_sites (pred_site_id);
 ALTER TABLE flights ADD CONSTRAINT FK_pilot_id     FOREIGN KEY(pilot_id)     REFERENCES pilots     (pilot_id)   ON DELETE CASCADE;ALTER TABLE flights ADD CONSTRAINT FK_contest_id   FOREIGN KEY(contest_id)   REFERENCES contests   (contest_id) ON DELETE CASCADE;ALTER TABLE flights ADD CONSTRAINT FK_site_id      FOREIGN KEY(site_id)      REFERENCES sites      (site_id);
+
+
 
 INSERT INTO contests (contest_name, website) values ('onlinecontest', 'http://www.onlinecontest.org');INSERT INTO contests (contest_name, website) values ('xcontest',      'http://www.xcontest.org');
 INSERT INTO pred_sites (site_name, location, country) values ('Fiesch',      GeomFromText('POINT(46.411933333078998 8.1145333332485592)', -1), 'CH');
@@ -64,4 +77,5 @@ INSERT INTO pred_sites (site_name, location, country) values ('Uetliberg',   Geo
 SELECT AddGeometryColumn('weather_pred','location',-1,'POINT',2);
 
 CREATE INDEX weatherByLvLParamTime ON weather_pred (level, parameter, pred_time);
+CREATE INDEX weatherByLocation     ON weather_pred USING GIST ( location );
 

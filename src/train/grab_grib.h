@@ -29,7 +29,7 @@ public:
     grib_grabber(const std::string &db_conn_str, const std::string &model, size_t download_pack);
     ~grib_grabber() { }
 
-    void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to, const geometry::point_ll_deg &pos);
+    void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to);
 
 private:
     struct request
