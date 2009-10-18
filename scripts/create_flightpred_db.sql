@@ -62,3 +62,5 @@ INSERT INTO pred_sites (site_name, location, country) values ('Engelberg',   Geo
 );
 SELECT AddGeometryColumn('weather_pred','location',-1,'POINT',2);
 
+CREATE INDEX weatherByLvLParamTime ON weather_pred (level, parameter, pred_time);
+
