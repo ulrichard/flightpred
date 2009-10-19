@@ -7,13 +7,6 @@
 #include <boost/noncopyable.hpp>
 // standard library
 #include <string>
-//#include <vector>
-//#include <list>
-//#include <map>
-//#include <set>
-//#include <ostream>
-//#include <istream>
-//#include <utility>
 
 namespace flightpred
 {

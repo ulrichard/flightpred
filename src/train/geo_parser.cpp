@@ -77,7 +77,9 @@ struct position_grammar : public grammar<position_grammar/*, pair_closure::conte
 		{
 
 			top = (rLat[set_lat(self.pos_)(arg1)] >> rLon[set_lon(self.pos_)(arg1)])
-			    | (rLon[set_lon(self.pos_)(arg1)] >> rLat[set_lat(self.pos_)(arg1)]);
+			    | (rLon[set_lon(self.pos_)(arg1)] >> rLat[set_lat(self.pos_)(arg1)])
+			    | ("POINT(" >> ureal_p[set_lat(self.pos_)(arg1)] >> " " >> ureal_p[set_lon(self.pos_)(arg1)] >> ")")
+			    ;
 
 			rLat = rLatD[rLat.val = arg1] | rLatDM[rLat.val = arg1] | rLatDMS[rLat.val = arg1];
 

@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters='--get-weather --position &quot;N 47 E 8&quot; --start_date &quot;2009-03-01&quot; --end_date &quot;2009-03-03&quot; --download_pack 100' />
+				<Option parameters="--register-area" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />
