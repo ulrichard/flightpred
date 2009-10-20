@@ -8,12 +8,12 @@
 A system that shall predict good days and locations for cross country
 free flying such as paragliding by comparing current weather
 predictions with statistics about past weather predictions and flights
-from online contests.<br>
+from online xc competitions.<br>
 <h5>Short description</h5>
 To do so, we collect weather prediction data from the past, and match
 them with the flights that were uploaded to online competitions. Using
 these data, we train a self learning system. Training will probably be
-done per flight area. Then, when we want to predict the upcoming days,
+done per flight area. Finally, when we want to predict future flights,
 we fetch the current weather predictions, feed them to the system and
 create a ranking of which areas have the best xc potential for the
 upcoming days. <br>
@@ -27,7 +27,7 @@ as <a
 files</a>. At the beginning we will use data from the <a
  href="http://en.wikipedia.org/wiki/Global_Forecast_System">GFS model</a>
 run by the <a href="http://www.noaa.gov/">noaa</a>, as it is easily
-accessible Once we have some results, we might also want to look for
+accessible. Once we have some results, we might also want to look for
 data from a high quality meso scale model.<br>
 To train our system, we have to extract some meaningful features at
 some grid positions that are sensible for the flight area for which we
@@ -230,6 +230,43 @@ for 2. Aug 2009</td>
 </table>
 Once the results have a certain quality, it would be nice if email or
 sms alerts could be configured for good xc days in areas of interest.<br>
+<br>
+<h3>Current Status (pre alpha)</h3>
+<ul>
+  <li>Got flight data for the past three years from http://xcontest.org
+bundled as json files. (thanks)</li>
+  <li>The people from http://onlinecontest.org have yet to decide if
+they can provide their data.</li>
+  <li>Imported the flights into the database.</li>
+  <li>Downloading grib data from the GFS model. First downloading the
+grib index, and then downloading only the parts of interest through
+bundled http byte range requests. <br>
+  </li>
+  <li>Postponed usage of the wdb (weather database) for the moment, as
+it was not easy to make deb packages for the target platforms.<br>
+  </li>
+  <li>Decoding the grib data using the grib_api library and insert into
+the database.</li>
+  <li>Currently, there are about 4.7 million records in the db for
+central europe on the following altitude levels : surface, 850 mb, 700
+mb and 500 mb.</li>
+  <li>Using postgis with spatial indexes for the position data.</li>
+</ul>
+<h3>Next steps:</h3>
+<ul>
+  <li>Assign the flying sites from the flights to prediction sites, by
+defining a reference location and a radius.</li>
+  <li>Define a representatoin for feature sets, and define a initial
+set for each flying site semi automatically.</li>
+  <li>Train the support vector machine.</li>
+  <li>Grab current weather predictions and calculate the first flight
+predictions.</li>
+  <li>Evaluate better feature sets using genetic algorithms.</li>
+  <li>Make a nice frontend.</li>
+  <li>Re evaluate usage of wdb.<br>
+  </li>
+</ul>
+<br>
 <br>
 </body>
 </html>
