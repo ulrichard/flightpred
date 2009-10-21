@@ -344,7 +344,7 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req)
 
             sstr.str("");
             sstr << "SELECT weather_pred_id FROM weather_pred "
-                 << "WHERE location = GeomFromText('POINT(" << lat << " " << lon << ")', -1) "
+                 << "WHERE location = GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << ") "
                  << "AND pred_time='" << dati << "' "
                  << "AND level=" << req.level
                  << "AND parameter='" << req.param << "'";
@@ -355,7 +355,7 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req)
             sstr.str("");
             sstr << "INSERT INTO weather_pred (pred_time, level, parameter, location, value) "
                  << "values ('" << dati<< "', " << req.level << ", '" << req.param
-                 << "', GeomFromText('POINT(" << lat << " " << lon << ")', -1), "
+                 << "', GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << "), "
                  << value << ")";
             res = trans.exec(sstr.str());
             if(++count % 10 == 0)

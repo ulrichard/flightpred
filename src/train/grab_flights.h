@@ -3,6 +3,8 @@
 
 // json_spirit
 #include <json_spirit_reader.h>
+// ggl (boost sandbox)
+#include <geometry/geometries/latlong.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/filesystem.hpp>
@@ -21,7 +23,7 @@ struct flight
     std::string             pilot_country;
     std::string             takeoff_name;
     std::string             takeoff_country;
-    double                  lat, lon;  // todo : use position class
+    geometry::point_ll_deg  pos;
     double                  distance;
     double                  score;
     boost::gregorian::date  day;

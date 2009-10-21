@@ -59,6 +59,8 @@
 		<Unit filename="../../scripts/create_flightpred_db.sql" />
 		<Unit filename="area_mgr.cpp" />
 		<Unit filename="area_mgr.h" />
+		<Unit filename="extract_features_flight.cpp" />
+		<Unit filename="extract_features_flight.h" />
 		<Unit filename="geo_parser.cpp" />
 		<Unit filename="geo_parser.h" />
 		<Unit filename="grab_flights.cpp" />

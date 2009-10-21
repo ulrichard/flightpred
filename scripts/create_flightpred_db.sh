@@ -10,3 +10,6 @@ sudo -u postgres psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/l
 sudo -u postgres psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
 sudo -u postgres psql -e -a -d flightpred -f create_flightpred_db.sql
 
+mkdir ../backup
+sudo -u postgres pg_dump flightpred > ../backup/dbdump.sql
+

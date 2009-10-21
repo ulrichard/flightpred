@@ -48,6 +48,7 @@ private:
     const std::string db_conn_str_;
     grib_pred_model   *model_;
     const size_t       download_pack_;
+    static const size_t PG_SIR_WGS84 = 4326;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 }; // namespace flightpred

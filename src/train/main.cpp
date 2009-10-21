@@ -4,6 +4,7 @@
 #include "grab_flights.h"
 #include "area_mgr.h"
 #include "geo_parser.h"
+#include "extract_features_flight.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
 // boost

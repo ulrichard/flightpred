@@ -2,6 +2,8 @@
 #include "grab_flights.h"
 // postgre
 #include <pqxx/pqxx>
+// ggl (boost sandbox)
+#include <geometry/io/wkt/aswkt.hpp>
 // boost
 #include <boost/filesystem/fstream.hpp>
 #include <boost/bind.hpp>
@@ -83,8 +85,8 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
         fl.takeoff_country  = flObj.find("takeoff")->second.get_obj().find("countryIso")->second.get_str();
         if(flObj.find("pointStart") == flObj.end())
         {
-            fl.lat          = flObj.find("pointStart")->second.get_obj().find("latitude")->second.get_real();
-            fl.lon          = flObj.find("pointStart")->second.get_obj().find("longitude")->second.get_real();
+            fl.pos.lat(flObj.find("pointStart")->second.get_obj().find("latitude")->second.get_real());
+            fl.pos.lon(flObj.find("pointStart")->second.get_obj().find("longitude")->second.get_real());
         }
         else
         {
@@ -95,7 +97,10 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
                 throw std::runtime_error("could not evaluate geographic position of takeoff");
             link = link.substr(pos + srchstr.length(), link.length());
             std::stringstream sstr(link);
-            sstr >> fl.lat >> fl.lon;
+            double lat, lon;
+            sstr >> lon >> lat;
+            fl.pos.lon(lon);
+            fl.pos.lat(lat);
         }
         fl.distance         = flObj.find("league")->second.get_obj().find("route")->second.get_obj().find("distance")->second.get_real();
         fl.score            = flObj.find("league")->second.get_obj().find("route")->second.get_obj().find("points")->second.get_real();
@@ -134,10 +139,11 @@ void flight_grabber::write_flight_to_db(const flight &fl)
         res[0]["site_id"].to(site_id);
     else
     {
+        const size_t PG_SIR_WGS84 = 4326;
         std::stringstream sstr;
         sstr << "INSERT INTO sites (site_name, location, country) values ('"
-             << fl.takeoff_name << "', point(" << fl.lat << "," << fl.lon << "), '" << fl.takeoff_country << "') "
-             << "RETURNING site_id";
+             << fl.takeoff_name << "', GeomFromText('" << geometry::make_wkt(fl.pos) << "', "
+             << PG_SIR_WGS84 << "), '" << fl.takeoff_country << "') " << "RETURNING site_id";
         res = trans.exec(sstr.str());
         res[0]["site_id"].to(site_id);
     }
