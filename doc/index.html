@@ -1,6 +1,10 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
+  <title>FreeFlightPrediction</title>
+  <meta content="Richard Ulrich [richi@paraeasy.ch]" name="author">
+  <meta content="Description of the flightpred project"
+ name="description">
 </head>
 <body>
 <h1>Free Flight Prediction</h1>
@@ -247,9 +251,11 @@ it was not easy to make deb packages for the target platforms.<br>
   </li>
   <li>Decoding the grib data using the grib_api library and insert into
 the database.</li>
-  <li>Currently, there are about 4.7 million records in the db for
+  <li>Currently, there are about 6.5 million records in the db for
 central europe on the following altitude levels : surface, 850 mb, 700
-mb and 500 mb.</li>
+mb and 500 mb. For each of the 63 grid point that makes a bit more than
+100'000 samples. The sql dump has currently a size of about 650MB.<br>
+  </li>
   <li>Using postgis with spatial indexes for the position data.</li>
 </ul>
 <h3>Next steps:</h3>

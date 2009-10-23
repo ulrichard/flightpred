@@ -20,7 +20,7 @@ public:
     feature_extractor_flight(const std::string &db_conn_str) : db_conn_str_(db_conn_str) {}
     virtual ~feature_extractor_flight() {}
 
-    std::vector<double> get_features(const std::string &desc, const boost::gregorian::date &day);
+    std::vector<double> get_features(size_t pred_site_id, const boost::gregorian::date &day);
 
 private:
     const std::string db_conn_str_;

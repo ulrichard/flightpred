@@ -4,7 +4,7 @@
 #include "grab_flights.h"
 #include "area_mgr.h"
 #include "geo_parser.h"
-#include "extract_features_flight.h"
+#include "train_svm.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
 // boost
@@ -93,15 +93,8 @@ int main(int argc, char* argv[])
 
         if(vm.count("train"))
         {
-        // first step : download the grib files
-
-        // second step : load the grib files into the database
-
-        // third step : filter the weather information
-
-        // fourth step : filter the flight information
-
-        // fifth step : train the learning system
+            train_svm trainer(db_conn_str);
+            trainer.train(name, dtstart, dtend);
         }
     }
     catch(std::exception &ex)

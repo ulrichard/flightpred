@@ -76,6 +76,10 @@ INSERT INTO pred_sites (site_name, location, country) values ('Uetliberg',   Geo
 );
 SELECT AddGeometryColumn('weather_pred','location',4326,'POINT',2);
 
+CREATE INDEX weatherByTime         ON weather_pred (pred_time);
 CREATE INDEX weatherByLvLParamTime ON weather_pred (level, parameter, pred_time);
 CREATE INDEX weatherByLocation     ON weather_pred USING GIST (location);
+
+
+
 

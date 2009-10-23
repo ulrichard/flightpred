@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--register-area" />
+				<Option parameters="--train" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />
@@ -61,6 +61,8 @@
 		<Unit filename="area_mgr.h" />
 		<Unit filename="extract_features_flight.cpp" />
 		<Unit filename="extract_features_flight.h" />
+		<Unit filename="features_weather.cpp" />
+		<Unit filename="features_weather.h" />
 		<Unit filename="geo_parser.cpp" />
 		<Unit filename="geo_parser.h" />
 		<Unit filename="grab_flights.cpp" />
@@ -70,6 +72,8 @@
 		<Unit filename="grib_pred_model.cpp" />
 		<Unit filename="grib_pred_model.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="train_svm.cpp" />
+		<Unit filename="train_svm.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />
