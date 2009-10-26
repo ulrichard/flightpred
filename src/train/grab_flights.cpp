@@ -105,6 +105,7 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
         fl.distance         = flObj.find("league")->second.get_obj().find("route")->second.get_obj().find("distance")->second.get_real();
         fl.score            = flObj.find("league")->second.get_obj().find("route")->second.get_obj().find("points")->second.get_real();
         fl.day              = bgreg::from_string(flObj.find("pointStart")->second.get_obj().find("time")->second.get_str().substr(0, 10));
+        const string durstr = flObj.find("stats")->second.get_obj().find("duration")->second.get_str();  // format : "PT01H54M36S"
 
         write_flight_to_db(fl);
 

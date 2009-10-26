@@ -28,15 +28,15 @@ public:
     {
         feat_desc() : model("GFS") { }
         feat_desc(const feat_desc &org)
-            : reltime(org.reltime), location(org.location), level(org.level), param(org.param) { }
+            : model(org.model), reltime(org.reltime), location(org.location), level(org.level), param(org.param) { }
         bool operator==(const feat_desc &rhs) const;
         bool operator<(const feat_desc &rhs) const;
 
+        std::string                      model;
         boost::posix_time::time_duration reltime;
         geometry::point_ll_deg           location;
         size_t                           level;
         std::string                      param;
-        std::string                      model;
     };
 
     static std::set<feat_desc> decode_feature_desc(const std::string &desc);

@@ -19,7 +19,8 @@ vector<double> feature_extractor_flight::get_features(size_t pred_site_id, const
     pqxx::transaction<> trans(conn, "collect flight features");
 
     std::stringstream sstr;
-    sstr << "SELECT max(distance) AS max_dist, avg(distance) AS avg_dist "
+    sstr << "SELECT max(distance) AS max_dist, avg(distance) AS avg_dist, "
+         << "max(duration) as max_dur, avg(duration) as avg_dur "
          << "FROM sites INNER JOIN flights ON sites.site_id = flights.site_id "
          << "WHERE flight_date = '" << bgreg::to_iso_extended_string(day) << "' "
          << "AND pred_site_id=" << pred_site_id;
@@ -33,6 +34,10 @@ vector<double> feature_extractor_flight::get_features(size_t pred_site_id, const
     res[0]["max_dist"].to(val);
     ret.push_back(val);
     res[0]["avg_dist"].to(val);
+    ret.push_back(val);
+    res[0]["max_dur"].to(val);
+    ret.push_back(val);
+    res[0]["avg_dur"].to(val);
     ret.push_back(val);
 
     return ret;

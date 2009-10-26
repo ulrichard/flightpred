@@ -11,12 +11,13 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--train" />
+				<Option parameters="--train --name Fiesch --start_date &apos;2009-08-01&apos; --end_date &apos;2009-08-31&apos;" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />
 					<Add directory="../../3rd-party/json_spirit/json_spirit" />
 					<Add directory="../../3rd-party/ggl/boost/ggl" />
+					<Add directory="../../3rd-party/dclib" />
 				</Compiler>
 				<Linker>
 					<Add library="boost_program_options-mt-d" />
@@ -38,6 +39,7 @@
 					<Add option="-O2" />
 					<Add directory="../../3rd-party/json_spirit/json_spirit" />
 					<Add directory="../../3rd-party/ggl/boost/ggl" />
+					<Add directory="../../3rd-party/dclib" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />

@@ -36,7 +36,7 @@ data from a high quality meso scale model.<br>
 To train our system, we have to extract some meaningful features at
 some grid positions that are sensible for the flight area for which we
 want to train. We will have to evaluate how many grid points and
-altitude (or pressure) steps are feasible.<br>
+pressure steps are feasible.<br>
 These features could be:<br>
 <ul>
   <li>year</li>
@@ -47,8 +47,8 @@ These features could be:<br>
 thermals than the bare temperature [to be prooved])<br>
     </li>
     <li>wind speed</li>
-    <li>pressure (or altitude if the grid is pressure based)</li>
-    <li>humidity (or skew)<br>
+    <li>altitude</li>
+    <li>humidity<br>
     </li>
   </ul>
 </ul>
@@ -66,8 +66,11 @@ The measures will be calculated (for the past) and predicted (for the
 future) per flight area and could include:<br>
 <ul>
   <li>maximum distance</li>
-  <li>number of flights</li>
   <li>average distance</li>
+  <li>maximum duration</li>
+  <li>average duration<br>
+  </li>
+  <li>number of flights</li>
   <li>number of pilots having the best flight of the season.</li>
 </ul>
 <h4>The self learning system</h4>
@@ -257,11 +260,15 @@ mb and 500 mb. For each of the 63 grid point that makes a bit more than
 100'000 samples. The sql dump has currently a size of about 650MB.<br>
   </li>
   <li>Using postgis with spatial indexes for the position data.</li>
+  <li>Assign the flying sites from the flights to prediction sites, by
+defining a reference location and a radius.</li>
+  <li>The "c with classes" interface found in torch was a bit
+disapointing. Better alternatives seem to be dlib and kml.</li>
+  <li>Started integrating the SVM from dlib.<br>
+  </li>
 </ul>
 <h3>Next steps:</h3>
 <ul>
-  <li>Assign the flying sites from the flights to prediction sites, by
-defining a reference location and a radius.</li>
   <li>Define a representatoin for feature sets, and define a initial
 set for each flying site semi automatically.</li>
   <li>Train the support vector machine.</li>
@@ -272,7 +279,20 @@ predictions.</li>
   <li>Re evaluate usage of wdb.<br>
   </li>
 </ul>
-<br>
+<h3>3rd praty libraries and products used:</h3>
+<ul>
+  <li>grib-api for decoding of the grib binary weather prediction
+format.</li>
+  <li>boost::asio for downloading the grib files.</li>
+  <li>boost::spirit for parsing the json files containing the flight
+details from xcontest.org</li>
+  <li>postgresql for storing the data.</li>
+  <li>postgis for the locations with spatial indexes.</li>
+  <li>dlib for the support vector machine.</li>
+  <li>generic geometry library for locations and distance calculations.</li>
+  <li>various other boos libraries.<br>
+  </li>
+</ul>
 <br>
 </body>
 </html>
