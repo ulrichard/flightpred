@@ -19,11 +19,11 @@ CREATE TABLE sites
 	site_id      SERIAL PRIMARY KEY,
 	pred_site_id int,
 	site_name    varchar(50) NOT NULL,
-	country      varchar(5)  NOT NULL
+	country      varchar(5)  NOT NULL,
+	CONSTRAINT FK_pred_site_id FOREIGN KEY(pred_site_id) REFERENCES pred_sites (pred_site_id)
 );
 SELECT AddGeometryColumn('sites', 'location', 4326, 'POINT', 2);
-CREATE INDEX sites_by_location ON sites USING GIST ( location );
-ALTER TABLE sites ADD CONSTRAINT FK_pred_site_id FOREIGN KEY(pred_site_id) REFERENCES pred_sites (pred_site_id);
+CREATE INDEX sites_by_location ON sites USING GIST(location);
 
 CREATE TABLE flights
 (
@@ -36,9 +36,9 @@ CREATE TABLE flights
 	igc_file     varchar(256) NULL,
 	distance     real         NOT NULL,
 	score	     int          NOT NULL,
-	duration     real
+	duration     real,
+	CONSTRAINT FK_pilot_id     FOREIGN KEY(pilot_id)     REFERENCES pilots     (pilot_id)   ON DELETE CASCADE,	CONSTRAINT FK_contest_id   FOREIGN KEY(contest_id)   REFERENCES contests   (contest_id) ON DELETE CASCADE,	CONSTRAINT FK_site_id      FOREIGN KEY(site_id)      REFERENCES sites      (site_id)
 );
-ALTER TABLE flights ADD CONSTRAINT FK_pilot_id     FOREIGN KEY(pilot_id)     REFERENCES pilots     (pilot_id)   ON DELETE CASCADE;ALTER TABLE flights ADD CONSTRAINT FK_contest_id   FOREIGN KEY(contest_id)   REFERENCES contests   (contest_id) ON DELETE CASCADE;ALTER TABLE flights ADD CONSTRAINT FK_site_id      FOREIGN KEY(site_id)      REFERENCES sites      (site_id);
 
 CREATE TABLE pred_sites
 (
@@ -47,7 +47,7 @@ CREATE TABLE pred_sites
 	country      varchar(5)
 );
 SELECT AddGeometryColumn('pred_sites','location',4326,'POINT',2);
-CREATE UNIQUE INDEX predSitesByName ON pred_sites (site_name);
+CREATE UNIQUE INDEX predSitesByName ON pred_sites(site_name);
 INSERT INTO pred_sites (site_name, location, country) values ('Fiesch',      GeomFromText('POINT(8.1145333332485592 46.411933333078998)', 4326), 'CH');
 INSERT INTO pred_sites (site_name, location, country) values ('Grindelwald', GeomFromText('POINT(8.0552869234381106 46.656613323997803)', 4326), 'CH');
 INSERT INTO pred_sites (site_name, location, country) values ('Niesen',      GeomFromText('POINT(7.6476388888888902 46.644222222434202)', 4326), 'CH');
@@ -55,13 +55,16 @@ INSERT INTO pred_sites (site_name, location, country) values ('Rothenflue',  Geo
 INSERT INTO pred_sites (site_name, location, country) values ('Engelberg',   GeomFromText('POINT(8.4053166664971304 46.840041666560701)', 4326), 'CH');
 INSERT INTO pred_sites (site_name, location, country) values ('Uetliberg',   GeomFromText('POINT(8.5012333333333299 47.323266666666697)', 4326), 'CH');
 
-CREATE TABLE svn_features
+CREATE TABLE trained_solutions
 (
-    svn_feat_id    SERIAL PRIMARY KEY,
-    pred_site_id   int,
-    params         varchar(2048),
-    score          real,
-    generation     int
+	train_sol_id    SERIAL PRIMARY KEY,
+	pred_site_id   int,
+	configuration  text,
+	svm_ser        oid,
+	score          real,
+	train_time     real,
+	generation     int,
+	CONSTRAINT FK_pred_site_id FOREIGN KEY(pred_site_id) REFERENCES pred_sites(pred_site_id) ON DELETE CASCADE
 );
 
 CREATE TABLE weather_models

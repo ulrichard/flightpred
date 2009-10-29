@@ -262,8 +262,11 @@ mb and 500 mb. For each of the 63 grid point that makes a bit more than
   <li>Using postgis with spatial indexes for the position data.</li>
   <li>Assign the flying sites from the flights to prediction sites, by
 defining a reference location and a radius.</li>
-  <li>The "c with classes" interface found in torch was a bit
-disapointing. Better alternatives seem to be dlib and kml.</li>
+  <li>The "c with classes" interface found in <a
+ href="http://www.torch.ch">torch</a> was a bit
+disapointing. Better alternatives seem to be <a
+ href="http://dclib.sourceforge.net/ml.html">dlib</a> and <a
+ href="http://www.terborg.net/research/kml/">kml</a>.</li>
   <li>Started integrating the SVM from dlib.<br>
   </li>
 </ul>
@@ -281,16 +284,29 @@ predictions.</li>
 </ul>
 <h3>3rd praty libraries and products used:</h3>
 <ul>
-  <li>grib-api for decoding of the grib binary weather prediction
+  <li><a
+ href="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</a>
+for decoding of the grib binary weather prediction
 format.</li>
-  <li>boost::asio for downloading the grib files.</li>
-  <li>boost::spirit for parsing the json files containing the flight
+  <li><a
+ href="http://www.boost.org/doc/libs/1_39_0/doc/html/boost_asio.html">boost::asio</a>
+for downloading the grib files.</li>
+  <li><a
+ href="http://www.boost.org/doc/libs/1_39_0/libs/spirit/index.html">boost::spirit</a>
+for parsing the json files containing the flight
 details from xcontest.org</li>
-  <li>postgresql for storing the data.</li>
-  <li>postgis for the locations with spatial indexes.</li>
-  <li>dlib for the support vector machine.</li>
-  <li>generic geometry library for locations and distance calculations.</li>
-  <li>various other boos libraries.<br>
+  <li><a href="http://www.postgresql.org/">postgresql</a> for storing
+the data.</li>
+  <li><a href="http://postgis.refractions.net/">postgis</a> for the
+locations with spatial indexes.</li>
+  <li><a href="http://pqxx.org/development/libpqxx/">pqxx</a> for
+accessing postgre from.<br>
+  </li>
+  <li><a href="http://dclib.sourceforge.net/ml.html">dlib</a> for the
+support vector machine.</li>
+  <li><a href="http://geometrylibrary.geodan.nl/">generic geometry
+library</a> for locations and geoid distance calculations.</li>
+  <li>various other boost libraries.<br>
   </li>
 </ul>
 <br>

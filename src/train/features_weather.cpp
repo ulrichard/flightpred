@@ -12,6 +12,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/bind.hpp>
+#include <boost/array.hpp>
 // standard library
 #include <vector>
 #include <map>
@@ -21,6 +22,7 @@ using namespace flightpred;
 using geometry::point_ll_deg;
 namespace bgreg = boost::gregorian;
 namespace bpt   = boost::posix_time;
+using boost::array;
 using std::vector;
 using std::set;
 using std::map;
@@ -59,11 +61,22 @@ set<features_weather::feat_desc> features_weather::decode_feature_desc(const std
     return features;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void features_weather::generate_features(features_weather::feat_desc feat, const vector<point_ll_deg> &locations,
+    const bpt::time_duration &from, const bpt::time_duration &to, set<feat_desc> &features)
+{
+    for(vector<geometry::point_ll_deg>::const_iterator itl = locations.begin(); itl != locations.end(); ++itl)
+    {
+        feat.location = *itl;
+        for(bpt::time_duration tdur = from; tdur <= to; tdur += bpt::hours(6))
+        {
+            feat.reltime = tdur;
+            features.insert(feat);
+        }
+    }
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 set<features_weather::feat_desc> features_weather::get_standard_features(const point_ll_deg &site_location)
 {
-
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "collect default weather features");
     static const size_t PG_SIR_WGS84 = 4326;
 
     // get the closest 4 points of the grid
@@ -77,33 +90,27 @@ set<features_weather::feat_desc> features_weather::get_standard_features(const p
     nearbyloc.push_back(point_ll_deg(geometry::longitude<>(lonl), geometry::latitude<>(latl + gridres)));
     nearbyloc.push_back(point_ll_deg(geometry::longitude<>(lonl + gridres), geometry::latitude<>(latl + gridres)));
 
+    // parameters and levels
+    const array<string, 2> featgnd = {"PRES", "TMP"};
+    const array<string, 8> featair = {"HGT", "TMP", "UGRD", "VGRD", "ABSV", "RH", "VVEL", "CLWMR"};
+    const array<size_t, 4> levels  = {0, 850, 700, 500};
 
+    feat_desc fdesc;
+    fdesc.model = "GFS";
     set<feat_desc> features;
-    for(vector<geometry::point_ll_deg>::const_iterator it = nearbyloc.begin(); it != nearbyloc.end(); ++it)
+    fdesc.level = 0;
+    fdesc.param = featgnd[0];
+    generate_features(fdesc, nearbyloc, bpt::hours(-12), bpt::hours(18), features);
+    fdesc.param = featgnd[1];
+ //   generate_features(fdesc, nearbyloc, bpt::hours(-12), bpt::hours(18), features);
+
+    for(size_t i=1; i<levels.size(); ++i)
     {
-        std::stringstream sstr;
-        sstr << "SELECT DISTINCT level, parameter FROM weather_pred WHERE "
-             << "location = ST_GeomFromText('" << geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") "
-             << "AND pred_time='2009-09-01 00:00:00'";
-//        std::cout << sstr.str() << std::endl;
-        pqxx::result res = trans.exec(sstr.str());
- //       std::cout << res.size() << " combinations for " << geometry::make_wkt(*it) << std::endl;
-        for(size_t i=0; i<res.size(); ++i)
+        fdesc.level = levels[i];
+        for(size_t j=0; j<featair.size(); ++j)
         {
-            feat_desc fdesc;
-
-            fdesc.model = "GFS";
-            fdesc.location = *it;
-            res[i]["level"].to(fdesc.level);
-            res[i]["parameter"].to(fdesc.param);
-
-
-            for(bpt::time_duration tdur = bpt::hours(-12); tdur <= bpt::hours(18); tdur += bpt::hours(6))
-            {
-                fdesc.reltime = tdur;
-
-                features.insert(fdesc);
-            }
+            fdesc.param[j];
+            generate_features(fdesc, nearbyloc, bpt::hours(-12), bpt::hours(18), features);
         }
     }
 

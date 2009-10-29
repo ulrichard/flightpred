@@ -46,6 +46,9 @@ public:
     std::vector<double> get_features(const std::set<feat_desc> &descriptions, const boost::gregorian::date &day);
 
 private:
+    void generate_features(feat_desc feat, const std::vector<geometry::point_ll_deg> &locations,
+        const boost::posix_time::time_duration &from, const boost::posix_time::time_duration &to, std::set<feat_desc> &features);
+
     const std::string db_conn_str_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
