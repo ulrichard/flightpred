@@ -15,6 +15,7 @@
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />
+					<Add directory=".." />
 					<Add directory="../../3rd-party/json_spirit/json_spirit" />
 					<Add directory="../../3rd-party/ggl/boost/ggl" />
 					<Add directory="../../3rd-party/dclib" />
@@ -37,6 +38,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory=".." />
 					<Add directory="../../3rd-party/json_spirit/json_spirit" />
 					<Add directory="../../3rd-party/ggl/boost/ggl" />
 					<Add directory="../../3rd-party/dclib" />
@@ -59,20 +61,20 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="../../scripts/create_flightpred_db.sql" />
+		<Unit filename="../common/features_weather.cpp" />
+		<Unit filename="../common/features_weather.h" />
+		<Unit filename="../common/geo_parser.cpp" />
+		<Unit filename="../common/geo_parser.h" />
+		<Unit filename="../common/grab_flights.cpp" />
+		<Unit filename="../common/grab_flights.h" />
+		<Unit filename="../common/grab_grib.cpp" />
+		<Unit filename="../common/grab_grib.h" />
+		<Unit filename="../common/grib_pred_model.cpp" />
+		<Unit filename="../common/grib_pred_model.h" />
 		<Unit filename="area_mgr.cpp" />
 		<Unit filename="area_mgr.h" />
 		<Unit filename="extract_features_flight.cpp" />
-		<Unit filename="extract_features_flight.h" />
-		<Unit filename="features_weather.cpp" />
-		<Unit filename="features_weather.h" />
-		<Unit filename="geo_parser.cpp" />
-		<Unit filename="geo_parser.h" />
-		<Unit filename="grab_flights.cpp" />
 		<Unit filename="grab_flights.h" />
-		<Unit filename="grab_grib.cpp" />
-		<Unit filename="grab_grib.h" />
-		<Unit filename="grib_pred_model.cpp" />
-		<Unit filename="grib_pred_model.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="train_svm.cpp" />
 		<Unit filename="train_svm.h" />

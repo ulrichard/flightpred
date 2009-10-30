@@ -1,7 +1,7 @@
 // flightpred
 #include "features_weather.h"
 #include "grib_pred_model.h"
-#include "area_mgr.h"
+//#include "area_mgr.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)

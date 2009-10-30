@@ -11,14 +11,19 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="--docroot ../.. --http-address 0.0.0.0 --http-port 8080" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory=".." />
+					<Add directory="../../3rd-party/dclib" />
+					<Add directory="../../3rd-party/ggl/boost/ggl" />
 				</Compiler>
 				<Linker>
 					<Add library="wt" />
 					<Add library="wtext" />
 					<Add library="wthttp" />
 					<Add library="pqxx" />
+					<Add library="grib_api" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -28,6 +33,9 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory=".." />
+					<Add directory="../../3rd-party/dclib" />
+					<Add directory="../../3rd-party/ggl/boost/ggl" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -35,6 +43,7 @@
 					<Add library="wtext" />
 					<Add library="wtfcgi" />
 					<Add library="pqxx" />
+					<Add library="grib_api" />
 				</Linker>
 			</Target>
 		</Build>
@@ -42,6 +51,12 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="../common/features_weather.cpp" />
+		<Unit filename="../common/features_weather.h" />
+		<Unit filename="../common/grab_grib.cpp" />
+		<Unit filename="../common/grab_grib.h" />
+		<Unit filename="../common/grib_pred_model.cpp" />
+		<Unit filename="../common/grib_pred_model.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
 		<Extensions>

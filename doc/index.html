@@ -13,7 +13,7 @@ A system that shall predict good days and locations for cross country
 free flying such as paragliding by comparing current weather
 predictions with statistics about past weather predictions and flights
 from online xc competitions.<br>
-<h5>Short description</h5>
+<h4>Short description</h4>
 To do so, we collect weather prediction data from the past, and match
 them with the flights that were uploaded to online competitions. Using
 these data, we train a self learning system. Training will probably be
@@ -21,8 +21,8 @@ done per flight area. Finally, when we want to predict future flights,
 we fetch the current weather predictions, feed them to the system and
 create a ranking of which areas have the best xc potential for the
 upcoming days. <br>
-<h4>Input</h4>
-<h5>Weather Data</h5>
+<h3>Input</h3>
+<h4>Weather Data</h4>
 Weather prediction systems calculate various parameters for points on a
 grid at various altitudes. These values can be <a
  href="http://www.cpc.noaa.gov/products/wesley/fast_downloading_grib.html">downloaded</a>
@@ -55,7 +55,7 @@ thermals than the bare temperature [to be prooved])<br>
 It looks like the <a href="http://sourceforge.net/projects/wdb/">"weather
 database system"</a> could help in handling the grib data, so we will
 give it a try.<br>
-<h5>Actual Flights from the online competitions</h5>
+<h4>Actual Flights from the online competitions</h4>
 The measures that we want to predict have to be known for the past. So,
 we will calculate these measures from the flights on the online
 competitions such as <a href="http://www.xcontest.org">xcontest.org</a>
@@ -76,25 +76,28 @@ future) per flight area and could include:<br>
 <h4>The self learning system</h4>
 At first, we will use a <a
  href="http://en.wikipedia.org/wiki/Support_vector_machine">support
-vector machine</a> possibly from <a href="http://www.torch.ch">torch</a>
+vector machine</a><a href="http://www.torch.ch"></a>
 but may later also experiment with <a
  href="http://en.wikipedia.org/wiki/Neural_network">neural networks</a>
 or with voting of both systems. The engine shall be pluggable to easily
 experiment with different systems.<br>
 It might be interesting to use <a
- href="http://en.wikipedia.org/wiki/Genetic_algorithms">genetic
+ href="http://en.wikipedia.org/wiki/Genetic_algorithms">genetic/evolutionary
 algorithms</a> to explore possible sets of features (grid point
-location, altitude, parameters).&nbsp; We might use the <a
- href="http://lancet.mit.edu/ga/">ga library</a> for that.<br>
+location, altitude, parameters, svm config).&nbsp; <br>
 Depending if the machine can handle multiple outputs, we willl generate
 one training sample per day or as many as we have figures to predict.
 Each training sample consists of all the extracted features from the
 weather predictions and the desired result.<br>
 <h4>Platform</h4>
 The main development is in C++ on linux, specifically debian based
-systems such as ubuntu or voyage. The code is open so it should be easy
+systems such as <a href="http://www.ubuntu.com">ubuntu</a> or <a
+ href="http://linux.voyage.hk/">voyage.</a> The code is open so it
+should be easy
 to port to other platforms such as mac os x or Windows, but the actual
-porting will come later, if at all.<br>
+porting will come later, if at all. Especially potring to Windows might
+prove difficult, as some of the used libraries are not tested on that
+operating system.<br>
 <h4>Output</h4>
 A possible output could look like this at the beginning, with some
 graphical enhancements later:<br>
@@ -282,7 +285,7 @@ predictions.</li>
   <li>Re evaluate usage of wdb.<br>
   </li>
 </ul>
-<h3>3rd praty libraries and products used:</h3>
+<h3>3rd party libraries and products used:</h3>
 <ul>
   <li><a
  href="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</a>
@@ -300,15 +303,84 @@ the data.</li>
   <li><a href="http://postgis.refractions.net/">postgis</a> for the
 locations with spatial indexes.</li>
   <li><a href="http://pqxx.org/development/libpqxx/">pqxx</a> for
-accessing postgre from.<br>
+accessing postgre from C++.<br>
   </li>
   <li><a href="http://dclib.sourceforge.net/ml.html">dlib</a> for the
 support vector machine.</li>
   <li><a href="http://geometrylibrary.geodan.nl/">generic geometry
 library</a> for locations and geoid distance calculations.</li>
-  <li>various other boost libraries.<br>
+  <li>various other <a href="http://www.boost.org">boost</a> libraries.</li>
+  <li><a href="http://www.webtoolkit.eu">witty</a> for the web frontend.<br>
   </li>
 </ul>
+<h3>3rd party libraries and products considered:</h3>
+<ul>
+  <li><a href="http://sourceforge.net/projects/wdb/">wdb</a> for the
+storage of the grib binary weather prediction data. I liked what I saw,
+but it was not easy to create a deb package from the sources. Wil
+probably re-evaluate after a while.<br>
+  </li>
+  <li><a href="http://www.torch.ch">torch</a> for the support vector
+machine and other machine learning algorithms. Didn't like the "C with
+classes" interface.</li>
+  <li><a href="http://www.terborg.net/research/kml/">kml</a> for the
+support vector machine and other machine learning algorithms. I liked
+what I saw, but dlib was first evaluated. Might re-evaluate if I should
+run into a problem with dlib.</li>
+  <li><a href="http://lancet.mit.edu/ga/">galib</a> for
+genetic/evolutionary algorithms. Have yet to decide which lib to use,
+and it's one of the candidates.</li>
+  <li><a
+ href="http://www.coyotegulch.com/products/libevocosm/index.html">evocosm</a>
+for genetic/evolutionary algorithms. Have yet to decide which lib to
+use, and it's one of the candidates.</li>
+</ul>
+<h2>Usage of the flightpred system</h2>
+<h3>Installation</h3>
+At this time there is no installation procedure. It is planned to
+create debian packages in the future.<br>
+You can download the code from subversion at sourceforge.net. <br>
+To compile, you need CodeBlocks. It is planned to later use CMake for
+the release builds.<br>
+You will also need some additional libraries. The files in the script
+directory will be of help in getting these libraries and
+compile/debianize/install them. <br>
+Also the scripts for setting up the database are in the scripts
+directory.<br>
+<h3>Train the system</h3>
+To train the system, we have a program called flightpred_train. You can
+use it as follows. You will have to proceed step by step as they rely
+on the data from the previous steps.<br>
+<ul>
+  <li><span style="font-weight: bold;">flightpred_train --get-flights</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+-&gt; Reads the json files from the flights/xcontest_org directory. In
+the future it shall download the flight data directly from the
+competition server. But for now I was provided with some files. I shall
+not distribute them. So if you want them, we can ask the people from
+xcontest.org.</li>
+  <li><span style="font-weight: bold;">flightpred_train --register-area
+--name Fiesch --position "N47.5 E8.75" --area_radius 5000&nbsp;&nbsp; </span>-&gt;&nbsp;
+Registers the flight area Fiesch at the given position, and assigns all
+flights that started within the selected radius to it.</li>
+  <li><span style="font-weight: bold;">flightpred_train --get-weather
+--start_date "2009-01-01" --end_date "2009-09-30"&nbsp;&nbsp; </span>-&gt;
+Downloads selected grib data from the GFS model for central europe in
+the given date period. At the moment we only download the data from the
+following pressure levels : surface / 850hP / 700hP / 500hP. In the
+future we want more data at the closest grid points around the flying
+areas.</li>
+  <li><span style="font-weight: bold;">flightpred_train --train --name
+Fiesch </span><span style="font-weight: bold;">--start_date
+"2009-08-01" --end_date "2009-08-31"&nbsp; </span>-&gt; Trains the
+system for the given parameters. Training is very simple and not
+optimized at the moment. <br>
+  </li>
+</ul>
+<h3>The web client</h3>
+The second program of the system is the web application flightpred_wt.
+It is a web application server. If you connect to wi with a browser.
+You can see the actual predictions. It is very sparse at the moment.<br>
+<br>
 <br>
 </body>
 </html>
