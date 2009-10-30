@@ -13,6 +13,9 @@
 				<Option compiler="gcc" />
 				<Option parameters="--train --name Fiesch --start_date &apos;2009-08-01&apos; --end_date &apos;2009-08-31&apos;" />
 				<Compiler>
+					<Add option="-march=pentium3" />
+					<Add option="-Wmain" />
+					<Add option="-pedantic" />
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />
 					<Add directory=".." />
@@ -36,8 +39,10 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="--train --name Fiesch --start_date &apos;2009-08-01&apos; --end_date &apos;2009-08-31&apos;" />
 				<Compiler>
-					<Add option="-O2" />
+					<Add option="-march=pentium3" />
+					<Add option="-O3" />
 					<Add directory=".." />
 					<Add directory="../../3rd-party/json_spirit/json_spirit" />
 					<Add directory="../../3rd-party/ggl/boost/ggl" />

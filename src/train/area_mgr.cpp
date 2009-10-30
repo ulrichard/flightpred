@@ -1,6 +1,6 @@
 // flightpred
 #include "area_mgr.h"
-#include "geo_parser.h"
+#include "common/geo_parser.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)

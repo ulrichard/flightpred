@@ -95,15 +95,15 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
 
     dlib::decision_function<kernel_type> learnedfunc = trainer.train(samples, labels);
 
- // at the moment additionally serialize to a file
-    std::cout << "streaming the svm to a temp file" << std::endl;
-    std::ofstream fout("tmp/saved_function.dat", std::ios::binary);
-    serialize(learnedfunc,fout);
-    fout.close();
-
     // rate the solution
     const double traintime = btim.elapsed();
     const double score = 0.0;
+
+        // serialize the svm to the database blob
+    std::cout << "streaming the svm to the db blob" << std::endl;
+    pqxx::largeobject dblobj(trans);
+    pqxx::olostream dbstrm(trans, dblobj);
+    dlib::serialize(learnedfunc, dbstrm);
 
     // register the solution in the db
     std::cout << "registering the config in the db" << std::endl;
@@ -116,11 +116,11 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
 
     trans.commit();
 
-    // serialize the svm to the database blob
-    std::cout << "streaming the svm to the db blob" << std::endl;
-    pqxx::largeobject dblobj(trans);
-    pqxx::olostream dbstrm(trans, dblobj);
-    dlib::serialize(learnedfunc, dbstrm);
+    // at the moment additionally serialize to a file
+    std::cout << "streaming the svm to a temp file" << std::endl;
+    std::ofstream fout("tmp/saved_function.dat", std::ios::binary);
+    serialize(learnedfunc,fout);
+    fout.close();
 
 
 }

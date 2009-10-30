@@ -77,8 +77,6 @@ void features_weather::generate_features(features_weather::feat_desc feat, const
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 set<features_weather::feat_desc> features_weather::get_standard_features(const point_ll_deg &site_location)
 {
-    static const size_t PG_SIR_WGS84 = 4326;
-
     // get the closest 4 points of the grid
     const grib_pred_model_gfs gfsmodel;
     const double gridres = gfsmodel.getGridResolution();

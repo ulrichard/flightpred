@@ -1,9 +1,9 @@
 
 // flightpred
-#include "grab_grib.h"
-#include "grab_flights.h"
+#include "common/grab_grib.h"
+#include "common/grab_flights.h"
 #include "area_mgr.h"
-#include "geo_parser.h"
+#include "common/geo_parser.h"
 #include "train_svm.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
