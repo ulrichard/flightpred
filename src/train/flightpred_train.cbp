@@ -15,7 +15,6 @@
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-Wmain" />
-					<Add option="-pedantic" />
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />
 					<Add directory=".." />

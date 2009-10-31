@@ -13,12 +13,14 @@
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/timer.hpp>
+#include <boost/array.hpp>
 // standard library
 #include <sstream>
 #include <fstream>
 
 using namespace flightpred;
 namespace bgreg = boost::gregorian;
+using boost::array;
 using std::vector;
 using std::set;
 using std::string;
@@ -59,16 +61,20 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     dlib::rvm_regression_trainer<kernel_type> trainer;
     trainer.set_kernel(kernel_type(0.05));
 
-    vector<sample_type> samples;
-    vector<double>      labels;
+    const size_t num_fl_lbl = 5;
+    vector<sample_type>               samples;
+    array<vector<double>, num_fl_lbl> labels;
 
     for(bgreg::date day = from; day <= to; day += bgreg::days(1))
     {
         const vector<double> valflights = flights.get_features(pred_site_id, day);
+        assert(valflights.size() == num_fl_lbl);
         std::cout << "collecting features for " << bgreg::to_iso_extended_string(day)
-                  << " max " << valflights[0] << " km "
-                  << " avg " << valflights[1] << " km" << std::endl;
+                  << " "     << valflights[0] << " flights "
+                  << " max " << valflights[1] << " km "
+                  << " avg " << valflights[2] << " km" << std::endl;
         const vector<double> valweather = weather.get_features(features, day);
+        assert(valweather.size() == features.size());
         // put together the values to feet to the svm
         vector<double> featval;
         featval.push_back(day.year());
@@ -82,46 +88,67 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
             samp(i) = featval[i];
         samples.push_back(samp);
 
-        labels.push_back(valflights[0]);
-
+        for(size_t i=0; i<num_fl_lbl; ++i)
+            labels[i].push_back(valflights[i]);
     }
 
-    boost::timer btim;
     // normalize the samples
+    std::cout << "normalize the samples" << std::endl;
     dlib::vector_normalizer<sample_type> normalizer;
     normalizer.train(samples);
-    for (unsigned long i = 0; i < samples.size(); ++i)
+    for(unsigned long i = 0; i < samples.size(); ++i)
         samples[i] = normalizer(samples[i]);
 
-    dlib::decision_function<kernel_type> learnedfunc = trainer.train(samples, labels);
-
-    // rate the solution
-    const double traintime = btim.elapsed();
-    const double score = 0.0;
+    const array<string, num_fl_lbl> svm_names = {"svm_num_flight", "svm_max_dist", "svm_avg_dist", "svm_max_dur", "svm_avg_dur"};
+    array<size_t, num_fl_lbl> blob_ids;
+    double traintime = 0.0;
+    for(size_t i=0; i<num_fl_lbl; ++i)
+    {
+        std::cout << "train the support vector machine for " << svm_names[i] << std::endl;
+        boost::timer btim;
+        dlib::decision_function<kernel_type> learnedfunc = trainer.train(samples, labels[i]);
+        traintime += btim.elapsed();
 
         // serialize the svm to the database blob
-    std::cout << "streaming the svm to the db blob" << std::endl;
-    pqxx::largeobject dblobj(trans);
-    pqxx::olostream dbstrm(trans, dblobj);
-    dlib::serialize(learnedfunc, dbstrm);
+        std::cout << "streaming the svm to the db blob" << std::endl;
+        pqxx::largeobject dblobj(trans);
+        pqxx::olostream dbstrm(trans, dblobj);
+        dlib::serialize(learnedfunc, dbstrm);
+        blob_ids[i] = dblobj.id();
+    }
 
-    // register the solution in the db
+    const size_t generation = 0;
+    const double score = 0.0;
     std::cout << "registering the config in the db" << std::endl;
+    // delete previous default configuratinos
+    if(generation == 0)
+    {
+        sstr.str("");
+        sstr << "DELETE FROM trained_solutions WHERE configuration='SVM(RBF 0.05) ";
+        std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
+        sstr << "' AND generation=0";
+        res = trans.exec(sstr.str());
+    }
+    // register the solution in the db
     sstr.str("");
-    sstr << "INSERT INTO trained_solutions (pred_site_id, configuration, svm_ser, score, train_time, generation) "
+    sstr << "INSERT INTO trained_solutions (pred_site_id, configuration, ";
+    std::copy(svm_names.begin(), svm_names.end(), std::ostream_iterator<string>(sstr, ", "));
+    sstr << "score, train_time, generation) "
          << "VALUES (" << pred_site_id << ", 'SVM(RBF 0.05) ";
     std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
-    sstr << "', " << dblobj.id() << ", " << score << ", " << traintime << ", 0)";
+    sstr << "', ";
+    std::copy(blob_ids.begin(), blob_ids.end(), std::ostream_iterator<size_t>(sstr, ", "));
+    sstr << score << ", " << traintime << ", " << generation << ")";
     res = trans.exec(sstr.str());
 
     trans.commit();
-
+/*
     // at the moment additionally serialize to a file
     std::cout << "streaming the svm to a temp file" << std::endl;
-    std::ofstream fout("tmp/saved_function.dat", std::ios::binary);
+    std::ofstream fout("/tmp/saved_function.dat", std::ios::binary);
     serialize(learnedfunc,fout);
     fout.close();
-
+*/
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

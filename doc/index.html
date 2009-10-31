@@ -23,8 +23,10 @@ create a ranking of which areas have the best xc potential for the
 upcoming days. <br>
 <h3>Input</h3>
 <h4>Weather Data</h4>
-Weather prediction systems calculate various parameters for points on a
-grid at various altitudes. These values can be <a
+Numerical weather prediction systems calculate various parameters for a
+vast number of points on a
+grid at various altitudes. They do so by modeling certain physical
+rules on the parameters of the nearby grid points. These values can be <a
  href="http://www.cpc.noaa.gov/products/wesley/fast_downloading_grib.html">downloaded</a>
 as <a
  href="http://weather.mailasail.com/Franks-Weather/Grib-Files-Explained">grib
@@ -39,11 +41,16 @@ want to train. We will have to evaluate how many grid points and
 pressure steps are feasible.<br>
 These features could be:<br>
 <ul>
-  <li>year</li>
-  <li>day of year</li>
+  <li>year&nbsp;&nbsp;<small> (performance of material and people is
+slowly progressing)</small><br>
+  </li>
+  <li>day of year&nbsp;<small> (seasonal differences)</small><br>
+  </li>
+  <li>day of week<small>&nbsp; (weekends)</small><br>
+  </li>
   <li>per selected grid point and altitude step:</li>
   <ul>
-    <li>temperature difference to the next step (more important for
+    <li>temperature or difference to the next step (more important for
 thermals than the bare temperature [to be prooved])<br>
     </li>
     <li>wind speed</li>
@@ -52,9 +59,6 @@ thermals than the bare temperature [to be prooved])<br>
     </li>
   </ul>
 </ul>
-It looks like the <a href="http://sourceforge.net/projects/wdb/">"weather
-database system"</a> could help in handling the grib data, so we will
-give it a try.<br>
 <h4>Actual Flights from the online competitions</h4>
 The measures that we want to predict have to be known for the past. So,
 we will calculate these measures from the flights on the online
@@ -317,7 +321,7 @@ library</a> for locations and geoid distance calculations.</li>
 <ul>
   <li><a href="http://sourceforge.net/projects/wdb/">wdb</a> for the
 storage of the grib binary weather prediction data. I liked what I saw,
-but it was not easy to create a deb package from the sources. Wil
+but it was not easy to create a deb package from the sources. Will
 probably re-evaluate after a while.<br>
   </li>
   <li><a href="http://www.torch.ch">torch</a> for the support vector
@@ -332,6 +336,9 @@ genetic/evolutionary algorithms. Have yet to decide which lib to use,
 and it's one of the candidates.</li>
   <li><a
  href="http://www.coyotegulch.com/products/libevocosm/index.html">evocosm</a>
+for genetic/evolutionary algorithms. Have yet to decide which lib to
+use, and it's one of the candidates.</li>
+  <li><a href="http://coolsoft-sd.com/Products.aspx?pid=1">coolsoft gal</a>
 for genetic/evolutionary algorithms. Have yet to decide which lib to
 use, and it's one of the candidates.</li>
 </ul>
@@ -378,8 +385,9 @@ optimized at the moment. <br>
 </ul>
 <h3>The web client</h3>
 The second program of the system is the web application flightpred_wt.
-It is a web application server. If you connect to wi with a browser.
-You can see the actual predictions. It is very sparse at the moment.<br>
+It is a web application server. If you connect to it with a browser.
+You can see the actual predictions. It is very sparse at the moment.
+For more details see the witty documentation for the moment.<br>
 <br>
 <br>
 </body>
