@@ -77,7 +77,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     sstr.str("");
     sstr << "SELECT configuration, ";
     std::copy(svm_names.begin(), svm_names.end(), std::ostream_iterator<string>(sstr, ", "));
-    sstr << "score, train_time, generation FROM trained_solutions WHERE "
+    sstr << "normalizer, score, train_time, generation FROM trained_solutions WHERE "
          << "pred_site_id=" << pred_site_id << " ORDER BY score DESC";
     res = trans.exec(sstr.str());
     if(!res.size())
@@ -91,6 +91,8 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     array<size_t, num_fl_lbl> blobids;
     for(size_t i=0; i<num_fl_lbl; ++i)
         res[0][svm_names[i]].to(blobids[i]);
+    size_t oid_normalizer;
+    res[0]["normalizer"].to(oid_normalizer);
 
     // collect the current features
 //  const std::set<features_weather::feat_desc> features_weather::decode_feature_desc(featdesc);
@@ -106,6 +108,13 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     samp(1) = day.day_of_year();
     for(size_t i=0; i<valweather.size(); ++i)
         samp(i + 2) = valweather[i];
+
+    // normalize the samples
+    dlib::vector_normalizer<sample_type> normalizer;
+    pqxx::ilostream dbstrm(trans, oid_normalizer);
+    assert(dbstrm.good());
+    deserialize(normalizer, dbstrm);
+    samp = normalizer(samp);
 
     // fedd samples to the learned functions
     array<double, num_fl_lbl> predval;

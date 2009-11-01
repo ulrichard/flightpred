@@ -96,8 +96,18 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     std::cout << "normalize the samples" << std::endl;
     dlib::vector_normalizer<sample_type> normalizer;
     normalizer.train(samples);
-    for(unsigned long i = 0; i < samples.size(); ++i)
-        samples[i] = normalizer(samples[i]);
+    std::transform(samples.begin(), samples.end(), samples.begin(), normalizer);
+//    for(unsigned long i = 0; i < samples.size(); ++i)
+//        samples[i] = normalizer(samples[i]);
+    size_t oid_normalizer = 0;
+    if(true)
+    {
+        std::cout << "streaming the normalizer to the db blob" << std::endl;
+        pqxx::largeobject dblobj(trans);
+        pqxx::olostream dbstrm(trans, dblobj);
+        serialize(normalizer, dbstrm);
+        oid_normalizer = dblobj.id();
+    }
 
     const array<string, num_fl_lbl> svm_names = {"svm_num_flight", "svm_max_dist", "svm_avg_dist", "svm_max_dur", "svm_avg_dur"};
     array<size_t, num_fl_lbl> blob_ids;
@@ -133,12 +143,12 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     sstr.str("");
     sstr << "INSERT INTO trained_solutions (pred_site_id, configuration, ";
     std::copy(svm_names.begin(), svm_names.end(), std::ostream_iterator<string>(sstr, ", "));
-    sstr << "score, train_time, generation) "
+    sstr << "normalizer, score, train_time, generation) "
          << "VALUES (" << pred_site_id << ", 'SVM(RBF 0.05) ";
     std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
     sstr << "', ";
     std::copy(blob_ids.begin(), blob_ids.end(), std::ostream_iterator<size_t>(sstr, ", "));
-    sstr << score << ", " << traintime << ", " << generation << ")";
+    sstr << oid_normalizer << ", " << score << ", " << traintime << ", " << generation << ")";
     res = trans.exec(sstr.str());
 
     trans.commit();

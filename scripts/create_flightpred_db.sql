@@ -65,6 +65,7 @@ CREATE TABLE trained_solutions
 	svm_avg_dist   oid,
 	svm_max_dur    oid,
 	svm_avg_dur    oid,
+	normalizer     oid,
 	score          real,
 	train_time     real,
 	generation     int,
