@@ -10,23 +10,30 @@
 <h1>Free Flight Prediction</h1>
 <br>
 A system that shall predict good days and locations for cross country
-free flying such as paragliding by comparing current weather
-predictions with statistics about past weather predictions and flights
-from online xc competitions.<br>
+free flying such as paragliding. The system is trained with past
+weather
+prediction data and flights
+from online xc competitions. With current weather prediction data it
+can then make predictoins about possible flights in areas it is trained
+for.<br>
 <h4>Short description</h4>
 To do so, we collect weather prediction data from the past, and match
 them with the flights that were uploaded to online competitions. Using
-these data, we train a self learning system. Training will probably be
-done per flight area. Finally, when we want to predict future flights,
+these data, we train a self learning system. Training will be
+done per flight area and values to predict. <br>
+Finally, when we want to predict future flights,
 we fetch the current weather predictions, feed them to the system and
 create a ranking of which areas have the best xc potential for the
 upcoming days. <br>
 <h3>Input</h3>
 <h4>Weather Data</h4>
-Numerical weather prediction systems calculate various parameters for a
+Numerical weather prediction systems calculate various physical
+parameters for a
 vast number of points on a
-grid at various altitudes. They do so by modeling certain physical
-rules on the parameters of the nearby grid points. These values can be <a
+longitude / latitude grid (2.5 deg for GFS) at various pressure levels
+(altitudes). They do so by modeling certain physical
+rules on the parameters of the adjacent grid points. These values can
+be <a
  href="http://www.cpc.noaa.gov/products/wesley/fast_downloading_grib.html">downloaded</a>
 as <a
  href="http://weather.mailasail.com/Franks-Weather/Grib-Files-Explained">grib

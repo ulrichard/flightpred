@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 
         if(vm.count("get-weather"))
         {
-            grib_grabber gr(db_conn_str, pred_model, download_pack);
+            grib_grabber_gfs_past gr(db_conn_str, download_pack);
             gr.grab_grib(dtstart, dtend);
         }
 
