@@ -87,9 +87,6 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
         if(!res.size())
             throw std::invalid_argument("no configuration found for : " + site_name);
 
-        typedef dlib::matrix<double, 0, 1> sample_type;
-        typedef dlib::radial_basis_kernel<sample_type> kernel_type;
-        dlib::decision_function<kernel_type> learnedfunc;
         string featdesc;
         res[0]["configuration"].to(featdesc);
         array<size_t, num_fl_lbl> blobids;
@@ -98,61 +95,78 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
         size_t oid_normalizer;
         res[0]["normalizer"].to(oid_normalizer);
 
+        const bgreg::date today(boost::posix_time::second_clock::universal_time().date());
+
+        // check if we have enough weather prediction data in the database
+        sstr.str("");
+        sstr << "SELECT * FROM weather_pred WHERE pred_time >= '"
+             << bgreg::to_iso_extended_string(today + bgreg::days(2)) << " 18:00:00'";
+        res = trans.exec(sstr.str());
+        if(!res.size())
+        {
+            grib_grabber_gfs_future gribgrab(db_conn_str, 100);
+            gribgrab.grab_grib();
+        }
+
+        typedef dlib::matrix<double, 0, 1> sample_type;
+        typedef dlib::radial_basis_kernel<sample_type> kernel_type;
+        dlib::decision_function<kernel_type> learnedfunc;
+
         // collect the current features
     //  const std::set<features_weather::feat_desc> features_weather::decode_feature_desc(featdesc);
         features_weather weather(db_conn_str);
         const std::set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
 
-        grib_grabber_gfs_future gribgrab(db_conn_str, 100);
-        gribgrab.grab_grib();
-
-        const bgreg::date day(boost::posix_time::second_clock::universal_time().date());
-        const vector<double> valweather = weather.get_features(features, day);
-
-        sample_type samp;
-        samp.set_size(valweather.size() + 2);
-        samp(0) = day.year();
-        samp(1) = day.day_of_year();
-        for(size_t i=0; i<valweather.size(); ++i)
-            samp(i + 2) = valweather[i];
-
-        // normalize the samples
-        dlib::vector_normalizer<sample_type> normalizer;
-        pqxx::ilostream dbstrm(trans, oid_normalizer);
-        assert(dbstrm.good());
-        deserialize(normalizer, dbstrm);
-        samp = normalizer(samp);
-
-        // fedd samples to the learned functions
-        array<double, num_fl_lbl> predval;
-        for(size_t i=0; i<num_fl_lbl; ++i)
-        {
-            // de-serialize the svm's from the database blob
-            pqxx::ilostream dbstrm(trans, blobids[i]);
-            assert(dbstrm.good());
-            dbstrm.seekg(0, std::ios::end);
-            const size_t strmsize = dbstrm.tellg();
-            dbstrm.seekg(0, std::ios::beg);
-            std::cout << "size of the db stream " << strmsize << std::endl;
-            dlib::deserialize(learnedfunc, dbstrm);
-
-            predval[i] = learnedfunc(samp);
-        }
-
-        sstr.str("");
-        sstr << "Predicted values for " << site_name << " on " << bgreg::to_simple_string(day) << ":";
-        Wt::WText  *wtxt1 = new Wt::WText(sstr.str(), root());
-        Wt::WBreak *brk1  = new Wt::WBreak(root());
-
-        const array<string, num_fl_lbl> labels = {"Number of flights: ", "Maximum distance: ", "Average distance: ", "Maximum duration: ", "Average duration: "};
-
-//        root().clear();
         for(size_t i=0; i<3; ++i)
         {
+            const bgreg::date day(today + bgreg::days(i));
+            const vector<double> valweather = weather.get_features(features, day);
+
+            sample_type samp;
+            samp.set_size(valweather.size() + 2);
+            samp(0) = day.year();
+            samp(1) = day.day_of_year();
+            for(size_t i=0; i<valweather.size(); ++i)
+                samp(i + 2) = valweather[i];
+
+            // normalize the samples
+            dlib::vector_normalizer<sample_type> normalizer;
+            pqxx::ilostream dbstrm(trans, oid_normalizer);
+            assert(dbstrm.good());
+            deserialize(normalizer, dbstrm);
+            samp = normalizer(samp);
+
+            // fedd samples to the learned functions
+            array<double, num_fl_lbl> predval;
+            for(size_t i=0; i<num_fl_lbl; ++i)
+            {
+                // de-serialize the svm's from the database blob
+                pqxx::ilostream dbstrm(trans, blobids[i]);
+                assert(dbstrm.good());
+                dbstrm.seekg(0, std::ios::end);
+                const size_t strmsize = dbstrm.tellg();
+                dbstrm.seekg(0, std::ios::beg);
+                std::cout << "size of the db stream " << strmsize << std::endl;
+                dlib::deserialize(learnedfunc, dbstrm);
+
+                predval[i] = learnedfunc(samp);
+            }
+
             sstr.str("");
-            sstr << labels[i] << predval[i];
-            new Wt::WText(sstr.str(), root());
-            new Wt::WBreak(root());
+            sstr << "Predicted values for " << site_name << " on " << bgreg::to_simple_string(day) << ":";
+            Wt::WText  *wtxt1 = new Wt::WText(sstr.str(), root());
+            Wt::WBreak *brk1  = new Wt::WBreak(root());
+
+            const array<string, num_fl_lbl> labels = {"Number of flights: ", "Maximum distance: ", "Average distance: ", "Maximum duration: ", "Average duration: "};
+
+    //        root().clear();
+            for(size_t i=0; i<3; ++i)
+            {
+                sstr.str("");
+                sstr << labels[i] << predval[i];
+                new Wt::WText(sstr.str(), root());
+                new Wt::WBreak(root());
+            }
         }
     }
     catch(std::exception &ex)

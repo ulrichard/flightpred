@@ -81,7 +81,7 @@ CREATE TABLE weather_models
 	url_future VARCHAR(512)  NOT NULL	
 );
 
-INSERT INTO weather_models (model_name, grid_step, url_past, url_future) values ('GFS', 2.5, 'nomad3.ncep.noaa.gov/pub/reanalysis-2/6hr/pgb/', 'www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/');
+INSERT INTO weather_models (model_name, grid_step, url_past, url_future) values ('GFS', 2.5, 'nomad3.ncep.noaa.gov/pub/reanalysis-2/6hr/pgb/', 'http://nomad3.ncep.noaa.gov/pub/nomad1-raid1/gfs_master/');
 CREATE TABLE weather_pred
 (
 	weather_pred_id SERIAL PRIMARY KEY,

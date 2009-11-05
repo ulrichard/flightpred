@@ -40,11 +40,12 @@ int main(int argc, char* argv[])
         // Declare the supported options.
         po::options_description desc("Allowed options");
         desc.add_options()
-            ("help",		  "produce help message")
-            ("get-flights",	  "get flights from online competition (import from local files at the moment)")
-            ("register-area", "register a flight area for prediction (name, position, area_radius[km])")
-            ("get-weather",   "get weather prediction grib data for all registered areas (start_date, end_date)")
-            ("train",		  "train the system for an area")
+            ("help",		       "produce help message")
+            ("get-flights",	       "get flights from online competition (import from local files at the moment)")
+            ("register-area",      "register a flight area for prediction (name, position, area_radius[km])")
+            ("get-weather",        "get past weather prediction grib data for central europe (start_date, end_date, download_pack)")
+            ("get-future-weather", "get future weather prediction grib data for central europe (download_pack)")
+            ("train",		       "train the system for an area")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
             ("position",      po::value<string>(&position)->default_value("N 0 E 0"), "geographic position")
             ("area_radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training [m]")
@@ -90,6 +91,11 @@ int main(int argc, char* argv[])
             gr.grab_grib(dtstart, dtend);
         }
 
+        if(vm.count("get-future-weather"))
+        {
+            grib_grabber_gfs_future gr(db_conn_str, download_pack);
+            gr.grab_grib();
+        }
 
         if(vm.count("train"))
         {
