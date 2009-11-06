@@ -286,11 +286,6 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
     while(grib_iterator_next(iter, &lat, &lon, &value))
         if(value != missingValue)
         {
-//            cout << bgreg::to_iso_extended_string(req.pred_time.date()) << " " << lon << " " << lat << endl;
-
-//            if(lat < 40.0 || lat > 55.0 || lon < -5.0 || lon > 20.0)
-//                continue; // for the moment we collect only data from central europe
-
             const point_ll_deg location = point_ll_deg(geometry::longitude<>(lon), geometry::latitude<>(lat));
             if(sel_locations.find(location) == sel_locations.end())
                 continue;
@@ -500,13 +495,13 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void grib_grabber_gfs_future::grab_grib()
+void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
 {
     const set<string>       sel_levels    = get_std_levels();
     const set<string>       sel_param     = get_std_params();
     const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(2.5, 20);
 
-    const bpt::time_duration usual_pred_run_time = bpt::hours(18); // the usual mxa time for the prediction results to become online available
+    const bpt::time_duration usual_pred_run_time = bpt::hours(30); // the usual mxa time for the prediction results to become online available
     const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;
     const size_t   hours = static_cast<size_t>(now.time_of_day().hours() / 6.0) * 6.0;
     const bpt::ptime lastpredrun(now.date(), bpt::hours(hours));
@@ -514,9 +509,9 @@ void grib_grabber_gfs_future::grab_grib()
     const bpt::ptime yesterday(now.date() - bgreg::days(1), bpt::hours(0));
 
     // download the grib files
-    for(bpt::ptime preddt = lastmidnight; preddt < now + bpt::hours(72); preddt += bpt::hours(6))
+    for(bpt::ptime preddt = lastmidnight; preddt < bpt::second_clock::universal_time() + future_time; preddt += bpt::hours(6))
     {
-        bpt::ptime predrun     = lastpredrun;
+        bpt::ptime predrun = lastpredrun;
 
         if(preddt >= lastpredrun)
             predrun = lastpredrun;
@@ -553,16 +548,13 @@ void grib_grabber_gfs_future::grab_grib()
             if(vtokens.size() < 6)
                 continue;
             request req;
+            req.pred_time   = preddt;
             req.range_start = lexical_cast<size_t>(vtokens[1]);
             req.range_end   = 0;
             if(requests.size() && !requests.back().range_end)
                 requests.back().range_end = req.range_start;
             if(vtokens[2].length() == 12 && vtokens[2].substr(0, 2) == "d=")
             {
-//                req.pred_time = bpt::ptime(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
-//                                           bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
-                req.pred_time = preddt;
-//                assert(req.pred_time == preddt);
                 if(sel_levels.find(vtokens[4]) != sel_levels.end() && sel_param.find(vtokens[3]) != sel_param.end())
                 {
                     req.level = atoi(vtokens[4].c_str());

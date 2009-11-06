@@ -94,13 +94,16 @@ int main(int argc, char* argv[])
         if(vm.count("get-future-weather"))
         {
             grib_grabber_gfs_future gr(db_conn_str, download_pack);
-            gr.grab_grib();
+            gr.grab_grib(boost::posix_time::hours(24 * 4));
         }
 
         if(vm.count("train"))
         {
             train_svm trainer(db_conn_str);
-            trainer.train(name, dtstart, dtend);
+            if(name.length())
+                trainer.train(name, dtstart, dtend);
+            else
+                trainer.train_all(dtstart, dtend);
         }
     }
     catch(std::exception &ex)

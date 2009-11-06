@@ -84,7 +84,7 @@ public:
         : grib_grabber(db_conn_str, get_base_url(db_conn_str, "GFS", true), download_pack) { }
     virtual ~grib_grabber_gfs_future() { }
 
-    virtual void grab_grib();
+    virtual void grab_grib(const boost::posix_time::time_duration &future_time);
 
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

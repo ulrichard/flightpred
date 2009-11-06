@@ -57,6 +57,7 @@
 		<Unit filename="../common/grab_grib.h" />
 		<Unit filename="../common/grib_pred_model.cpp" />
 		<Unit filename="../common/grib_pred_model.h" />
+		<Unit filename="../common/lm_svm_dlib.cpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
 		<Extensions>
