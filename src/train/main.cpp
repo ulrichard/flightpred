@@ -1,10 +1,11 @@
 
 // flightpred
+#include "area_mgr.h"
+#include "train_svm.h"
 #include "common/grab_grib.h"
 #include "common/grab_flights.h"
-#include "area_mgr.h"
+#include "common/forecast.h"
 #include "common/geo_parser.h"
-#include "train_svm.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
 // boost
@@ -46,6 +47,7 @@ int main(int argc, char* argv[])
             ("get-weather",        "get past weather prediction grib data for central europe (start_date, end_date, download_pack)")
             ("get-future-weather", "get future weather prediction grib data for central europe (download_pack)")
             ("train",		       "train the system for an area")
+            ("forecast",           "predict possible flights for the next few days")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
             ("position",      po::value<string>(&position)->default_value("N 0 E 0"), "geographic position")
             ("area_radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training [m]")
@@ -67,34 +69,35 @@ int main(int argc, char* argv[])
         const string db_conn_str = "host=" + db_host + " dbname=" + db_name + " user=" + db_user + " password=" + db_password;
         const geometry::point_ll_deg pos = parse_position(position);
 
-        if(vm.count("help"))
-        {
-            cout << desc << "\n";
-            return 1;
-        }
+
+        bool show_help_msg = true;
 
         if(vm.count("get-flights"))
         {
             flight_grabber gr(flight_grabber::XCONTEST, db_conn_str);
             gr.grab_flights(dtstart, dtend);
+            show_help_msg = false;
         }
 
         if(vm.count("register-area"))
         {
             area_mgr am(db_conn_str);
             am.add_area(name, pos, area_radius);
+            show_help_msg = false;
         }
 
         if(vm.count("get-weather"))
         {
             grib_grabber_gfs_past gr(db_conn_str, download_pack);
             gr.grab_grib(dtstart, dtend);
+            show_help_msg = false;
         }
 
         if(vm.count("get-future-weather"))
         {
             grib_grabber_gfs_future gr(db_conn_str, download_pack);
             gr.grab_grib(boost::posix_time::hours(24 * 4));
+            show_help_msg = false;
         }
 
         if(vm.count("train"))
@@ -104,6 +107,20 @@ int main(int argc, char* argv[])
                 trainer.train(name, dtstart, dtend);
             else
                 trainer.train_all(dtstart, dtend);
+            show_help_msg = false;
+        }
+
+        if(vm.count("forecast"))
+        {
+            forecast fcst(db_conn_str);
+            fcst.prediction_run(3);
+            show_help_msg = false;
+        }
+
+        if(vm.count("help") || show_help_msg)
+        {
+            cout << desc << "\n";
+            return 1;
         }
     }
     catch(std::exception &ex)

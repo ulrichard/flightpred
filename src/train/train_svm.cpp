@@ -44,10 +44,10 @@ void train_svm::train_all(const bgreg::date &from, const bgreg::date &to)
         pqxx::result res = trans.exec(sstr.str());
         if(!res.size())
             throw std::invalid_argument("no sites found");
-        string tmpstr;
         for(int i=0; i<res.size(); ++i)
         {
-            res[0][0].to(tmpstr);
+            string tmpstr;
+            res[i][0].to(tmpstr);
             sites.push_back(tmpstr);
         }
     }
@@ -82,10 +82,10 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
 //    const set<features_weather::feat_desc> features = weather.decode_feature_desc("here comes the description");
     const set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
 
+    cout << "collecting features for " << site_name << endl;
     const size_t num_fl_lbl = 5;
     learning_machine::SampleType      training_samples;
     array<vector<double>, num_fl_lbl> labels;
-
     for(bgreg::date day = from; day <= to; day += bgreg::days(1))
     {
         const vector<double> valflights = flights.get_features(pred_site_id, day);
@@ -104,19 +104,20 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         training_samples.push_back(vector<double>());
         training_samples.back().push_back(day.year());
         training_samples.back().push_back(day.day_of_year());
+        training_samples.back().push_back(day.day_of_week());
         std::copy(valweather.begin(), valweather.end(), std::back_inserter(training_samples.back()));
     }
 
     const size_t generation = 0;
     const double score = 0.0;
-    std::cout << "registering the config in the db" << std::endl;
+    std::cout << "registering the config in the db for " << site_name << std::endl;
     // delete previous default configuratinos
     if(generation == 0)
     {
         sstr.str("");
         sstr << "DELETE FROM trained_solutions WHERE configuration='SVM(RBF 0.05) ";
         std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
-        sstr << "' AND generation=0";
+        sstr << "' AND pred_site_id=" << pred_site_id << " AND generation=0";
         res = trans.exec(sstr.str());
     }
     // register the solution in the db
@@ -130,7 +131,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     sstr.str("");
     sstr << "SELECT train_sol_id FROM trained_solutions WHERE configuration='SVM(RBF 0.05) ";
     std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
-        sstr << "' AND generation=" << generation;
+        sstr << "' AND pred_site_id=" << pred_site_id << " AND generation=" << generation;
     res = trans.exec(sstr.str());
     if(!res.size())
         throw std::runtime_error("newly inserted record not found");
@@ -143,14 +144,22 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     double traintime = 0.0;
     for(size_t i=0; i<num_fl_lbl; ++i)
     {
-        std::cout << "train the support vector machine for " << svm_names[i] << std::endl;
+        std::cout << "train the support vector machine for " << svm_names[i] << " at site: " << site_name <<  std::endl;
         boost::timer btim;
         lm_svm_dlib dlibsvmtrainer(svm_names[i], db_conn_str_);
         dlibsvmtrainer.train(training_samples, labels[i]);
         traintime += btim.elapsed();
+        std::cout << "training took " << btim.elapsed() / 60.0 << " min" << std::endl;
         dlibsvmtrainer.write_to_db(conf_id);
     }
 
+    pqxx::transaction<> trans2(conn, "update training info");
+    sstr.str("");
+    sstr << "UPDATE trained_solutions SET train_time=" << traintime << ", num_samples=" << training_samples.size()
+         << ", num_features=" << training_samples.front().size()
+         << "  WHERE train_sol_id=" << conf_id;
+    res = trans2.exec(sstr.str());
+    trans2.commit();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

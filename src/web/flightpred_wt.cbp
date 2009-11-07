@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--docroot ../.. --http-address 0.0.0.0 --http-port 8080" />
+				<Option parameters="--docroot ../../www_docroot --http-address 0.0.0.0 --http-port 8080" />
 				<Compiler>
 					<Add option="-g" />
 					<Add directory=".." />
@@ -53,6 +53,7 @@
 		</Compiler>
 		<Unit filename="../common/features_weather.cpp" />
 		<Unit filename="../common/features_weather.h" />
+		<Unit filename="../common/forecast.cpp" />
 		<Unit filename="../common/grab_grib.cpp" />
 		<Unit filename="../common/grab_grib.h" />
 		<Unit filename="../common/grib_pred_model.cpp" />

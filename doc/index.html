@@ -62,7 +62,13 @@ thermals than the bare temperature [to be prooved])<br>
     </li>
     <li>wind speed</li>
     <li>altitude</li>
-    <li>humidity<br>
+    <li>humidity</li>
+  </ul>
+  <li>separately calculated per grid point:</li>
+  <ul>
+    <li>average temperature gradient for the height range used during
+flight (e.g. 1500 - 3500m)</li>
+    <li>best and worst temperature gradient for 100 meter steps<br>
     </li>
   </ul>
 </ul>
@@ -281,19 +287,51 @@ defining a reference location and a radius.</li>
 disapointing. Better alternatives seem to be <a
  href="http://dclib.sourceforge.net/ml.html">dlib</a> and <a
  href="http://www.terborg.net/research/kml/">kml</a>.</li>
-  <li>Started integrating the SVM from dlib.<br>
-  </li>
+  <li>Integrated the SVM from dlib in a modular fashion, so that
+plugging other ml algorithms sould be relatively easy.</li>
+  <li>Defined a representatoin for feature sets, and defined an initial
+default feature set per flying site.</li>
+  <li>Train some support vector machines.</li>
+  <li>Downloaded current weather predictions and calculated the first
+flight
+predictions.</li>
 </ul>
 <h3>Next steps:</h3>
 <ul>
-  <li>Define a representatoin for feature sets, and define a initial
-set for each flying site semi automatically.</li>
-  <li>Train the support vector machine.</li>
-  <li>Grab current weather predictions and calculate the first flight
-predictions.</li>
+  <li>Partitioned training with the dlib SVM as training over the whole
+set is unfeasibly slow.<br>
+  </li>
+  <li>Parse the textual representatoin of the feature sets.</li>
   <li>Evaluate better feature sets using genetic algorithms.</li>
   <li>Make a nice frontend.</li>
   <li>Re evaluate usage of wdb.<br>
+  </li>
+</ul>
+<h3>Problems faced:</h3>
+<ul>
+  <li>One of the GFS grib data servers dropped certain byte ranges that
+were requested. So I had to loop and request the missing parts untill I
+had all the requested data. <br>
+  </li>
+  <li>The data sets I initially used for reanalysis and forecast were
+randomly found on the internet without any documentation. I later found
+out that one used a 2.5 degree grid, while the other had a 1 degree
+grid. So I had to go look for some documentation on details about the
+different data sets that are available. Also some data sets become
+publicly available with a delay of 30 hours whild others only need 30
+minutes. <br>
+  </li>
+  <li>The course of dimensionality: Training with 98 features for the
+samples of a month took some seconds, for three months it took a minute
+and for six month it took an hour. But I stopped the attempt to train
+the system on all the samples of three years after having used 48 hours
+of CPU time. So I will need to implement some partitioning to be able
+to train on the full three years, which is clearly what I want.</li>
+  <li>First I planned the web application to download the grib data for
+the future and runt the forecast in real time. But as especially
+downloading and feature extraction are too slow, the forecast is now
+mainly done in advance. Thus the web client soley reads the forecasts
+of interest from the database.<br>
   </li>
 </ul>
 <h3>3rd party libraries and products used:</h3>

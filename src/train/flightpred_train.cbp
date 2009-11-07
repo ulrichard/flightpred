@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--train --start_date 2009-03-01 --end_date 2009-09-30" />
+				<Option parameters="--forecast" />
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-Wmain" />
@@ -67,6 +67,8 @@
 		<Unit filename="../../scripts/create_flightpred_db.sql" />
 		<Unit filename="../common/features_weather.cpp" />
 		<Unit filename="../common/features_weather.h" />
+		<Unit filename="../common/forecast.cpp" />
+		<Unit filename="../common/forecast.h" />
 		<Unit filename="../common/geo_parser.cpp" />
 		<Unit filename="../common/geo_parser.h" />
 		<Unit filename="../common/grab_flights.cpp" />

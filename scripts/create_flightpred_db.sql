@@ -39,6 +39,7 @@ CREATE TABLE flights
 	duration     real,
 	CONSTRAINT FK_pilot_id     FOREIGN KEY(pilot_id)     REFERENCES pilots     (pilot_id)   ON DELETE CASCADE,	CONSTRAINT FK_contest_id   FOREIGN KEY(contest_id)   REFERENCES contests   (contest_id) ON DELETE CASCADE,	CONSTRAINT FK_site_id      FOREIGN KEY(site_id)      REFERENCES sites      (site_id)
 );
+CREATE INDEX flightByDate ON flights (flight_date, distance);
 
 CREATE TABLE pred_sites
 (
@@ -65,10 +66,11 @@ CREATE TABLE trained_solutions
 	svm_avg_dist   oid,
 	svm_max_dur    oid,
 	svm_avg_dur    oid,
-	normalizer     oid,
 	score          real,
 	train_time     real,
 	generation     int,
+	num_samples    int,
+	num_features   int,
 	CONSTRAINT FK_pred_site_id FOREIGN KEY(pred_site_id) REFERENCES pred_sites(pred_site_id) ON DELETE CASCADE
 );
 
@@ -96,6 +98,19 @@ CREATE INDEX weatherByTime         ON weather_pred (pred_time);
 CREATE INDEX weatherByLvLParamTime ON weather_pred (level, parameter, pred_time);
 CREATE INDEX weatherByLocation     ON weather_pred USING GIST (location);
 
-
+CREATE TABLE flight_pred
+(
+	flight_pred_id SERIAL PRIMARY KEY,
+	pred_site_id   int	NOT NULL,
+	train_sol_id   int	NOT NULL,
+	calculated     timestamp  without time zone NOT NULL,
+	pred_day       date  	NOT NULL,
+	num_flight     real,
+	max_dist       real,
+	avg_dist       real,
+	max_dur        real,
+	avg_dur        real
+);
+CREATE INDEX flightPredByDate  ON flight_pred (pred_day, pred_site_id);
 
 

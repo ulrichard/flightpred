@@ -80,9 +80,8 @@ void lm_svm_dlib_impl::write_to_db(const size_t conf_id)
     {
         pqxx::largeobject dblobj(trans);
         pqxx::olostream dbstrm(trans, dblobj);
-        std::cout << "streaming the normalizer to the db blob" << std::endl;
+        std::cout << "streaming normalizer and SVM to the db blob" << std::endl;
         serialize(normalizer_, dbstrm);
-        std::cout << "streaming the svm to the db blob" << std::endl;
         dlib::serialize(learnedfunc_, dbstrm);
         oid_blob = dblobj.id();
     }
