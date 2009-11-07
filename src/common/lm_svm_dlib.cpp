@@ -12,6 +12,8 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <cmath>
+#include <numeric>
 
 using namespace flightpred;
 using boost::array;
@@ -30,15 +32,17 @@ public:
     typedef dlib::matrix<double, 0, 1> sample_type;
     typedef dlib::radial_basis_kernel<sample_type> kernel_type;
 
-    lm_svm_dlib_impl(const string &pred_name, const std::string &db_conn_str)
-        : learning_machine(pred_name, db_conn_str) { }
+    lm_svm_dlib_impl(const string &pred_name, const std::string &db_conn_str, const size_t train_partition)
+        : learning_machine(pred_name, db_conn_str), train_partition_(train_partition) { }
     virtual ~lm_svm_dlib_impl() {}
 
+    // inherited from learning_machine
     virtual void   train(const SampleType &samples, const vector<double> &labels);
     virtual double eval(const std::vector<double> &sample) const;
     virtual void   write_to_db(const size_t conf_id);
     virtual void   read_from_db(const size_t conf_id);
 
+    const size_t train_partition_;
     dlib::vector_normalizer<sample_type> normalizer_;
     dlib::decision_function<kernel_type> learnedfunc_;
 };
@@ -48,6 +52,17 @@ public:
 void lm_svm_dlib_impl::train(const learning_machine::SampleType &samplesin, const vector<double> &labels)
 {
     assert(samplesin.size() == labels.size());
+
+    // partition the data
+    typedef learning_machine::SampleType::const_iterator iterTsamp;
+    vector<boost::iterator_range<iterTsamp> > ranges_samp;
+    partition_range(samplesin, train_partition_, std::inserter(ranges_samp, ranges_samp.end()));
+    typedef vector<double>::const_iterator iterTlbl;
+    vector<boost::iterator_range<iterTlbl> > ranges_lbl;
+    partition_range(labels, train_partition_, std::inserter(ranges_lbl, ranges_lbl.end()));
+    assert(ranges_samp.size() == ranges_lbl.size());
+
+
 
     // format transformation
     vector<sample_type> samples;
@@ -68,7 +83,8 @@ void lm_svm_dlib_impl::train(const learning_machine::SampleType &samplesin, cons
     std::cout << "train the support vector machine" << std::endl;
     dlib::rvm_regression_trainer<kernel_type> trainer;
     trainer.set_kernel(kernel_type(0.05));
-    learnedfunc_ = trainer.train(samples, labels);
+    learnedfunc_ = dlib::reduced2(trainer, train_partition_ / 3).train(samples, labels);
+    std::cout << "the resulting SVM has " << learnedfunc_.support_vectors.nr() << " support vectors." << std::endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void lm_svm_dlib_impl::write_to_db(const size_t conf_id)
@@ -136,10 +152,10 @@ double lm_svm_dlib_impl::eval(const vector<double> &sample) const
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-lm_svm_dlib::lm_svm_dlib(const string &pred_name, const string &db_conn_str)
+lm_svm_dlib::lm_svm_dlib(const string &pred_name, const string &db_conn_str, const size_t train_partition)
     : learning_machine(pred_name, db_conn_str)
 {
-    pimpl_ = new lm_svm_dlib_impl(pred_name, db_conn_str);
+    pimpl_ = new lm_svm_dlib_impl(pred_name, db_conn_str, train_partition);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 lm_svm_dlib::~lm_svm_dlib()

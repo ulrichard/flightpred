@@ -16,7 +16,8 @@ namespace flightpred
 class train_svm : public boost::noncopyable
 {
 public:
-    train_svm(const std::string &db_conn_str) : db_conn_str_(db_conn_str) { }
+    train_svm(const std::string &db_conn_str, const size_t train_partition)
+        : db_conn_str_(db_conn_str), train_partition_(train_partition) { }
     virtual ~train_svm() { }
 
     void train(const std::string &site_name, const boost::gregorian::date &from, const boost::gregorian::date &to);
@@ -25,6 +26,7 @@ public:
 
 private:
     const std::string db_conn_str_;
+    const size_t      train_partition_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred

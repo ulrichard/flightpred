@@ -13,7 +13,7 @@ class lm_svm_dlib_impl;
 class lm_svm_dlib : public learning_machine
 {
 public:
-    lm_svm_dlib(const std::string &pred_name, const std::string &db_conn_str);
+    lm_svm_dlib(const std::string &pred_name, const std::string &db_conn_str, const size_t train_partition);
     virtual ~lm_svm_dlib();
 
     virtual void   train(const SampleType &samples, const std::vector<double> &labels);

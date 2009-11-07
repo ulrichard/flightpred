@@ -44,7 +44,7 @@ void train_svm::train_all(const bgreg::date &from, const bgreg::date &to)
         pqxx::result res = trans.exec(sstr.str());
         if(!res.size())
             throw std::invalid_argument("no sites found");
-        for(int i=0; i<res.size(); ++i)
+        for(size_t i=0; i<res.size(); ++i)
         {
             string tmpstr;
             res[i][0].to(tmpstr);
@@ -63,7 +63,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     pqxx::connection conn(db_conn_str_);
     pqxx::transaction<> trans(conn, "collect features");
 
-    // get the id of the prediction site
+    // get the id and geographic position of the prediction site
     std::stringstream sstr;
     sstr << "SELECT pred_site_id, AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name << "'";
     pqxx::result res = trans.exec(sstr.str());
@@ -109,7 +109,6 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     }
 
     const size_t generation = 0;
-    const double score = 0.0;
     std::cout << "registering the config in the db for " << site_name << std::endl;
     // delete previous default configuratinos
     if(generation == 0)
@@ -140,13 +139,12 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     trans.commit();
 
     const array<string, num_fl_lbl> svm_names = {"svm_num_flight", "svm_max_dist", "svm_avg_dist", "svm_max_dur", "svm_avg_dur"};
-    array<size_t, num_fl_lbl> blob_ids;
     double traintime = 0.0;
     for(size_t i=0; i<num_fl_lbl; ++i)
     {
         std::cout << "train the support vector machine for " << svm_names[i] << " at site: " << site_name <<  std::endl;
         boost::timer btim;
-        lm_svm_dlib dlibsvmtrainer(svm_names[i], db_conn_str_);
+        lm_svm_dlib dlibsvmtrainer(svm_names[i], db_conn_str_, train_partition_);
         dlibsvmtrainer.train(training_samples, labels[i]);
         traintime += btim.elapsed();
         std::cout << "training took " << btim.elapsed() / 60.0 << " min" << std::endl;

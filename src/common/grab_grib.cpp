@@ -335,7 +335,7 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
     grib_iterator_delete(iter);
     grib_handle_delete(h);
 
-    cout << endl << "imported " << count << " records." << endl;
+    cout << "imported " << count << " records." << endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 set<string> grib_grabber::get_std_levels()
