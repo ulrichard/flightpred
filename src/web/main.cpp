@@ -6,6 +6,8 @@
 #include <Wt/Ext/TableView>
 #include <Wt/WStandardItemModel>
 #include <Wt/WDate>
+#include <Wt/WTabWidget>
+#include <Wt/WContainerWidget>
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -14,7 +16,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/array.hpp>
 #include <boost/any.hpp>
-// standard library
+// standard libraryhttp://www.google.ch/search?q=dlib+reduce+number+support+vectors&ie=utf-8&oe=utf-8&aq=t&rls=com.ubuntu:en-US:unofficial&client=firefox-a
 #include <sstream>
 #include <fstream>
 #include <utility>
@@ -119,14 +121,19 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
 
         }
 
-        new Wt::WText("FreeFlightPrediction results: ", root());
+        Wt::WTabWidget *tabw = new Wt::WTabWidget(root());
+        Wt::WContainerWidget *forecastpanel = new Wt::WContainerWidget();
+        tabw->addTab(forecastpanel, "Flight Forecast");
 
-        Wt::Ext::TableView *table = new Wt::Ext::TableView(root());
+        new Wt::WText("FreeFlightPrediction results: ", forecastpanel);
+
+        Wt::Ext::TableView *table = new Wt::Ext::TableView(forecastpanel);
         table->resize(800, 300);
         table->setModel(model);
         table->setColumnSortable(0, true);
         table->setColumnSortable(1, true);
         table->setColumnSortable(2, true);
+
     }
     catch(std::exception &ex)
     {
