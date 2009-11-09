@@ -287,11 +287,14 @@ defining a reference location and a radius.</li>
 disapointing. Better alternatives seem to be <a
  href="http://dclib.sourceforge.net/ml.html">dlib</a> and <a
  href="http://www.terborg.net/research/kml/">kml</a>.</li>
-  <li>Integrated the SVM from dlib in a modular fashion, so that
-plugging other ml algorithms sould be relatively easy.</li>
+  <li>Integrated the <a href="http://dclib.sourceforge.net/ml.html">SVM
+from dlib</a> in a modular fashion, so that plugging other ml
+algorithms should be relatively easy.</li>
   <li>Defined a representatoin for feature sets, and defined an initial
 default feature set per flying site.</li>
-  <li>Train some support vector machines.</li>
+  <li>Trained some support vector machines with a limited set of
+samples, as training for the full three years of data available in the
+db took way too long.</li>
   <li>Downloaded current weather predictions and calculated the first
 flight
 predictions.</li>
@@ -302,12 +305,17 @@ predictions.</li>
 set is unfeasibly slow.<br>
   </li>
   <li>Parse the textual representatoin of the feature sets.</li>
+  <li>Download strategy for grib forecast data: Try most recent run, if
+not awailable try older one, until successfull.<br>
+  </li>
   <li>Evaluate better feature sets using genetic algorithms.</li>
-  <li>Evaluate different sources of grib data with a coarser grid.</li>
+  <li>Evaluate different sources of grib data with a finer grid.</li>
   <li>Experiment with different numbers of features and training
 partition sizes.<br>
   </li>
-  <li>Make a nice frontend.</li>
+  <li>Make a nice web frontend to present the calculated predictions.
+Including sortable tables, graphics on a map...<br>
+  </li>
   <li>Re evaluate usage of wdb.</li>
   <li>Make a command to clean the database from obsolete stuff.<br>
   </li>

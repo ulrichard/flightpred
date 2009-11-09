@@ -501,7 +501,7 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
     const set<string>       sel_param     = get_std_params();
     const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(2.5, 20);
 
-    const bpt::time_duration usual_pred_run_time = bpt::hours(30); // the usual mxa time for the prediction results to become online available
+    const bpt::time_duration usual_pred_run_time = bpt::hours(12); // the usual mxa time for the prediction results to become online available
     const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;
     const size_t   hours = static_cast<size_t>(now.time_of_day().hours() / 6.0) * 6.0;
     const bpt::ptime lastpredrun(now.date(), bpt::hours(hours));

@@ -1,0 +1,5 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+
+PROJECT(flightpred_common)
+SET(CMAKE_MODULE_PATH ${flightpred_common_SOURCE_DIR})
+

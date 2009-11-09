@@ -6,10 +6,11 @@
 // witty
 #include <Wt/WApplication>
 // boost
-
+#include <boost/date_time/gregorian/gregorian_types.hpp>
 //standard library
 #include <string>
-
+#include <vector>
+#include <utility>
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 namespace flightpred
@@ -23,8 +24,10 @@ public:
 
 protected:
     virtual void finalize();
+    void makePredDay(const boost::gregorian::date &day, Wt::WContainerWidget *parent);
 private:
-
+    std::string db_conn_str_;
+    std::vector<std::pair<size_t, std::string> > sites_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred
