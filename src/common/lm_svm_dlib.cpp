@@ -19,8 +19,8 @@ using namespace flightpred;
 using boost::array;
 using std::vector;
 using std::string;
-//using std::cout;
-//using std::endl;
+using std::cout;
+using std::endl;
 
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -61,6 +61,7 @@ void lm_svm_dlib_impl::train(const learning_machine::SampleType &samplesin, cons
     vector<boost::iterator_range<iterTlbl> > ranges_lbl;
     partition_range(labels, train_partition_, std::inserter(ranges_lbl, ranges_lbl.end()));
     assert(ranges_samp.size() == ranges_lbl.size());
+    cout << "splitted the " << samplesin.size() << " samples into " << ranges_samp.size() << " partitions." << endl;
 
 
 
@@ -76,15 +77,15 @@ void lm_svm_dlib_impl::train(const learning_machine::SampleType &samplesin, cons
     }
 
     // normalize the samples
-    std::cout << "normalize the samples" << std::endl;
+    cout << "normalize the samples" << endl;
     normalizer_.train(samples);
     std::transform(samples.begin(), samples.end(), samples.begin(), normalizer_);
 
-    std::cout << "train the support vector machine" << std::endl;
+    cout << "train the support vector machine" << endl;
     dlib::rvm_regression_trainer<kernel_type> trainer;
     trainer.set_kernel(kernel_type(0.05));
     learnedfunc_ = dlib::reduced2(trainer, train_partition_ / 3).train(samples, labels);
-    std::cout << "the resulting SVM has " << learnedfunc_.support_vectors.nr() << " support vectors." << std::endl;
+    cout << "the resulting SVM has " << learnedfunc_.support_vectors.nr() << " support vectors." << endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void lm_svm_dlib_impl::write_to_db(const size_t conf_id)
@@ -96,7 +97,7 @@ void lm_svm_dlib_impl::write_to_db(const size_t conf_id)
     {
         pqxx::largeobject dblobj(trans);
         pqxx::olostream dbstrm(trans, dblobj);
-        std::cout << "streaming normalizer and SVM to the db blob" << std::endl;
+        cout << "streaming normalizer and SVM to the db blob" << endl;
         serialize(normalizer_, dbstrm);
         dlib::serialize(learnedfunc_, dbstrm);
         oid_blob = dblobj.id();
@@ -109,7 +110,7 @@ void lm_svm_dlib_impl::write_to_db(const size_t conf_id)
 
     /*
     // at the moment additionally serialize to a file
-    std::cout << "streaming the svm to a temp file" << std::endl;
+    cout << "streaming the svm to a temp file" << endl;
     std::ofstream fout("/tmp/saved_function.dat", std::ios::binary);
     serialize(learnedfunc,fout);
     fout.close();
@@ -134,7 +135,7 @@ void lm_svm_dlib_impl::read_from_db(const size_t conf_id)
     deserialize(normalizer_,  dbstrm);
     dlib::deserialize(learnedfunc_, dbstrm);
 
-    std::cout << pred_name_ << " has " << learnedfunc_.support_vectors.nr() << " support vectors." << std::endl;
+    cout << pred_name_ << " has " << learnedfunc_.support_vectors.nr() << " support vectors." << endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 double lm_svm_dlib_impl::eval(const vector<double> &sample) const
