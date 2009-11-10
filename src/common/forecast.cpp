@@ -131,7 +131,9 @@ void forecast::prediction_run(const size_t pred_days)
             {
                 double val = predres["svm_" + predname];
                 sstr << val << ", ";
-                std::cout << it->second << " " << bgreg::to_iso_extended_string(day) << " " << predname << " " << val << std::endl;
+                std::cout << it->second << " " << bgreg::to_iso_extended_string(day) << " "
+                          << predname << " " << val << std::endl;
+
             }
 
             sstr << "Now(), '" <<  bgreg::to_iso_extended_string(day) << "')";

@@ -1,0 +1,14 @@
+Source: flightpred
+Section: web
+Priority: optional
+Maintainer: Richard Ulrich <richi@paraeasy.ch>
+Build-Depends: debhelper (>= 7), libfcgi0ldbl, libboost-regex1.37-dev, libboost-program-options1.37-dev, libboost-date-time1.37-dev, libboost-signals1.37-dev, libboost-thread1.37-dev, libboost-system1.37-dev, libboost-filesystem1.37-dev, witty-dev (>= 2.2.4) postgis libpqxx-dev
+standards-Version: 3.8.1.0
+Homepage: http://sourceforge.net/projects/flightpred
+
+Package: flightpred
+Architecture: i386
+Essential: no
+Depends: apache2, libapache2-mod-fastcgi, libfcgi0ldbl, libboost-regex1.37.0, libboost-program-options1.37.0, libboost-date-time1.37.0, libboost-signals1.37.0, libboost-thread1.37.0, libboost-system1.37.0, libboost-filesystem1.37.0, libboost-serialization1.37.0, witty (>= 2.2.4)
+Description: Free flight prediction system to forecast good days and locations for cross country flights
+ A system that shall predict good days and locations for cross country free flying such as paragliding. The system is trained with past weather prediction data and flights from online xc competitions. With current weather prediction data it can then make predictoins about possible flights in areas it is trained for.

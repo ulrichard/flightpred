@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+	remove|upgrade|remove-in-favour|deconfigure-in-favour)
+		#
+		# do here pre removes
+		#
+		echo "remove flightpred from apache"
+		a2dissite /etc/apache2/sites-available/flightpred
+		;;
+	failed-upgrade)
+		;;
+esac
+
+exit 0

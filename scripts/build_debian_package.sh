@@ -1,0 +1,2 @@
+cd ..
+dpkg-buildpackage -rfakeroot

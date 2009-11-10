@@ -133,6 +133,8 @@ void lm_svm_dlib_impl::read_from_db(const size_t conf_id)
     assert(dbstrm.good());
     deserialize(normalizer_,  dbstrm);
     dlib::deserialize(learnedfunc_, dbstrm);
+
+    std::cout << pred_name_ << " has " << learnedfunc_.support_vectors.nr() << " support vectors." << std::endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 double lm_svm_dlib_impl::eval(const vector<double> &sample) const
