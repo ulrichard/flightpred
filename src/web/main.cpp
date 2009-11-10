@@ -146,20 +146,19 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
     sstr << day;
     new Wt::WText(sstr.str(), parent);
 
-
-    string renderJs = "function change(val) { return val.toFixed(2); }";
-
     Wt::Ext::TableView *table = new Wt::Ext::TableView(parent);
-    table->resize(400, 300);
+    table->resize(340, 300);
     table->setModel(model);
     table->setColumnSortable(0, true);
     table->setColumnWidth(0, 75);
     for(size_t i=0; i<pred_names.size(); ++i)
     {
         table->setColumnSortable(i + 1, true);
-        table->setColumnWidth(i + 1, 55);
-        table->setRenderer(i + 1, renderJs);
+        table->setColumnWidth(i + 1, i ? 50 : 55);
+        table->setRenderer(i + 1, "function change(val) { return val.toFixed(2); }");
     }
+
+//    Wt::WGoogleMap *map = new Wt::WGoogleMap(parent);
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
