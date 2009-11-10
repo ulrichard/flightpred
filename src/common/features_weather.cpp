@@ -150,8 +150,6 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
         bind(&features_weather::feat_desc::location, _1));
     std::sort(locations.begin(), locations.end(), point_ll_deg_sorter());
     locations.erase(std::unique(locations.begin(), locations.end()), locations.end());
-//    for(set<features_weather::feat_desc>::const_iterator it = descriptions.begin(); it != descriptions.end(); ++it)
-//        locations.insert(it->location);
 
     std::stringstream sstr;
     sstr << "SELECT pred_time, AsText(location) as loc, level, parameter, value FROM weather_pred "
@@ -165,10 +163,7 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
         sstr << "location = ST_GeomFromText('" << geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
     }
     sstr << ")";
-    // todo : we could later restrict the lookup to a radius of 1'000 km around the flying site
-//    std::cout << sstr.str() << std::endl;
     pqxx::result res = trans.exec(sstr.str());
-//    std::cout << "Query returned " << res.size() << " records." << std::endl;
     if(!res.size())
         throw std::runtime_error("no weather features found.");
 
@@ -180,7 +175,7 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
         currdesc.model = "GFS";
         string tmpstr;
         res[i]["pred_time"].to(tmpstr);
-        bpt::ptime pred_time = bpt::time_from_string(tmpstr);
+        const bpt::ptime pred_time = bpt::time_from_string(tmpstr);
         currdesc.reltime = pred_time - bpt::ptime(day, bpt::time_duration(0, 0, 0));
         res[i]["loc"].to(tmpstr);
         if(!geometry::from_wkt(tmpstr, currdesc.location))
@@ -194,8 +189,6 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
             res[i]["value"].to(val);
             feat_map[currdesc] = val;
         }
-//        else
-//            std::cout << "desc not found: " << currdesc << std::endl;
     }
 
     if(descriptions.size() != feat_map.size())
