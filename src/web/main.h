@@ -26,6 +26,9 @@ protected:
     virtual void finalize();
     void makePredDay(const boost::gregorian::date &day, Wt::WContainerWidget *parent);
 private:
+    void try_imbue(std::ostream &ostr, const std::string &localename);
+
+
     std::string db_conn_str_;
     std::vector<std::pair<size_t, std::string> > sites_;
 };

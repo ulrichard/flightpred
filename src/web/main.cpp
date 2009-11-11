@@ -16,7 +16,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/array.hpp>
 #include <boost/any.hpp>
-// standard libraryhttp://www.google.ch/search?q=dlib+reduce+number+support+vectors&ie=utf-8&oe=utf-8&aq=t&rls=com.ubuntu:en-US:unofficial&client=firefox-a
+// gnu gettext
+#include <libintl.h>
+// standard library
 #include <sstream>
 #include <fstream>
 #include <utility>
@@ -28,6 +30,10 @@ using boost::any;
 using std::string;
 using std::vector;
 using std::pair;
+using std::cout;
+using std::endl;
+
+#define _(STRING) gettext(STRING)
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // callback function is called everytime when a user enters the page. Can be used to authenticate.
@@ -43,6 +49,10 @@ Wt::WApplication *createApplication(const Wt::WEnvironment& env)
 // main entry point of the application
 int main(int argc, char *argv[])
 {
+    setlocale(LC_ALL, "");
+//    bindtextdomain("flightpred", "/usr/share/locale");
+    textdomain("flightpred");
+
 	return Wt::WRun(argc, argv, &createApplication);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -50,8 +60,9 @@ int main(int argc, char *argv[])
 FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
  : Wt::WApplication(env)
 {
-	setTitle("free flight prediction system");               // application title
+	setTitle(_("free flight prediction system")); // application title
 //	useStyleSheet("flightpred.css");
+    cout << "create a new session. locale is : " << locale() << endl;
 
 
     // WARNING
@@ -85,7 +96,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
 
         Wt::WTabWidget *tabw = new Wt::WTabWidget(root());
         Wt::WContainerWidget *forecastpanel = new Wt::WContainerWidget();
-        tabw->addTab(forecastpanel, "Flight Forecasts");
+        tabw->addTab(forecastpanel, _("Flight Forecasts"));
 
         const size_t forecast_days = 4;
         Wt::WTable *maintable = new Wt::WTable(forecastpanel);
@@ -143,6 +154,7 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
     model->sort(1, Wt::DescendingOrder);
 
     std::stringstream sstr;
+    try_imbue(sstr, locale());
     sstr << day;
     new Wt::WText(sstr.str(), parent);
 
@@ -160,5 +172,24 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
 
 //    Wt::WGoogleMap *map = new Wt::WGoogleMap(parent);
 
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void FlightpredApp::try_imbue(std::ostream &ostr, const string &localename)
+{
+    try
+    {
+        ostr.imbue(std::locale(localename.c_str()));
+    }
+    catch(std::exception &)
+    {
+        try
+        {
+            ostr.imbue(std::locale(localename.substr(0, 2).c_str()));
+        }
+        catch(std::exception &)
+        {
+            cout << "failed to create std::locale for : " << localename << endl;
+        }
+    }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
