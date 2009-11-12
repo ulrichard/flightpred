@@ -1,0 +1,11 @@
+Template: flightpred/user_account
+Type: text
+Default: flightpred
+Description: flightpred administrator account
+ A user account for the flightpred administrator
+
+Template: flightpred/database_name
+Type: text
+Default: flightpred
+Description: flightpred database name
+ The name to use on the flightpred database

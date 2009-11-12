@@ -1,18 +1,55 @@
 #!/bin/bash
 # postinst script for flightpred
 
-. /usr/share/debconf/confmodule
-
 set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+. /usr/share/debconf/confmodule
+. /usr/share/dbconfig-common/dpkg/postinst.pgsql
+dbc_go flightpred $@
+
+
+db_get flightpred/user_account && DB_USER="$RET"
+db_get flightpred/database_name && DB_NAME="$RET"
 
 case "$1" in
 	configure)
+        #Create flightpred admin user
+		if ! grep -q "^$DB_USER:" /etc/passwd ; then
+		    adduser --gecos 0 --disabled-password $DB_USER
+		    # Remove any old crontab entries if this account have had any before
+		    su $DB_USER -c "crontab -r" 2> /dev/null || true
+		fi
+		echo 'PATH=$PATH:/usr/lib/flightpred/' >> /home/$DB_USER/.bashrc
+	
+		# Generate config file
+		if [ ! -f /etc/flightpred.conf ]; then
+		    echo "database = $DB_NAME" > /etc/flightpred.conf
+		    PORT=`pg_lsclusters -h | grep main | xargs echo | cut -d' ' -f3`
+		    echo "port = $PORT" >> /etc/flightpred.conf
+		    echo "user = $DB_USER" >> /etc/flightpred.conf
+		fi
+	
+		su postgres -c "psql -c \"ALTER USER $DB_USER WITH SUPERUSER\"" >> /dev/null
+
+	# set up the environment for the webapp
 		mkdir -p /var/run/flightpred
     		chown -R www-data:www-data /var/run/flightpred
 		# register with apache
 		a2enmod fcgid
 		echo "register flightpred with apache"
-		a2ensite /etc/apache2/sites-available/flightpred 
+		a2ensite /etc/apache2/sites-available/flightpred.conf 
 		;;
 	*)
 		#

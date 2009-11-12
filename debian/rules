@@ -38,7 +38,8 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	# $(MAKE) clean
-	rm -rf build-debian
+	rm -rf $(CURDIR)/build-debian
+	rm -rf $(CURDIR)/debian/tmp
 
 	dh_clean 
 
@@ -50,9 +51,16 @@ install: build
 
 	# Add here commands to install the package into debian/flightpred.
 	# $(MAKE) DESTDIR=$(CURDIR)/debian/flightpred install
-	(cd $(CURDIR)/build-debian; $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp/ )
+	(cd $(CURDIR)/build-debian; $(MAKE) install DESTDIR=$(CURDIR)/debian/flightpred/ )
 
-#	cp -R $(CURDIR)/../res $(CURDIR)/debian/tmp/usr/share/flightpred/
+	for TASK in install upgrade; do \
+		mkdir -p $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/wdb/$$TASK; \
+		/bin/echo -e "#!/bin/sh\nsu postgres -c /usr/lib/flightpred/$${TASK}_database" > $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/flightpred/$$TASK/pgsql; \
+		chmod 700 $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/flightpred/$$TASK/pgsql; \
+	done
+
+
+#	cp -R $(CURDIR)/../res $(CURDIR)/debian/flightpred/usr/share/flightpred/
 
 # Build architecture-independent files here.
 binary-indep: build install

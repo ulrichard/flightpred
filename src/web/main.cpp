@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
  : Wt::WApplication(env)
 {
-	setTitle(_("free flight prediction system\n")); // application title
+	setTitle(_("free flight prediction system")); // application title
 //	useStyleSheet("flightpred.css");
     cout << "create a new session. locale is : " << locale() << endl;
 
@@ -107,7 +107,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     }
     catch(std::exception &ex)
     {
-        std::cout << "critical error : " << ex.what() << std::endl;
+        std::cout << _("critical error : ") << ex.what() << std::endl;
         new Wt::WText(ex.what(), root());
     }
 }
@@ -126,7 +126,7 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
     const array<string, num_fl_lbl> pred_names = {"num_flight", "max_dist", "avg_dist", "max_dur", "avg_dur"};
 
     Wt::WStandardItemModel *model = new Wt::WStandardItemModel(sites_.size(), pred_names.size() + 1);
-    model->setHeaderData(0, Wt::Horizontal, any(string("flying site")));
+    model->setHeaderData(0, Wt::Horizontal, any(string(_("flying site"))));
     for(size_t i=0; i<pred_names.size(); ++i)
         model->setHeaderData(i + 1, Wt::Horizontal, any(pred_names[i]));
 
