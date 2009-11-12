@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
  : Wt::WApplication(env)
 {
-	setTitle(_("free flight prediction system")); // application title
+	setTitle(_("free flight prediction system\n")); // application title
 //	useStyleSheet("flightpred.css");
     cout << "create a new session. locale is : " << locale() << endl;
 
@@ -96,7 +96,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
 
         Wt::WTabWidget *tabw = new Wt::WTabWidget(root());
         Wt::WContainerWidget *forecastpanel = new Wt::WContainerWidget();
-        tabw->addTab(forecastpanel, _("Flight Forecasts"));
+        tabw->addTab(forecastpanel, _("Flight Forecasts\n"));
 
         const size_t forecast_days = 4;
         Wt::WTable *maintable = new Wt::WTable(forecastpanel);
