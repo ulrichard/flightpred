@@ -40,6 +40,7 @@ clean:
 	# $(MAKE) clean
 	rm -rf $(CURDIR)/build-debian
 	rm -rf $(CURDIR)/debian/tmp
+	rm -rf $(CURDIR)/debian/flightpred
 
 	dh_clean 
 
@@ -54,7 +55,7 @@ install: build
 	(cd $(CURDIR)/build-debian; $(MAKE) install DESTDIR=$(CURDIR)/debian/flightpred/ )
 
 	for TASK in install upgrade; do \
-		mkdir -p $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/wdb/$$TASK; \
+		mkdir -p $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/flightpred/$$TASK; \
 		/bin/echo -e "#!/bin/sh\nsu postgres -c /usr/lib/flightpred/$${TASK}_database" > $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/flightpred/$$TASK/pgsql; \
 		chmod 700 $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/flightpred/$$TASK/pgsql; \
 	done
