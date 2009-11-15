@@ -14,6 +14,7 @@
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/date_facet.hpp>
 #include <boost/array.hpp>
 #include <boost/any.hpp>
 // gnu gettext
@@ -98,10 +99,19 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
         Wt::WContainerWidget *forecastpanel = new Wt::WContainerWidget();
         tabw->addTab(forecastpanel, _("Flight Forecasts\n"));
 
-        const size_t forecast_days = 4;
+        const size_t forecast_days = 3;
         Wt::WTable *maintable = new Wt::WTable(forecastpanel);
         for(size_t j=0; j<forecast_days; ++j)
             makePredDay(today + bgreg::days(j), maintable->elementAt(0, j));
+
+
+        Wt::WContainerWidget *docupanel = new Wt::WContainerWidget();
+        tabw->addTab(docupanel, _("Documentation"));
+        sstr.str("");
+        sstr << "<iframe src=\"http://flightpred.svn.sourceforge.net/viewvc/flightpred/trunk/doc/index.html\" width=\"100%\" height=\"100%\"></iframe>";
+        Wt::WText *txIFrame = new Wt::WText(sstr.str(), Wt::XHTMLUnsafeText);
+        docupanel->addWidget(txIFrame);
+        tabw->resize(Wt::WLength(100.0, Wt::WLength::Percentage), Wt::WLength(100.0, Wt::WLength::Percentage));
 
 
     }
@@ -155,7 +165,14 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
 
     std::stringstream sstr;
     try_imbue(sstr, locale());
+//    boost::date_time::date_facet *facet(new boost::date_time::date_facet("%A %x"));
+//    sstr.imbue(std::locale(sstr.getloc(), facet));
     sstr << day;
+    static const bgreg::date today(boost::posix_time::second_clock::universal_time().date());
+    if(day == today)
+        sstr << _(" (today)");
+    if(day == today + bgreg::days(1))
+        sstr << _(" (tomorrow)");
     new Wt::WText(sstr.str(), parent);
 
     Wt::Ext::TableView *table = new Wt::Ext::TableView(parent);

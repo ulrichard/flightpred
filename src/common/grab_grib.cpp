@@ -20,6 +20,9 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/minmax_element.hpp>
+#include <boost/tuple/tuple.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 // standard library
 #include <sstream>
 #include <iomanip>
@@ -41,6 +44,8 @@ using boost::posix_time::time_duration;
 using boost::lexical_cast;
 using boost::asio::ip::tcp;
 using namespace boost::lambda;
+using boost::transform_iterator;
+using boost::minmax_element;
 using std::string;
 using std::vector;
 using std::list;
@@ -56,8 +61,8 @@ using std::stringstream;
 // a description of the grib data fields can be found at:
 // http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2f00.shtml
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-grib_grabber::grib_grabber(const std::string &db_conn_str, const std::string &baseurl, size_t download_pack)
-    : db_conn_str_(db_conn_str), baseurl_(baseurl), download_pack_(download_pack)
+grib_grabber::grib_grabber(const std::string &db_conn_str, const std::string &baseurl, size_t download_pack, const bool is_future)
+    : db_conn_str_(db_conn_str), baseurl_(baseurl), download_pack_(download_pack), is_future_(is_future)
 {
 
 }
@@ -293,33 +298,36 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
             std::stringstream sstr;
             sstr << bgreg::to_iso_extended_string(req.pred_time.date()) << " " << std::setfill('0')
                  << std::setw(2) << req.pred_time.time_of_day().hours() << ":00:00";
-            const string dati(sstr.str());
+            const string dati_pred(sstr.str());
 
             sstr.str("");
-            sstr << "SELECT weather_pred_id FROM weather_pred "
+            sstr << bgreg::to_iso_extended_string(predrun_.date()) << " " << std::setfill('0')
+                 << std::setw(2) << predrun_.time_of_day().hours() << ":00:00";
+            const string dati_run(sstr.str());
+
+            const string table_name(is_future_ ? "weather_pred_future" : "weather_pred");
+
+            sstr.str("");
+            sstr << "SELECT weather_pred_id FROM "  << table_name << " "
                  << "WHERE location = GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << ") "
-                 << "AND pred_time='" << dati << "' "
+                 << "AND pred_time='" << dati_pred << "' "
                  << "AND level=" << req.level
                  << "AND parameter='" << req.param << "'";
+            if(is_future_)
+                sstr << " AND run_time='" << dati_run << "'";
             pqxx::result res = trans.exec(sstr.str());
-            if(res.size()) // the record is already in the database
-            {
-                if(req.pred_time < bpt::second_clock::universal_time() - bpt::hours(2))
-                    continue;
-                sstr.str("");
-                sstr << "DELETE FROM weather_pred "
-                     << "WHERE location = GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << ") "
-                     << "AND pred_time='" << dati << "' "
-                     << "AND level=" << req.level
-                     << "AND parameter='" << req.param << "'";
-                res = trans.exec(sstr.str());
-            }
+            if(res.size()) // a record is already in the database
+                continue;
 
             sstr.str("");
-            sstr << "INSERT INTO weather_pred (pred_time, level, parameter, location, value) "
-                 << "values ('" << dati<< "', " << req.level << ", '" << req.param
-                 << "', GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << "), "
-                 << value << ")";
+            sstr << "INSERT INTO weather_pred (pred_time, level, parameter, location, value";
+            if(is_future_)
+                sstr << ", run_time";
+            sstr << ") values ('" << dati_pred << "', " << req.level << ", '" << req.param
+                 << "', GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << "), " << value;
+            if(is_future_)
+                sstr << ", '" << dati_run << "'";
+            sstr << ")";
             res = trans.exec(sstr.str());
             if(++count % 10 == 0)
             {
@@ -420,6 +428,17 @@ boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(cons
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+size_t geometry::hash_value(const geometry::point_ll_deg &pnt)
+{
+    return boost::hash_value(pnt.lat()) + boost::hash_value(pnt.lon());
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+bool geometry::operator==(const geometry::point_ll_deg &lhs, const geometry::point_ll_deg &rhs)
+{
+    return lhs.lon() == rhs.lon() && lhs.lat() == rhs.lat();
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date &to)
 {
@@ -458,6 +477,7 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
             {
                 req.pred_time = bpt::ptime(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
                                            bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
+                predrun_ = req.pred_time;
                 if(req.pred_time.date() >=from && req.pred_time.date() <= to)
                     if(sel_levels.find(vtokens[4]) != sel_levels.end() && sel_param.find(vtokens[3]) != sel_param.end())
                     {
@@ -501,7 +521,7 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
     const set<string>       sel_param     = get_std_params();
     const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(2.5, 20);
 
-    const bpt::time_duration usual_pred_run_time = bpt::hours(12); // the usual mxa time for the prediction results to become online available
+    const bpt::time_duration usual_pred_run_time = bpt::hours(12); // the usual max time for the prediction results to become online available
     const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;
     const size_t   hours = static_cast<size_t>(now.time_of_day().hours() / 6.0) * 6.0;
     const bpt::ptime lastpredrun(now.date(), bpt::hours(hours));
@@ -511,27 +531,27 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
     // download the grib files
     for(bpt::ptime preddt = lastmidnight; preddt < bpt::second_clock::universal_time() + future_time; preddt += bpt::hours(6))
     {
-        bpt::ptime predrun = lastpredrun;
+        predrun_ = lastpredrun;
 
         if(preddt >= lastpredrun)
-            predrun = lastpredrun;
+            predrun_ = lastpredrun;
         else if(preddt >= lastmidnight)
-            predrun = lastmidnight;
+            predrun_ = lastmidnight;
         else if(preddt >= yesterday)
-            predrun = yesterday;
+            predrun_ = yesterday;
         else
             assert(!"how come?");
 
-        const size_t futurehours = (preddt - predrun).hours();
+        const size_t futurehours = (preddt - predrun_).hours();
 
 
         // first, get the inventory
         std::stringstream ssurl;
         ssurl << baseurl_ << "gfs" << std::setfill('0')
-              << std::setw(4) << static_cast<int>(predrun.date().year())
-              << std::setw(2) << static_cast<int>(predrun.date().month())
-              << std::setw(2) << static_cast<int>(predrun.date().day())
-              << "/gfs.t"   << std::setw(2) << static_cast<int>(predrun.time_of_day().hours())
+              << std::setw(4) << static_cast<int>(predrun_.date().year())
+              << std::setw(2) << static_cast<int>(predrun_.date().month())
+              << std::setw(2) << static_cast<int>(predrun_.date().day())
+              << "/gfs.t"   << std::setw(2) << static_cast<int>(predrun_.time_of_day().hours())
               << "z.master.grbf" << std::setw(2) << futurehours;
 
         std::stringstream buf_inv;
@@ -603,15 +623,130 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
     } // for day
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-size_t geometry::hash_value(const geometry::point_ll_deg &pnt)
-{
-    return boost::hash_value(pnt.lat()) + boost::hash_value(pnt.lon());
-}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-bool geometry::operator==(const geometry::point_ll_deg &lhs, const geometry::point_ll_deg &rhs)
-{
-    return lhs.lon() == rhs.lon() && lhs.lat() == rhs.lat();
-}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+template<bool islat>
+struct get_pnt_latlon
+{
+    double operator()(const point_ll_deg &pnt) const
+    {
+        if(islat)
+            return pnt.lat();
+        else
+            return pnt.lon();
+    }
+    typedef double result_type;
+};
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
+{
+    const set<string>       sel_levels    = get_std_levels();
+    const set<string>       sel_param     = get_std_params();
+    const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(0.5, 20);
 
+    const bpt::time_duration usual_pred_run_time = bpt::hours(3); // the usual max time for the prediction results to become online available
+    const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;
+    const size_t   hours = static_cast<size_t>(now.time_of_day().hours() / 6.0) * 6.0;
+    const bpt::ptime lastpredrun(now.date(), bpt::hours(hours));
+    const bpt::ptime lastmidnight(now.date(), bpt::hours(0));
+    const bpt::ptime yesterday(now.date() - bgreg::days(1), bpt::hours(0));
+
+    // get the bounding box for the locations
+    typedef boost::unordered_set<point_ll_deg>::iterator locIterT;
+    typedef transform_iterator<get_pnt_latlon<false>, locIterT> lonIterT;
+    typedef transform_iterator<get_pnt_latlon<true>,  locIterT> latIterT;
+    const pair<lonIterT, lonIterT> minmax_lon = minmax_element(
+        make_transform_iterator(sel_locations.begin(), get_pnt_latlon<false>()),
+        make_transform_iterator(sel_locations.end(),   get_pnt_latlon<false>()));
+    const pair<latIterT, latIterT> minmax_lat = minmax_element(
+        make_transform_iterator(sel_locations.begin(), get_pnt_latlon<true>()),
+        make_transform_iterator(sel_locations.end(),   get_pnt_latlon<true>()));
+    const point_ll_deg bboxmin(geometry::longitude<>(*minmax_lon.first),  geometry::latitude<>(*minmax_lat.first));
+    const point_ll_deg bboxmax(geometry::longitude<>(*minmax_lon.second), geometry::latitude<>(*minmax_lat.second));
+
+    set<string> req_fields;
+    req_fields.insert("tmpsfc");
+
+
+    for(set<string>::const_iterator itfld = req_fields.begin(); itfld != req_fields.end(); ++itfld)
+    {
+        bpt::ptime predrun = lastpredrun;
+
+        // first, get the inventory
+        std::stringstream ssurl;
+        ssurl << baseurl_ << "gfs" << std::setfill('0')
+              << std::setw(4) << static_cast<int>(predrun.date().year())
+              << std::setw(2) << static_cast<int>(predrun.date().month())
+              << std::setw(2) << static_cast<int>(predrun.date().day())
+              << "/gfs_"   << std::setw(2) << static_cast<int>(predrun.time_of_day().hours())
+              << "z.ascii" << "?tmpsfc[0:30]"
+              << "[" << static_cast<int>(bboxmin.lat() + 90) << ":1:" << static_cast<int>(bboxmax.lat() + 90) << "]"
+              << "[" << static_cast<int>(bboxmin.lon())      << ":1:" << static_cast<int>(bboxmax.lon())      << "]";
+              //tmpsfc[0:30][130:1:145][0:1:20]
+
+        std::stringstream buf_response;
+        download_data(ssurl.str(), buf_response, list<request>(), false);
+
+        read_ascii_data(buf_response);
+    }
+/*
+    // download the grib files
+    for(bpt::ptime preddt = lastmidnight; preddt < bpt::second_clock::universal_time() + future_time; preddt += bpt::hours(6))
+    {
+        bpt::ptime predrun = lastpredrun;
+
+        if(preddt >= lastpredrun)
+            predrun = lastpredrun;
+        else if(preddt >= lastmidnight)
+            predrun = lastmidnight;
+        else if(preddt >= yesterday)
+            predrun = yesterday;
+        else
+            assert(!"wtf?");
+
+        const size_t futurehours = (preddt - predrun).hours();
+
+
+        // first, get the inventory
+        std::stringstream ssurl;
+        ssurl << baseurl_ << "gfs" << std::setfill('0')
+              << std::setw(4) << static_cast<int>(predrun.date().year())
+              << std::setw(2) << static_cast<int>(predrun.date().month())
+              << std::setw(2) << static_cast<int>(predrun.date().day())
+              << "/gfs_"   << std::setw(2) << static_cast<int>(predrun.time_of_day().hours())
+              << "z.ascii" << "?tmpsfc[0:30]"
+              << "[" << static_cast<int>(bboxmin.lat() + 90) << ":1:" << static_cast<int>(bboxmax.lat() + 90) << "]"
+              << "[" << static_cast<int>(bboxmin.lon())      << ":1:" << static_cast<int>(bboxmax.lon())      << "]";
+              //tmpsfc[0:30][130:1:145][0:1:20]
+
+        std::stringstream buf_inv;
+        download_data(ssurl.str(), buf_inv, list<request>(), false);
+
+        read_ascii_data(buf_inv);
+
+
+
+
+    } // for day
+*/
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void grib_grabber_gfs_OPeNDAP::read_ascii_data(std::istream &istr)
+{
+    string line;
+
+    while(std::getline(istr, line))
+    {
+        boost::char_separator<char> sep(",");
+        boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
+        vector<string> vtokens;
+        std::copy(tokens.begin(), tokens.end(), back_inserter(vtokens));
+        if(vtokens.size() < 2)
+            continue;
+
+
+
+    } // while getline
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

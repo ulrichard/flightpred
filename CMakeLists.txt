@@ -37,5 +37,12 @@ SET(WEBGROUP apache CACHE STRING "Webserver groupname (e.g. apache or www or use
 
 SUBDIRS(3rd-party/json_spirit/json_spirit src)
 
+INSTALL_FILES(/scripts/create_flightpred_db.sql FILES ${CMAKE_INSTALL_PREFIX}/share/flightpred/)
 
+INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/www_docroot DESTINATION
+    ${CMAKE_INSTALL_PREFIX}/share/flightpred/)
+
+#IF(NOT EXISTS ${CONFIGDIR}/wt_config.xml)
+#  INSTALL(FILES ${PROJECT_SOURCE_DIR}/wt_config.xml DESTINATION ${CONFIGDIR})
+#ENDIF (NOT EXISTS ${CONFIGDIR}/wt_config.xml)
 

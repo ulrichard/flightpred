@@ -83,7 +83,8 @@ CREATE TABLE weather_models
 	url_future VARCHAR(512)  NOT NULL	
 );
 
-INSERT INTO weather_models (model_name, grid_step, url_past, url_future) values ('GFS', 2.5, 'nomad3.ncep.noaa.gov/pub/reanalysis-2/6hr/pgb/', 'nomad1.ncep.noaa.gov/pub/gfs_master/');
+INSERT INTO weather_models (model_name, grid_step, url_past, url_future) values 
+('GFS', 2.5, 'nomad3.ncep.noaa.gov/pub/reanalysis-2/6hr/pgb/', 'nomad1.ncep.noaa.gov/pub/gfs_master/');
 CREATE TABLE weather_pred
 (
 	weather_pred_id SERIAL PRIMARY KEY,
@@ -97,6 +98,22 @@ SELECT AddGeometryColumn('weather_pred', 'location', 4326, 'POINT', 2);
 CREATE INDEX weatherByTime         ON weather_pred (pred_time);
 CREATE INDEX weatherByLvLParamTime ON weather_pred (level, parameter, pred_time);
 CREATE INDEX weatherByLocation     ON weather_pred USING GIST (location);
+
+CREATE TABLE weather_pred_future
+(
+	weather_pred_id SERIAL PRIMARY KEY,
+	model_id    int                          NOT NULL,
+	pred_time   timestamp  without time zone NOT NULL,
+	run_time    timestamp  without time zone NOT NULL,
+	level       real                         NOT NULL,
+	parameter   varchar(10)                  NOT NULL,
+	value       real                         NOT NULL
+);
+SELECT AddGeometryColumn('weather_pred_future', 'location', 4326, 'POINT', 2);
+CREATE INDEX weatherFutByTime         ON weather_pred_future (pred_time, run_time);
+CREATE INDEX weatherFutByLvLParamTime ON weather_pred_future (level, parameter, pred_time);
+CREATE INDEX weatherFutByLocation     ON weather_pred_future USING GIST (location);
+
 
 CREATE TABLE flight_pred
 (

@@ -46,7 +46,7 @@ protected:
         std::string param;
         size_t range_start, range_end; // byte positions in the large grib file on the server
     };
-    grib_grabber(const std::string &db_conn_str, const std::string &baseurl, size_t download_pack);
+    grib_grabber(const std::string &db_conn_str, const std::string &baseurl, size_t download_pack, const bool is_future);
     void download_data(const std::string &url, std::ostream &ostr, const std::list<request> &requests, const bool download_last);
     void dispatch_grib_data(std::istream &istr, std::list<request> &requests, const boost::unordered_set<geometry::point_ll_deg> &sel_locations);
 
@@ -56,10 +56,12 @@ protected:
     boost::unordered_set<geometry::point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
 
 
-    const std::string  db_conn_str_;
-    const std::string  baseurl_;
-    const size_t       download_pack_;
-    static const size_t PG_SIR_WGS84 = 4326;
+    const std::string        db_conn_str_;
+    const std::string        baseurl_;
+    const size_t             download_pack_;
+    const bool               is_future_;
+    static const size_t      PG_SIR_WGS84 = 4326;
+    boost::posix_time::ptime predrun_;
 
 private:
     void read_grib_data(std::istream &istr, const request &req, const boost::unordered_set<geometry::point_ll_deg> &sel_locations);
@@ -70,7 +72,7 @@ class grib_grabber_gfs_past : public grib_grabber
 {
 public:
     grib_grabber_gfs_past(const std::string &db_conn_str, size_t download_pack)
-        : grib_grabber(db_conn_str, get_base_url(db_conn_str, "GFS", false), download_pack) { }
+        : grib_grabber(db_conn_str, get_base_url(db_conn_str, "GFS", false), download_pack, false) { }
     virtual ~grib_grabber_gfs_past() { }
 
     virtual void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to);
@@ -81,11 +83,23 @@ class grib_grabber_gfs_future : public grib_grabber
 {
 public:
     grib_grabber_gfs_future(const std::string &db_conn_str, size_t download_pack)
-        : grib_grabber(db_conn_str, get_base_url(db_conn_str, "GFS", true), download_pack) { }
+        : grib_grabber(db_conn_str, get_base_url(db_conn_str, "GFS", true), download_pack, true) { }
     virtual ~grib_grabber_gfs_future() { }
 
     virtual void grab_grib(const boost::posix_time::time_duration &future_time);
 
+};
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+class grib_grabber_gfs_OPeNDAP : public grib_grabber
+{
+public:
+    grib_grabber_gfs_OPeNDAP(const std::string &db_conn_str)
+        : grib_grabber(db_conn_str, "nomads.ncep.noaa.gov:9090/dods/gfs/", 1, true) { }
+    virtual ~grib_grabber_gfs_OPeNDAP() { }
+
+    virtual void grab_grib(const boost::posix_time::time_duration &future_time);
+protected:
+    void read_ascii_data(std::istream &istr);
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 }; // namespace flightpred
