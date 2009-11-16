@@ -23,7 +23,7 @@ list_SOURCES          =   list.c
 
 INCLUDES =  -I$(top_builddir)/src
 
-LDADD = $(top_builddir)/src/libgrib_api.la
+LDADD = $(top_builddir)/src/libgrib_api.a
 DEPENDENCIES = $(LDADD)
 
 EXTRA_DIST =$(TESTS) include.sh

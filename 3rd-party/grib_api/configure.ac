@@ -43,16 +43,21 @@ AC_DEFINE_UNQUOTED(GRIB_API_REVISION_VERSION,$GRIB_API_REVISION_VERSION,Grib Api
 AH_TEMPLATE([_LARGE_FILE_API],
 			[Needs to be undefined on some AIX])
 
+PERLDIR=perl
+AC_SUBST(PERLDIR)
+
+
 dnl Checks for programs.
 AC_PROG_CC(xlc_r xlc gcc cc) 
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_PROG_RANLIB
 AC_PROG_YACC
 AC_PROG_LEX
-AC_PROG_F77(gfortran pgf90 pgf77 xlf gfortran f77 g77 f90 ifort) 
-AC_PROG_FC(gfortran pgf90 xlf90 gfortran f90 ifort) 
+AC_PROG_F77(pgf90 pgf77 xlf gfortran f77 g77 f90 ifort) 
+AC_PROG_FC(pgf90 xlf90 gfortran f90 ifort) 
 
 dnl check availability of pthreads
 AC_ARG_ENABLE([pthread],
@@ -150,13 +155,6 @@ AC_SYS_LARGEFILE
 dnl What OS are we running?
 AC_CANONICAL_HOST
 
-dnl Use libtool
-AM_PROG_LIBTOOL
-dnl Libtool version information (we use 0 and '0d' for debian until grib_api
-dnl maintainers start providing shared libraries)
-GRIBAPI_LIBTOOL_VERSIONING="-version-info 0:0:0 -release 0d"
-AC_SUBST(GRIBAPI_LIBTOOL_VERSIONING)
-
 GRIB_TEMPLATES_PATH=${definition_files_path}/grib_api/samples
 AC_DEFINE_UNQUOTED(GRIB_TEMPLATES_PATH,"$GRIB_TEMPLATES_PATH",Directory where templates are)
 AC_DEFINE_UNQUOTED(GRIB_SAMPLES_PATH,"$GRIB_TEMPLATES_PATH",Directory where samples are)
@@ -227,8 +225,13 @@ then
   without_fortran=1
 fi
 
-AM_CONDITIONAL([F90_CHECK], [test $without_fortran -ne 1])
-AM_CONDITIONAL([FORTRAN_MOD], [test $without_fortran -ne 1])
+if test $without_fortran -ne 1
+then
+  FORTRAN_MOD=fortran
+  AC_SUBST(FORTRAN_MOD)
+  F90_CHECK="examples/F90"
+  AC_SUBST(F90_CHECK)
+fi
 
 dnl EMOS
 AC_ARG_WITH([emos],

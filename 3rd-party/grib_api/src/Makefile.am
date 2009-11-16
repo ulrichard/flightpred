@@ -7,10 +7,10 @@ AM_CFLAGS =  @WARN_PEDANTIC@
 #  -DYYDEBUG
 
 
-lib_LTLIBRARIES = libgrib_api.la
+lib_LIBRARIES = libgrib_api.a
 include_HEADERS = grib_api.h
 
-libgrib_api_la_prototypes= action.c \
+libgrib_api_a_prototypes= action.c \
          action_class_alias.c \
          action_class_gen.c \
          action_class_if.c \
@@ -137,6 +137,7 @@ libgrib_api_la_prototypes= action.c \
            grib_accessor_class_spectral_truncation.c \
            grib_accessor_class_time.c \
            grib_accessor_class_transient.c \
+           grib_accessor_class_g1_half_byte_codeflag.c \
            grib_accessor_class_values.c \
 		   grib_accessor_class_simple_packing_error.c \
            grib_accessor_class_data_simple_packing.c \
@@ -252,11 +253,10 @@ libgrib_api_la_prototypes= action.c \
            grib_expression.c \
 		   md5.c 
 
-libgrib_api_la_SOURCES = $(libgrib_api_la_prototypes) grib_yacc.c  grib_lex.c
+libgrib_api_a_SOURCES = $(libgrib_api_a_prototypes) grib_yacc.c  grib_lex.c
 
-libgrib_api_la_LIBADD = @LIBOBJS@
-libgrib_api_la_LDFLAGS = @GRIBAPI_LIBTOOL_VERSIONING@
-libgrib_api_la_DEPENDENCIES = grib_api.h $(libgrib_api_la_LIBADD)
+libgrib_api_a_LIBADD = @LIBOBJS@
+libgrib_api_a_DEPENDENCIES = grib_api.h $(libgrib_api_a_LIBADD)
 
 
 # set the include path
@@ -264,7 +264,7 @@ INCLUDES=  -I.
 
 ## Make sure these will be cleaned even when they're not built by
 ## default.
-CLEANFILES = libgrib_api.a libgrib_api.la
+CLEANFILES = libgrib_api.a
 
 
 noinst_HEADERS = grib_api_internal.h \

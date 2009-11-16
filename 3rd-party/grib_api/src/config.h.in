@@ -49,9 +49,6 @@
    */
 #undef HAVE_DIRENT_H
 
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
-
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
@@ -147,10 +144,6 @@
 
 /* 1-> big endian 0->little endian */
 #undef IS_BIG_ENDIAN
-
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LT_OBJDIR
 
 /* memory management */
 #undef MANAGE_MEM

@@ -3,9 +3,9 @@ AM_CFLAGS =  @WARN_PEDANTIC@ @WERROR@ @FORCE_32_CFLAGS@ -DYYDEBUG
 
 AM_YFLAGS = -d
 
-noinst_LTLIBRARIES = libgrib_tools.la
+noinst_LIBRARIES = libgrib_tools.a
 
-libgrib_tools_la_SOURCES = grib_tools.c \
+libgrib_tools_a_SOURCES = grib_tools.c \
                         grib_options.c
 
 
@@ -56,12 +56,12 @@ grib1to2_SOURCES = grib1to2.txt
 
 INCLUDES =  -I$(top_builddir)/src
 
-LDADD = libgrib_tools.la $(top_builddir)/src/libgrib_api.la
+LDADD = libgrib_tools.a $(top_builddir)/src/libgrib_api.a
 DEPENDENCIES = $(LDADD)
 
 ## Make sure these will be cleaned even when they're not built by
 ## default.
-CLEANFILES = libgrib_tools.la libgrib_tools.a
+CLEANFILES = libgrib_tools.a
 
 grib1to2: grib1to2.txt
 	sed "s:toolsdir:$(bindir):" grib1to2.txt > grib1to2
