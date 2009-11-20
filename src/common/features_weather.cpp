@@ -139,7 +139,7 @@ struct point_ll_deg_sorter
     }
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-vector<double> features_weather::get_features(const set<features_weather::feat_desc> &descriptions, const bgreg::date &day)
+vector<double> features_weather::get_features(const set<features_weather::feat_desc> &descriptions, const bgreg::date &day, const bool future)
 {
     static const size_t PG_SIR_WGS84 = 4326;
     pqxx::connection conn(db_conn_str_);
@@ -151,8 +151,9 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
     std::sort(locations.begin(), locations.end(), point_ll_deg_sorter());
     locations.erase(std::unique(locations.begin(), locations.end()), locations.end());
 
+    const string table_name(future ? "weather_pred_future" : "weather_pred");
     std::stringstream sstr;
-    sstr << "SELECT pred_time, AsText(location) as loc, level, parameter, value FROM weather_pred "
+    sstr << "SELECT pred_time, AsText(location) as loc, level, parameter, value FROM " << table_name << " "
          << "WHERE pred_time >= '" << bgreg::to_iso_extended_string(day - bgreg::days(1)) << " 00:00:00' "
          << "AND   pred_time <  '" << bgreg::to_iso_extended_string(day + bgreg::days(2)) << " 00:00:00' "
          << "AND ( ";

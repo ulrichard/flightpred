@@ -89,15 +89,25 @@ int main(int argc, char* argv[])
 
         if(vm.count("get-weather"))
         {
-            grib_grabber_gfs_past gr(db_conn_str, download_pack);
-            gr.grab_grib(dtstart, dtend);
+            if(pred_model == "GFS")
+            {
+                grib_grabber_gfs_past gr(db_conn_str, download_pack);
+                gr.grab_grib(dtstart, dtend);
+            }
+            else
+                throw std::invalid_argument("unknown model: " + pred_model);
             show_help_msg = false;
         }
 
         if(vm.count("get-future-weather"))
         {
-            grib_grabber_gfs_future gr(db_conn_str, download_pack);
-            gr.grab_grib(boost::posix_time::hours(24 * 4));
+            if(pred_model == "GFS")
+            {
+                grib_grabber_gfs_future gr(db_conn_str, download_pack);
+                gr.grab_grib(boost::posix_time::hours(24 * 4));
+            }
+            else
+                throw std::invalid_argument("unknown model: " + pred_model);
             show_help_msg = false;
         }
 

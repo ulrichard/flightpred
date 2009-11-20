@@ -61,13 +61,14 @@ using std::stringstream;
 // a description of the grib data fields can be found at:
 // http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2f00.shtml
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-grib_grabber::grib_grabber(const std::string &db_conn_str, const std::string &baseurl, size_t download_pack, const bool is_future)
-    : db_conn_str_(db_conn_str), baseurl_(baseurl), download_pack_(download_pack), is_future_(is_future)
+grib_grabber::grib_grabber(const string &modelname, const string &db_conn_str, size_t download_pack, const bool is_future)
+    : db_conn_str_(db_conn_str), baseurl_(get_base_url(db_conn_str, modelname, is_future)), modelname_(modelname),
+      db_model_id_(get_model_id(db_conn_str, modelname)), download_pack_(download_pack), is_future_(is_future)
 {
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-string grib_grabber::get_base_url(const std::string &db_conn_str, const string &model, bool future)
+string grib_grabber::get_base_url(const string &db_conn_str, const string &model, bool future)
 {
     pqxx::connection conn(db_conn_str);
     pqxx::transaction<> trans(conn, "get model details");
@@ -82,12 +83,25 @@ string grib_grabber::get_base_url(const std::string &db_conn_str, const string &
     return url;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void grib_grabber::download_data(const string &url, std::ostream &ostr, const list<request> &requests, const bool download_last)
+size_t grib_grabber::get_model_id(const string &db_conn_str, const string &model)
 {
-    const list<request>::const_iterator requend = (download_last ? requests.end() : --requests.end());
+    pqxx::connection conn(db_conn_str);
+    pqxx::transaction<> trans(conn, "get model details");
 
-    cout << "downloading : " << url << " with " << std::distance(requests.begin(), requend) << " byte ranges totaling "
-         << std::accumulate(requests.begin(), requend, 0,
+    std::stringstream sstr;
+    sstr << "SELECT model_id FROM weather_models where model_name ='" << model << "'";
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("No details found in the db for weather prediction model " + model);
+    size_t dbid;
+    res[0][0].to(dbid);
+    return dbid;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void grib_grabber::download_data(const string &url, std::ostream &ostr, const list<request> &requests)
+{
+    cout << "downloading : " << url << " with " << requests.size() << " byte ranges totaling "
+         << std::accumulate(requests.begin(), requests.end(), 0,
                _1 + bind(&request::range_end, _2) - bind(&request::range_start, _2)) / 1024.0
          << " kBytes" << endl;
 
@@ -125,10 +139,10 @@ void grib_grabber::download_data(const string &url, std::ostream &ostr, const li
     request_stream << "GET " << path << " HTTP/1.1\r\n";
     request_stream << "Host: " << hostname << "\r\n";
     request_stream << "Accept: */*\r\n";
-    if(std::distance(requests.begin(), requend))
+    if(requests.size())
     {
         request_stream << "Range: bytes=";
-        for(list<grib_grabber::request>::const_iterator it = requests.begin(); it != requend; ++it)
+        for(list<grib_grabber::request>::const_iterator it = requests.begin(); it != requests.end(); ++it)
         {
             if(it->range_start >= it->range_end || !it->range_end)
                 continue;
@@ -215,7 +229,7 @@ void grib_grabber::dispatch_grib_data(std::istream &istr, list<request> &request
 
     while(!istr.eof() && requests.size())
     {
-        const size_t moved = read_until(istr, "Content-range: bytes ");
+        read_until(istr, "Content-range: bytes ");
         if(istr.eof())
             throw std::runtime_error("invalid range response: search string not found: 'Content-range: bytes '");
 
@@ -231,8 +245,7 @@ void grib_grabber::dispatch_grib_data(std::istream &istr, list<request> &request
         const size_t rng_start = lexical_cast<size_t>(line.substr(0, posm));
         const size_t rng_end   = lexical_cast<size_t>(line.substr(posm + 1, poss - posm - 1));
 
-        const size_t skipped = read_until(istr, "\r\n");
-//        cout << "skipped " << skipped << " bytes until the next \\r\\n" << endl;
+        read_until(istr, "\r\n");
 
         // find the request that matches the byte position of the response
         list<request>::iterator fit = std::find_if(requests.begin(), requests.end(),
@@ -252,9 +265,7 @@ void grib_grabber::dispatch_grib_data(std::istream &istr, list<request> &request
     }
 
     if(requests.size())
-    {
         cout << requests.size() << " requests remaining!" << endl;
-    }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber::read_grib_data(std::istream &istr, const request &req, const boost::unordered_set<point_ll_deg> &sel_locations)
@@ -309,7 +320,8 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
 
             sstr.str("");
             sstr << "SELECT weather_pred_id FROM "  << table_name << " "
-                 << "WHERE location = GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << ") "
+                 << "WHERE model_id=" << db_model_id_ << " "
+                 << "AND location = GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << ") "
                  << "AND pred_time='" << dati_pred << "' "
                  << "AND level=" << req.level
                  << "AND parameter='" << req.param << "'";
@@ -320,10 +332,10 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
                 continue;
 
             sstr.str("");
-            sstr << "INSERT INTO weather_pred (pred_time, level, parameter, location, value";
+            sstr << "INSERT INTO " << table_name << " (model_id, pred_time, level, parameter, location, value";
             if(is_future_)
                 sstr << ", run_time";
-            sstr << ") values ('" << dati_pred << "', " << req.level << ", '" << req.param
+            sstr << ") values (" << db_model_id_ << ", '" << dati_pred << "', " << req.level << ", '" << req.param
                  << "', GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << "), " << value;
             if(is_future_)
                 sstr << ", '" << dati_run << "'";
@@ -455,7 +467,7 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
               << std::setw(2) << static_cast<int>(mon.month());
 
         std::stringstream buf_inv;
-        download_data(ssurl.str() + ".inv", buf_inv, list<request>(), false);
+        download_data(ssurl.str() + ".inv", buf_inv, list<request>());
 
         list<request> requests;
         string line;
@@ -488,12 +500,12 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
                         {
                             // download the data
                             stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
-                            download_data(ssurl.str(), buf_grib, requests, false);
+                            download_data(ssurl.str(), buf_grib, requests);
 
                             // decode the grib data and write into the database
                             dispatch_grib_data(buf_grib, requests, sel_locations);
 
-                            requests.clear();
+                            //requests.clear();
                         }
 
                         requests.push_back(req);
@@ -505,7 +517,7 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
         {
             // download the data
             stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
-            download_data(ssurl.str(), buf_grib, requests, true);
+            download_data(ssurl.str(), buf_grib, requests);
 
             // decode the grib data and write into the database
             dispatch_grib_data(buf_grib, requests, sel_locations);
@@ -545,17 +557,18 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
         const size_t futurehours = (preddt - predrun_).hours();
 
 
-        // first, get the inventory
+        // first, get the inventory  gfs.2009111900/master/gfs.t00z.mastergrb2f00.idx
         std::stringstream ssurl;
-        ssurl << baseurl_ << "gfs" << std::setfill('0')
+        ssurl << baseurl_ << "gfs." << std::setfill('0')
               << std::setw(4) << static_cast<int>(predrun_.date().year())
               << std::setw(2) << static_cast<int>(predrun_.date().month())
               << std::setw(2) << static_cast<int>(predrun_.date().day())
-              << "/gfs.t"   << std::setw(2) << static_cast<int>(predrun_.time_of_day().hours())
-              << "z.master.grbf" << std::setw(2) << futurehours;
+              << std::setw(2) << static_cast<int>(predrun_.time_of_day().hours())
+              << "/master/gfs.t"   << std::setw(2) << static_cast<int>(predrun_.time_of_day().hours())
+              << "z.mastergrb2f" << std::setw(2) << futurehours;
 
         std::stringstream buf_inv;
-        download_data(ssurl.str() + ".inv", buf_inv, list<request>(), false);
+        download_data(ssurl.str() + ".idx", buf_inv, list<request>());
 
         list<request> requests;
         string line;
@@ -590,12 +603,12 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
 
                         // download the data
                         stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
-                        download_data(ssurl.str(), buf_grib, requests, false);
+                        download_data(ssurl.str(), buf_grib, requests);
 
                         // decode the grib data and write into the database
                         dispatch_grib_data(buf_grib, requests, sel_locations);
 
-                        requests.clear();
+                        //requests.clear();
                     }
 
                     requests.push_back(req);
@@ -609,7 +622,7 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
                 cout << "retry " << i << endl;
             // download the data
             stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
-            download_data(ssurl.str(), buf_grib, requests, true);
+            download_data(ssurl.str(), buf_grib, requests);
 
             // decode the grib data and write into the database
             dispatch_grib_data(buf_grib, requests, sel_locations);
@@ -685,7 +698,7 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
               //tmpsfc[0:30][130:1:145][0:1:20]
 
         std::stringstream buf_response;
-        download_data(ssurl.str(), buf_response, list<request>(), false);
+        download_data(ssurl.str(), buf_response, list<request>());
 
         read_ascii_data(buf_response);
     }
@@ -720,7 +733,7 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
               //tmpsfc[0:30][130:1:145][0:1:20]
 
         std::stringstream buf_inv;
-        download_data(ssurl.str(), buf_inv, list<request>(), false);
+        download_data(ssurl.str(), buf_inv, list<request>());
 
         read_ascii_data(buf_inv);
 

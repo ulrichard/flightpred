@@ -43,7 +43,7 @@ public:
 
     std::set<feat_desc> get_standard_features(const geometry::point_ll_deg &site_location);
 
-    std::vector<double> get_features(const std::set<feat_desc> &descriptions, const boost::gregorian::date &day);
+    std::vector<double> get_features(const std::set<feat_desc> &descriptions, const boost::gregorian::date &day, const bool future);
 
 private:
     void generate_features(feat_desc feat, const std::vector<geometry::point_ll_deg> &locations,

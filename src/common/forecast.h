@@ -41,7 +41,7 @@ private:
         const std::set<features_weather::feat_desc> features = weather.get_standard_features(pred_location_);
 
         // collect the features
-        const std::vector<double> valweather = weather.get_features(features, pred_day);
+        const std::vector<double> valweather = weather.get_features(features, pred_day, true);
 
         *insit++ = pred_day.year();
         *insit++ = pred_day.day_of_year();

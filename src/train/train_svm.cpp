@@ -97,7 +97,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
                   << " "     << valflights[0] << " flights "
                   << " max " << valflights[1] << " km "
                   << " avg " << valflights[2] << " km" << std::endl;
-        const vector<double> valweather = weather.get_features(features, day);
+        const vector<double> valweather = weather.get_features(features, day, false);
         assert(valweather.size() == features.size());
 
         // put together the values to feed to the svm

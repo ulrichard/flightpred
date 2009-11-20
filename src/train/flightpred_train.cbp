@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--forecast" />
+				<Option parameters="--get-weather --train --start_date &apos;2008-10-01&apos; --end_date &apos;2008-12-31&apos;  --download_pack 10 --get-future-weather --forecast" />
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-Wmain" />
@@ -23,10 +23,10 @@
 					<Add directory="../../3rd-party/dclib" />
 				</Compiler>
 				<Linker>
-					<Add library="boost_program_options-mt-d" />
-					<Add library="boost_filesystem-mt-d" />
-					<Add library="boost_date_time-mt-d" />
-					<Add library="boost_system-mt-d" />
+					<Add library="boost_program_options-mt" />
+					<Add library="boost_filesystem-mt" />
+					<Add library="boost_date_time-mt" />
+					<Add library="boost_system-mt" />
 					<Add library="json_spirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />

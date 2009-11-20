@@ -46,11 +46,12 @@ protected:
         std::string param;
         size_t range_start, range_end; // byte positions in the large grib file on the server
     };
-    grib_grabber(const std::string &db_conn_str, const std::string &baseurl, size_t download_pack, const bool is_future);
-    void download_data(const std::string &url, std::ostream &ostr, const std::list<request> &requests, const bool download_last);
+    grib_grabber(const std::string &modelname, const std::string &db_conn_str, size_t download_pack, const bool is_future);
+    void download_data(const std::string &url, std::ostream &ostr, const std::list<request> &requests);
     void dispatch_grib_data(std::istream &istr, std::list<request> &requests, const boost::unordered_set<geometry::point_ll_deg> &sel_locations);
 
     static std::string get_base_url(const std::string &db_conn_str, const std::string &model, bool future);
+    static size_t      get_model_id(const std::string &db_conn_str, const std::string &model);
     static std::set<std::string>     get_std_levels();
     static std::set<std::string>     get_std_params();
     boost::unordered_set<geometry::point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
@@ -58,6 +59,8 @@ protected:
 
     const std::string        db_conn_str_;
     const std::string        baseurl_;
+    const std::string        modelname_;
+    const size_t             db_model_id_;
     const size_t             download_pack_;
     const bool               is_future_;
     static const size_t      PG_SIR_WGS84 = 4326;
@@ -72,7 +75,7 @@ class grib_grabber_gfs_past : public grib_grabber
 {
 public:
     grib_grabber_gfs_past(const std::string &db_conn_str, size_t download_pack)
-        : grib_grabber(db_conn_str, get_base_url(db_conn_str, "GFS", false), download_pack, false) { }
+        : grib_grabber("GFS", db_conn_str, download_pack, false) { }
     virtual ~grib_grabber_gfs_past() { }
 
     virtual void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to);
@@ -83,7 +86,7 @@ class grib_grabber_gfs_future : public grib_grabber
 {
 public:
     grib_grabber_gfs_future(const std::string &db_conn_str, size_t download_pack)
-        : grib_grabber(db_conn_str, get_base_url(db_conn_str, "GFS", true), download_pack, true) { }
+        : grib_grabber("GFS", db_conn_str, download_pack, true) { }
     virtual ~grib_grabber_gfs_future() { }
 
     virtual void grab_grib(const boost::posix_time::time_duration &future_time);
@@ -94,7 +97,7 @@ class grib_grabber_gfs_OPeNDAP : public grib_grabber
 {
 public:
     grib_grabber_gfs_OPeNDAP(const std::string &db_conn_str)
-        : grib_grabber(db_conn_str, "nomads.ncep.noaa.gov:9090/dods/gfs/", 1, true) { }
+        : grib_grabber("GFS", db_conn_str, 1, true) { } // "nomads.ncep.noaa.gov:9090/dods/gfs/"
     virtual ~grib_grabber_gfs_OPeNDAP() { }
 
     virtual void grab_grib(const boost::posix_time::time_duration &future_time);

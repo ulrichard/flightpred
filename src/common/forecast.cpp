@@ -14,6 +14,7 @@
 #include <fstream>
 #include <algorithm>
 #include <utility>
+#include <limits>
 
 using namespace flightpred;
 namespace bgreg = boost::gregorian;
@@ -22,6 +23,7 @@ using std::vector;
 using std::string;
 using std::map;
 using std::pair;
+using std::numeric_limits;
 //using std::cout;
 //using std::endl;
 
@@ -43,7 +45,12 @@ map<string, double> forecast::predict(const string &site_name, const bgreg::date
 
     map<string, double> predval;
     for(size_t k=0; k<num_fl_lbl; ++k)
-        predval[svm_names[k]] = learnedfunctions_[k].eval(samp);
+    {
+        double val = learnedfunctions_[k].eval(samp);
+        if(isnan(val))
+           val = 0.0;
+        predval[svm_names[k]] = val;
+    }
 
     return predval;
 }
@@ -119,13 +126,13 @@ void forecast::prediction_run(const size_t pred_days)
         {
             const bgreg::date day(today + bgreg::days(j));
 
+           // let the machine make it's (educated) guesses
+            map<string, double> predres = predict(it->second, day);
+
             sstr.str("");
             sstr << "INSERT INTO flight_pred (pred_site_id, train_sol_id,";
             std::copy(pred_names.begin(), pred_names.end(), std::ostream_iterator<string>(sstr, ", "));
             sstr << "calculated, pred_day) VALUES (" << it->first << ", " << solution_id_ << ", ";
-
-            // let the machine make it's (educated) guesses
-            map<string, double> predres = predict(it->second, day);
 
             BOOST_FOREACH(string predname, pred_names)
             {
@@ -137,6 +144,7 @@ void forecast::prediction_run(const size_t pred_days)
             }
 
             sstr << "Now(), '" <<  bgreg::to_iso_extended_string(day) << "')";
+            std::cout << sstr.str() << std::endl;
             res = trans.exec(sstr.str());
         }
     }

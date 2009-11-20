@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Richard Ulrich <richi@paraeasy.ch>
 Build-Depends: debhelper (>= 7), libfcgi0ldbl, 
  libboost-regex1.37-dev, libboost-program-options1.37-dev, libboost-date-time1.37-dev, libboost-signals1.37-dev, libboost-thread1.37-dev, libboost-system1.37-dev, libboost-filesystem1.37-dev, 
- witty-dev (>= 2.2.4), postgis, libpqxx-dev, proj (>=4.6.0), adduser, libgrib-api-dev (>=1.8)
+ witty-dev (>= 2.2.4), postgis, libpqxx-dev, proj (>=4.6.0), adduser, libgrib-api-dev (>=1.7.0)
 standards-Version: 3.8.1.0
 Homepage: http://sourceforge.net/projects/flightpred
 
