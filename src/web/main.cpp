@@ -9,8 +9,12 @@
 #include <Wt/WTabWidget>
 #include <Wt/WContainerWidget>
 #include <Wt/WTable>
+#include <Wt/WGoogleMap>
 // pqxx
 #include <pqxx/pqxx>
+// ggl (boost sandbox)
+#include <geometry/geometries/latlong.hpp>
+#include <geometry/io/wkt/fromwkt.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -72,7 +76,8 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     try
     {
         // get flight forecasts from the db
-        db_conn_str_ = "host=localhost dbname=flightpred user=postgres password=postgres";
+//        db_conn_str_ = "host=localhost dbname=flightpred user=postgres password=postgres";
+        db_conn_str_ = "host=192.168.2.160 port=5432 dbname=flightpred user=postgres password=postgres";
         pqxx::connection conn(db_conn_str_);
         pqxx::transaction<> trans(conn, "web prediction");
         const bgreg::date today(boost::posix_time::second_clock::universal_time().date());
@@ -187,8 +192,40 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
         table->setRenderer(i + 1, "function change(val) { return val.toFixed(2); }");
     }
 
-//    Wt::WGoogleMap *map = new Wt::WGoogleMap(parent);
+#if WT_SERIES >= 0x3
 
+    Wt::WGoogleMap *gmap = new Wt::WGoogleMap(parent);
+    gmap->resize(340, 300);
+    gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
+    gmap->enableScrollWheelZoom();
+    gmap->enableDragging();
+
+    pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
+
+    for(size_t i=0; i<model->rowCount(); ++i)
+    {
+        const string site_name = boost::any_cast<string>(model->data(i, 0));
+
+        std::stringstream sstr;
+        sstr << "SELECT AsText(location) as loc from pred_sites WHERE site_name='" << site_name << "'";
+        pqxx::result res = trans.exec(sstr.str());
+        if(!res.size())
+            continue;
+
+        string dbloc;
+        res[0][0].to(dbloc);
+        geometry::point_ll_deg dbpos;
+        geometry::from_wkt(dbloc, dbpos);
+
+        gmap->addMarker(Wt::WGoogleMap::Coordinate(dbpos.lat(), dbpos.lon()));
+
+        bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
+        bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
+        bbox.second.setLatitude( std::max(bbox.second.latitude(),  dbpos.lat()));
+        bbox.second.setLongitude(std::max(bbox.second.longitude(), dbpos.lon()));
+    }
+    gmap->zoomWindow(bbox);
+#endif
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void FlightpredApp::try_imbue(std::ostream &ostr, const string &localename)

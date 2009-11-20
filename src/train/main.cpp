@@ -11,6 +11,7 @@
 // boost
 #include <boost/program_options.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/lexical_cast.hpp>
 // standard library
 #include <iostream>
 #include <string>
@@ -18,6 +19,7 @@
 using namespace flightpred;
 namespace po    = boost::program_options;
 namespace bgreg = boost::gregorian;
+using boost::lexical_cast;
 using std::string;
 using std::cout;
 using std::endl;
@@ -32,6 +34,7 @@ int main(int argc, char* argv[])
         double area_radius = 5000.0;
         size_t download_pack = 100, train_partit = 100;
         string db_host, db_name, db_user, db_password;
+        size_t db_port;
 
         bgreg::date dtend(bgreg::day_clock::local_day());
         bgreg::date dtstart(dtend - bgreg::months(5));
@@ -56,9 +59,10 @@ int main(int argc, char* argv[])
             ("end_date",      po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
             ("download_pack", po::value<size_t>(&download_pack)->default_value(download_pack), "how many grib messages to download at once")
             ("train_partit",  po::value<size_t>(&train_partit)->default_value(train_partit), "partition the training samples into junks of n days")
-            ("db_host",       po::value<string>(&db_host)->default_value("localhost"), "name or ip of the database server")
-            ("db_name",       po::value<string>(&db_name)->default_value("flightpred"), "name of the database")
-            ("db_user",       po::value<string>(&db_user)->default_value("postgres"), "name of the database user")
+            ("db_host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
+            ("db_port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
+            ("db_name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
+            ("db_user",       po::value<string>(&db_user)->default_value("postgres"),     "name of the database user")
             ("db_password",   po::value<string>(&db_password)->default_value("postgres"), "password of the database user")
             ;
         po::variables_map vm;
@@ -67,7 +71,8 @@ int main(int argc, char* argv[])
 
         dtstart = bgreg::from_string(start_date);
         dtend   = bgreg::from_string(end_date);
-        const string db_conn_str = "host=" + db_host + " dbname=" + db_name + " user=" + db_user + " password=" + db_password;
+        const string db_conn_str = "host=" + db_host + " port=" + lexical_cast<string>(db_port)
+                                 + " dbname=" + db_name + " user=" + db_user + " password=" + db_password;
         const geometry::point_ll_deg pos = parse_position(position);
 
 

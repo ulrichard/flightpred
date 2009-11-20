@@ -19,9 +19,9 @@
 					<Add directory="../../3rd-party/ggl/boost/ggl" />
 				</Compiler>
 				<Linker>
-					<Add library="wt" />
-					<Add library="wtext" />
-					<Add library="wthttp" />
+					<Add library="wtd" />
+					<Add library="wtextd" />
+					<Add library="wthttpd" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
 				</Linker>
