@@ -51,6 +51,8 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="WGoogleMapEx.cpp" />
+		<Unit filename="WGoogleMapEx.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
 		<Extensions>

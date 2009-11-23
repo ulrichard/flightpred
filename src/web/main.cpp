@@ -1,5 +1,6 @@
 // flightpred
 #include "main.h"
+#include "WGoogleMapEx.h"
 // witty
 #include <Wt/WEnvironment>
 #include <Wt/WText>
@@ -9,7 +10,6 @@
 #include <Wt/WTabWidget>
 #include <Wt/WContainerWidget>
 #include <Wt/WTable>
-#include <Wt/WGoogleMap>
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -116,7 +116,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
         sstr << "<iframe src=\"http://flightpred.svn.sourceforge.net/viewvc/flightpred/trunk/doc/index.html\" width=\"100%\" height=\"100%\"></iframe>";
         Wt::WText *txIFrame = new Wt::WText(sstr.str(), Wt::XHTMLUnsafeText);
         docupanel->addWidget(txIFrame);
-        tabw->resize(Wt::WLength(100.0, Wt::WLength::Percentage), Wt::WLength(100.0, Wt::WLength::Percentage));
+        docupanel->resize(Wt::WLength(100.0, Wt::WLength::Percentage), Wt::WLength(100.0, Wt::WLength::Percentage));
 
 
     }
@@ -148,6 +148,7 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
     for(vector<pair<size_t, string> >::iterator it = sites_.begin(); it != sites_.end(); ++it)
     {
         const size_t row = std::distance(sites_.begin(), it);
+        model->setData(row, 0, any(it->second));
 
         std::stringstream sstr;
         sstr << "SELECT ";
@@ -158,7 +159,6 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
         if(!res.size())
             continue;
 
-        model->setData(row, 0, any(it->second));
         for(size_t i=0; i<pred_names.size(); ++i)
         {
             double val;
@@ -181,7 +181,7 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
     new Wt::WText(sstr.str(), parent);
 
     Wt::Ext::TableView *table = new Wt::Ext::TableView(parent);
-    table->resize(340, 300);
+    table->resize(340, 200);
     table->setModel(model);
     table->setColumnSortable(0, true);
     table->setColumnWidth(0, 75);
@@ -194,7 +194,7 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
 
 #if WT_SERIES >= 0x3
 
-    Wt::WGoogleMap *gmap = new Wt::WGoogleMap(parent);
+    Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parent);
     gmap->resize(340, 300);
     gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
     gmap->enableScrollWheelZoom();
@@ -217,7 +217,7 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
         geometry::point_ll_deg dbpos;
         geometry::from_wkt(dbloc, dbpos);
 
-        gmap->addMarker(Wt::WGoogleMap::Coordinate(dbpos.lat(), dbpos.lon()));
+        gmap->addMarker(Wt::WGoogleMap::Coordinate(dbpos.lat(), dbpos.lon()), "/sigma.gif");
 
         bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
         bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
