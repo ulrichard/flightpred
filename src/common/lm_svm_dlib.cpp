@@ -52,7 +52,7 @@ public:
 void lm_svm_dlib_impl::train(const learning_machine::SampleType &samplesin, const vector<double> &labels)
 {
     assert(samplesin.size() == labels.size());
-
+/*
     // partition the data
     typedef learning_machine::SampleType::const_iterator iterTsamp;
     vector<boost::iterator_range<iterTsamp> > ranges_samp;
@@ -62,7 +62,7 @@ void lm_svm_dlib_impl::train(const learning_machine::SampleType &samplesin, cons
     partition_range(labels, train_partition_, std::inserter(ranges_lbl, ranges_lbl.end()));
     assert(ranges_samp.size() == ranges_lbl.size());
     cout << "splitted the " << samplesin.size() << " samples into " << ranges_samp.size() << " partitions." << endl;
-
+*/
 
 
     // format transformation
@@ -83,8 +83,10 @@ void lm_svm_dlib_impl::train(const learning_machine::SampleType &samplesin, cons
 
     cout << "train the support vector machine" << endl;
     dlib::rvm_regression_trainer<kernel_type> trainer;
-    trainer.set_kernel(kernel_type(0.05));
-    learnedfunc_ = dlib::reduced2(trainer, train_partition_ / 3).train(samples, labels);
+//    trainer.set_kernel(kernel_type(0.05));
+    trainer.set_kernel(kernel_type(0.005));
+//    learnedfunc_ = dlib::reduced2(trainer, train_partition_ / 3).train(samples, labels);
+    learnedfunc_ = trainer.train(samples, labels);
     cout << "the resulting SVM has " << learnedfunc_.support_vectors.nr() << " support vectors." << endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

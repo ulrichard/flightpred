@@ -1,3 +1,5 @@
+
+#if WT_SERIES >= 0x3
 // witty
 #include "WGoogleMapEx.h"
 
@@ -15,3 +17,5 @@ void WGoogleMapEx::addMarker(const Coordinate &pos, const string url)
 
     doGmJavaScript(strm.str(), false);
 }
+
+#endif

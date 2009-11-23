@@ -1,6 +1,8 @@
 // flightpred
 #include "main.h"
-#include "WGoogleMapEx.h"
+#if WT_SERIES >= 0x3
+ #include "WGoogleMapEx.h"
+#endif
 // witty
 #include <Wt/WEnvironment>
 #include <Wt/WText>

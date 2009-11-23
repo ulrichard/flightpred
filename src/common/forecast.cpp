@@ -111,7 +111,7 @@ void forecast::prediction_run(const size_t pred_days)
         throw std::invalid_argument("no sites found");
     vector<pair<size_t, string> > sites;
 
-    for(int l=0; l<res.size(); ++l)
+    for(size_t l=0; l<res.size(); ++l)
     {
         size_t pred_site_id;
         res[l]["pred_site_id"].to(pred_site_id);
@@ -144,7 +144,7 @@ void forecast::prediction_run(const size_t pred_days)
             }
 
             sstr << "Now(), '" <<  bgreg::to_iso_extended_string(day) << "')";
-            std::cout << sstr.str() << std::endl;
+//            std::cout << sstr.str() << std::endl;
             res = trans.exec(sstr.str());
         }
     }
