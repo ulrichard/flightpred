@@ -30,6 +30,7 @@
 
 using namespace flightpred;
 namespace bgreg = boost::gregorian;
+namespace bpt   = boost::posix_time;
 using boost::array;
 using boost::any;
 using std::string;
@@ -108,6 +109,10 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
         Wt::WTable *maintable = new Wt::WTable(forecastpanel);
         for(size_t j=0; j<forecast_days; ++j)
             makePredDay(today + bgreg::days(j), maintable->elementAt(0, j));
+
+        Wt::WContainerWidget *weatherpanel = new Wt::WContainerWidget();
+        tabw->addTab(weatherpanel, _("Weather data"));
+        showWeatherData(weatherpanel, "GFS", "TMP", 0, bpt::ptime(today, bpt::time_duration(0, 0, 0)));
 
 
         Wt::WContainerWidget *docupanel = new Wt::WContainerWidget();
@@ -247,3 +252,62 @@ void FlightpredApp::try_imbue(std::ostream &ostr, const string &localename)
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void FlightpredApp::showWeatherData(Wt::WContainerWidget *parent, const string &model_name, const string &param, size_t level, const bpt::ptime &when)
+{
+    // get weather prediction data from the db
+    pqxx::connection conn(db_conn_str_);
+    pqxx::transaction<> trans(conn, "web prediction");
+
+    std::stringstream sstr;
+    sstr << "SELECT model_id from weather_models WHERE model_name='GFS'";
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("GFS model not found");
+    size_t model_id;
+    res[0][0].to(model_id);
+
+
+    sstr.str("");
+    sstr << "SELECT AsText(location) as loc, value FROM weather_pred_future "
+         << "WHERE model_id=" << model_id << " "
+         << "AND parameter='" << param << "' "
+         << "AND level="      << level << " "
+         << "AND pred_time='" << bgreg::to_iso_extended_string(when.date()) << " "
+         << std::setfill('0') << std::setw(2) << when.time_of_day().hours() << ":00:00'";
+    res = trans.exec(sstr.str());
+
+
+#if WT_SERIES >= 0x3
+
+
+
+    Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parent);
+    gmap->resize(1000, 700);
+    gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
+    gmap->enableScrollWheelZoom();
+    gmap->enableDragging();
+
+    pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
+
+    for(size_t i=0; i<res.size(); ++i)
+    {
+        string dbloc;
+        res[i]["loc"].to(dbloc);
+        geometry::point_ll_deg dbpos;
+        geometry::from_wkt(dbloc, dbpos);
+        double val;
+        res[i]["value"].to(val);
+
+        gmap->addMarker(Wt::WGoogleMap::Coordinate(dbpos.lat(), dbpos.lon()), "/sigma.gif");
+
+        bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
+        bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
+        bbox.second.setLatitude( std::max(bbox.second.latitude(),  dbpos.lat()));
+        bbox.second.setLongitude(std::max(bbox.second.longitude(), dbpos.lon()));
+    }
+    gmap->zoomWindow(bbox);
+#endif
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+
+
