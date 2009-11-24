@@ -4,20 +4,31 @@
 // witty
 #include <Wt/WGoogleMap>
 
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 namespace Wt
 {
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 class WGoogleMapEx : public WGoogleMap
 {
 public:
-    WGoogleMapEx(WContainerWidget *parent = 0) : WGoogleMap(parent) { }
+    WGoogleMapEx(WContainerWidget *parent = 0);
     virtual ~WGoogleMapEx() { }
 
     /*! \brief Add a marker overlay to the map.
     */
-    void addMarker(const Coordinate &pos, const std::string url);
+    void addMarker(const Coordinate &pos, const std::string &imgUrl);
+
+    /*! \brief Add a radius overlay to the map. Sorry about the monster interface...
+    */
+    void addCircle(const Coordinate &pos, const double radiusKm,
+        const WColor &strokeColor, const size_t strokeWeightPx, const float strokeOpacity, const bool doFill,
+        const WColor &fillColor,   const float fillOpacity, const std::string &tooltip);
 
 private:
 
 };
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace Wt
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 #endif // WGOOGLEMAPEX_H_INCLUDED
+

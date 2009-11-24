@@ -69,7 +69,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
  : Wt::WApplication(env)
 {
 	setTitle(_("free flight prediction system")); // application title
-//	useStyleSheet("flightpred.css");
+	useStyleSheet("flightpred.css");
     cout << "create a new session. locale is : " << locale() << endl;
 
 
@@ -109,6 +109,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
 
         const size_t forecast_days = 3;
         Wt::WTable *maintable = new Wt::WTable(forecastpanel);
+        maintable->setStyleClass("forecastTable");
         for(size_t j=0; j<forecast_days; ++j)
             makePredDay(today + bgreg::days(j), maintable->elementAt(0, j));
 
@@ -188,7 +189,7 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
     new Wt::WText(sstr.str(), parent);
 
     Wt::Ext::TableView *table = new Wt::Ext::TableView(parent);
-    table->resize(340, 200);
+    table->resize(346, 200);
     table->setModel(model);
     table->setColumnSortable(0, true);
     table->setColumnWidth(0, 75);
@@ -202,7 +203,7 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
 #if WT_SERIES >= 0x3
 
     Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parent);
-    gmap->resize(340, 300);
+    gmap->resize(346, 300);
     gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
     gmap->enableScrollWheelZoom();
     gmap->enableDragging();
@@ -224,7 +225,10 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
         geometry::point_ll_deg dbpos;
         geometry::from_wkt(dbloc, dbpos);
 
-        gmap->addMarker(Wt::WGoogleMap::Coordinate(dbpos.lat(), dbpos.lon()), "/sigma.gif");
+        const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
+        gmap->addMarker(gmCoord, "/sigma.gif");
+        const double radiusKm = 20.0;
+//        gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 2, 0.7, true, Wt::WColor("#FF0000"), 0.3, "");
 
         bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
         bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
@@ -300,7 +304,8 @@ void FlightpredApp::showWeatherData(Wt::WContainerWidget *parent, const string &
         double val;
         res[i]["value"].to(val);
 
-        gmap->addMarker(Wt::WGoogleMap::Coordinate(dbpos.lat(), dbpos.lon()), "/sigma.gif");
+        const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
+        gmap->addMarker(gmCoord, "/sigma.gif");
 
         bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
         bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));

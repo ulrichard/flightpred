@@ -28,7 +28,7 @@ function BDCCArrow(point, rotation, color, opacity, tooltip) {
   this.svgId_ = "BDCCArrow" + arrowMarkerCounter.toString();
 
 }
-BDCCArrow.prototype = new GOverlay();
+BDCCArrow.prototype = new google.maps.Overlay();
 
 BDCCArrow.prototype.getPoint = function(){
     return this.point_;

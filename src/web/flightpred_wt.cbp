@@ -55,6 +55,8 @@
 		<Unit filename="WGoogleMapEx.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
+		<Unit filename="../../www_docroot/googlemaps_addons/BDCCArrow.js" />
+		<Unit filename="../../www_docroot/googlemaps_addons/BDCCCircle.js" />
 		<Extensions>
 			<envvars />
 			<code_completion />
