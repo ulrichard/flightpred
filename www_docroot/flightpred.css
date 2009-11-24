@@ -1,9 +1,12 @@
 
-table.forecastTable td
+table.forecastTable 
 {
-	padding: 3px 2px 3px 2px;
 	
 }
 
+td.forecastTableCell 
+{
+	padding: 2px 2px 2px 2px;
+}
 
 

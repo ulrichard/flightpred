@@ -30,7 +30,7 @@ public:
 
 protected:
     virtual void finalize();
-    void makePredDay(const boost::gregorian::date &day, Wt::WContainerWidget *parent);
+    void makePredDay(const boost::gregorian::date &day, Wt::WContainerWidget *parentForTable, Wt::WContainerWidget *parentForMap);
     void showWeatherData(Wt::WContainerWidget *parent, const std::string &model_name, const std::string &param, size_t level, const boost::posix_time::ptime &when);
 private:
     void try_imbue(std::ostream &ostr, const std::string &localename);

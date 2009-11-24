@@ -111,7 +111,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
         Wt::WTable *maintable = new Wt::WTable(forecastpanel);
         maintable->setStyleClass("forecastTable");
         for(size_t j=0; j<forecast_days; ++j)
-            makePredDay(today + bgreg::days(j), maintable->elementAt(0, j));
+            makePredDay(today + bgreg::days(j), maintable->elementAt(0, j), maintable->elementAt(1, j));
 
         Wt::WContainerWidget *weatherpanel = new Wt::WContainerWidget();
         tabw->addTab(weatherpanel, _("Weather data"));
@@ -140,7 +140,7 @@ void FlightpredApp::finalize()
     // clean up
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *parent)
+void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *parentForTable, Wt::WContainerWidget *parentForMap)
 {
     // get flight forecasts from the db
     pqxx::connection conn(db_conn_str_);
@@ -186,9 +186,10 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
         sstr << _(" (today)");
     if(day == today + bgreg::days(1))
         sstr << _(" (tomorrow)");
-    new Wt::WText(sstr.str(), parent);
+    new Wt::WText(sstr.str(), parentForTable);
 
-    Wt::Ext::TableView *table = new Wt::Ext::TableView(parent);
+    parentForTable->setStyleClass("forecastTableCell");
+    Wt::Ext::TableView *table = new Wt::Ext::TableView(parentForTable);
     table->resize(346, 200);
     table->setModel(model);
     table->setColumnSortable(0, true);
@@ -202,7 +203,8 @@ void FlightpredApp::makePredDay(const bgreg::date &day, Wt::WContainerWidget *pa
 
 #if WT_SERIES >= 0x3
 
-    Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parent);
+    parentForMap->setStyleClass("forecastTableCell");
+    Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parentForMap);
     gmap->resize(346, 300);
     gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
     gmap->enableScrollWheelZoom();
