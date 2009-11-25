@@ -51,8 +51,12 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="FlightForecast.cpp" />
+		<Unit filename="FlightForecast.h" />
 		<Unit filename="WGoogleMapEx.cpp" />
 		<Unit filename="WGoogleMapEx.h" />
+		<Unit filename="WeatherMap.cpp" />
+		<Unit filename="WeatherMap.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
 		<Unit filename="../../www_docroot/googlemaps_addons/BDCCArrow.js" />

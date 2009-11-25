@@ -1,7 +1,7 @@
 PROJECT(flightpred_web)
 SET(CMAKE_MODULE_PATH ${flightpred_train_SOURCE_DIR})
 
-ADD_EXECUTABLE(flightpred_web.fcgi main.cpp WGoogleMapEx.cpp)
+ADD_EXECUTABLE(flightpred_web.fcgi main.cpp WGoogleMapEx.cpp FlightForecast.cpp WeatherMap.cpp)
 TARGET_LINK_LIBRARIES(flightpred_web.fcgi flightpred_common wt wtfcgi wtext pqxx grib_api )
 
 SET_TARGET_PROPERTIES(

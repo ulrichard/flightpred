@@ -42,6 +42,18 @@ void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
     doGmJavaScript(strm.str(), true);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::addArrow(const Coordinate &pos, const double rotationDeg,
+        const WColor &color, const float opacity, const std::string &tooltip)
+{
+    std::ostringstream strm;
+    strm << "var pos = new google.maps.LatLng(" << pos.latitude() << ", " << pos.longitude() << "); "
+         << "var arrow = new BDCCArrow(pos, " << rotationDeg << ", \"" << color.cssText() << "\", "
+         <<         opacity << ", \"" << tooltip << "\"); "
+         << jsRef() << ".map.addOverlay(arrow);";
+
+    doGmJavaScript(strm.str(), true);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 
 
 #endif
