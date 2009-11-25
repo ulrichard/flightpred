@@ -144,7 +144,9 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     {
         std::cout << "train the support vector machine for " << svm_names[i] << " at site: " << site_name <<  std::endl;
         boost::timer btim;
-        lm_svm_dlib dlibsvmtrainer(svm_names[i], db_conn_str_, train_partition_);
+        const double gamma = 0.01;
+//        lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibsvmtrainer(svm_names[i], db_conn_str_, gamma);
+        lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibsvmtrainer(svm_names[i], db_conn_str_, gamma);
         dlibsvmtrainer.train(training_samples, labels[i]);
         traintime += btim.elapsed();
         std::cout << "training took " << btim.elapsed() / 60.0 << " min" << std::endl;

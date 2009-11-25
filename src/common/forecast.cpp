@@ -90,7 +90,9 @@ void forecast::load_learned_functins(const std::string &site_name)
     // de-serialize the svm's from the database blob
     for(size_t j=0; j<num_fl_lbl; ++j)
     {
-        learnedfunctions_.push_back(new lm_svm_dlib(svm_names[j], db_conn_str_, 0));
+//        typedef lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibtrainer;
+        typedef lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibtrainer;
+        learnedfunctions_.push_back(new dlibtrainer(svm_names[j], db_conn_str_, 0.01));
         learnedfunctions_.back().read_from_db(solution_id_);
     }
 }

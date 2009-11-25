@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
     {
         string name, position, start_date, end_date, pred_model;
         double area_radius = 5000.0;
-        size_t download_pack = 100, train_partit = 100;
+        size_t download_pack = 100;
         string db_host, db_name, db_user, db_password;
         size_t db_port;
 
@@ -58,7 +58,6 @@ int main(int argc, char* argv[])
             ("start_date",    po::value<string>(&start_date)->default_value(start_date), "start date (yyyy/mm/dd)")
             ("end_date",      po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
             ("download_pack", po::value<size_t>(&download_pack)->default_value(download_pack), "how many grib messages to download at once")
-            ("train_partit",  po::value<size_t>(&train_partit)->default_value(train_partit), "partition the training samples into junks of n days")
             ("db_host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
             ("db_port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
             ("db_name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
@@ -118,7 +117,7 @@ int main(int argc, char* argv[])
 
         if(vm.count("train"))
         {
-            train_svm trainer(db_conn_str, train_partit);
+            train_svm trainer(db_conn_str);
             if(name.length())
                 trainer.train(name, dtstart, dtend);
             else

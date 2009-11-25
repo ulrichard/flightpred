@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--get-weather --train --start_date &apos;2008-10-01&apos; --end_date &apos;2008-12-31&apos;  --download_pack 10 --get-future-weather --forecast" />
+				<Option parameters="--forecast" />
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-Wmain" />
@@ -78,7 +78,6 @@
 		<Unit filename="../common/grib_pred_model.cpp" />
 		<Unit filename="../common/grib_pred_model.h" />
 		<Unit filename="../common/learning_machine.h" />
-		<Unit filename="../common/lm_svm_dlib.cpp" />
 		<Unit filename="../common/lm_svm_dlib.h" />
 		<Unit filename="area_mgr.cpp" />
 		<Unit filename="area_mgr.h" />
