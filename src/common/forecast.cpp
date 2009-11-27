@@ -47,7 +47,7 @@ map<string, double> forecast::predict(const string &site_name, const bgreg::date
     for(size_t k=0; k<num_fl_lbl; ++k)
     {
         double val = learnedfunctions_[k].eval(samp);
-        if(isnan(val))
+        if(isnan(val) || val < 0.0)
            val = 0.0;
         predval[svm_names[k]] = val;
     }
@@ -79,7 +79,7 @@ void forecast::load_learned_functins(const std::string &site_name)
     const array<string, num_fl_lbl> svm_names = {"svm_num_flight", "svm_max_dist", "svm_avg_dist", "svm_max_dur", "svm_avg_dur"};
     sstr.str("");
     sstr << "SELECT train_sol_id, configuration, score, train_time, generation FROM trained_solutions WHERE "
-         << "pred_site_id=" << pred_site_id << " ORDER BY score DESC";
+         << "pred_site_id=" << pred_site_id << " ORDER BY score DESC, generation DESC";
     res = trans.exec(sstr.str());
     if(!res.size())
         throw std::runtime_error("no configuration found for : " + site_name);

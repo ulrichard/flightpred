@@ -48,8 +48,11 @@ int main(int argc, char* argv[])
             ("get-flights",	       "get flights from online competition (name) [import from local files at the moment]")
             ("register-area",      "register a flight area for prediction (name, position, area_radius[km])")
             ("get-weather",        "get past weather prediction grib data for central europe (start_date, end_date, download_pack)")
-            ("get-future-weather", "get future weather prediction grib data for central europe (download_pack)")
+            ("init-population",    "create an initial generation 0 of solutions (name)")
+            ("evolution-single",   "evolve a single generation (name)")
+            ("evolution-converge", "run the evolution until the progress falls below a threshold (name)")
             ("train",		       "train the system (name, start_date, end_date)")
+            ("get-future-weather", "get future weather prediction grib data for central europe (download_pack)")
             ("forecast",           "predict possible flights for the next few days")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
             ("position",      po::value<string>(&position)->default_value("N 0 E 0"), "geographic position")
@@ -103,15 +106,22 @@ int main(int argc, char* argv[])
             show_help_msg = false;
         }
 
-        if(vm.count("get-future-weather"))
+        if(vm.count("init-population"))
         {
-            if(pred_model == "GFS")
-            {
-                grib_grabber_gfs_future gr(db_conn_str, download_pack);
-                gr.grab_grib(boost::posix_time::hours(24 * 4));
-            }
-            else
-                throw std::invalid_argument("unknown model: " + pred_model);
+
+
+            show_help_msg = false;
+        }
+
+        if(vm.count("evolution-single"))
+        {
+
+            show_help_msg = false;
+        }
+
+        if(vm.count("evolution-converge"))
+        {
+
             show_help_msg = false;
         }
 
@@ -122,6 +132,18 @@ int main(int argc, char* argv[])
                 trainer.train(name, dtstart, dtend);
             else
                 trainer.train_all(dtstart, dtend);
+            show_help_msg = false;
+        }
+
+        if(vm.count("get-future-weather"))
+        {
+            if(pred_model == "GFS")
+            {
+                grib_grabber_gfs_future gr(db_conn_str, download_pack);
+                gr.grab_grib(boost::posix_time::hours(24 * 4));
+            }
+            else
+                throw std::invalid_argument("unknown model: " + pred_model);
             show_help_msg = false;
         }
 

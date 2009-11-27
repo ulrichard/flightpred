@@ -22,6 +22,7 @@ public:
     virtual ~learning_machine() { }
 
     typedef std::vector<std::vector<double> > SampleType;
+
     virtual void   train(const SampleType &samples, const std::vector<double> &labels) = 0;
     virtual double eval(const std::vector<double> &sample) const = 0;
     virtual void   write_to_db(const size_t conf_id) = 0;

@@ -8,6 +8,7 @@ geo_parser.cpp
 grab_flights.cpp
 grab_grib.cpp
 grib_pred_model.cpp
+solution_config.cpp
 )
 
 ADD_LIBRARY(flightpred_common ${libsources})

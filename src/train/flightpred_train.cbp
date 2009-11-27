@@ -79,6 +79,8 @@
 		<Unit filename="../common/grib_pred_model.h" />
 		<Unit filename="../common/learning_machine.h" />
 		<Unit filename="../common/lm_svm_dlib.h" />
+		<Unit filename="../common/solution_config.cpp" />
+		<Unit filename="../common/solution_config.h" />
 		<Unit filename="area_mgr.cpp" />
 		<Unit filename="area_mgr.h" />
 		<Unit filename="extract_features_flight.cpp" />
