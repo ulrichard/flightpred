@@ -8,6 +8,8 @@
 #include <geometry/io/wkt/fromwkt.hpp>
 // boost
 #include <boost/foreach.hpp>
+#include <boost/bind.hpp>
+#include <boost/ref.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 104000
   #include <boost/spirit/include/qi_core.hpp>
@@ -16,12 +18,17 @@
   #include <boost/spirit/include/classic_core.hpp>
   #include <boost/spirit/include/classic_attribute.hpp>
   #include <boost/spirit/include/classic_symbols.hpp>
-//  #include <boost/spirit/include/classic_chset.hpp>
+  #include <boost/spirit/include/phoenix1_actor.hpp>
+  #include <boost/spirit/include/phoenix1_statements.hpp>
   using namespace boost::spirit::classic;
+  using namespace phoenix;
 #endif
 
 using namespace flightpred;
+using geometry::point_ll_deg;
 using boost::shared_ptr;
+using boost::bind;
+using boost::ref;
 using std::string;
 using std::vector;
 using std::map;
@@ -82,11 +89,32 @@ vector<shared_ptr<solution_config> > solution_config::get_initial_generation(con
     return solutions;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+struct assignhour
+{
+    assignhour(boost::posix_time::time_duration &tdur) : tdur_(tdur) { }
+
+    void operator()(const int val) const
+    {
+        tdur_ = boost::posix_time::hours(val);
+    }
+private:
+    boost::posix_time::time_duration &tdur_;
+};
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_config::decode()
 {
+    features_desc_.clear();
+
 #if BOOST_VERSION >= 104000
   #error will have to implement the parser with the new spirit
 #else
+
+    features_weather::feat_desc currfeat;
+    vector<features_weather::feat_desc> features;
+    double currgamma;
+
+    void (point_ll_deg::*setlon)(const double &v) = &point_ll_deg::lon;
+    void (point_ll_deg::*setlat)(const double &v) = &point_ll_deg::lat;
 
 //    typedef char                    char_t;
 //	typedef file_iterator <char_t>  iterator_t;
@@ -94,31 +122,27 @@ void solution_config::decode()
 //	typedef rule<scanner_t>         rule_t;
 	typedef rule<>         rule_t;
 
-	rule_t kernel_dlib_rbf = "RBF(" >> ureal_p >> ")";
-	rule_t kernel_dlib = kernel_dlib_rbf;
-
-	rule_t algo_dlib_rvm  = "DLIB_RVM(" >> kernel_dlib >> ")";
-	rule_t algo_dlib_krls = "DLIB_KRLS(" >> kernel_dlib >> ")";
+	rule_t kernel_dlib_rbf = "RBF(" >> ureal_p[assign_a(currgamma)] >> ")";
+	rule_t algo_dlib_rvm  = "DLIB_RVM(" >> kernel_dlib_rbf >> ")";
+	rule_t algo_dlib_krls = "DLIB_KRLS(" >> kernel_dlib_rbf >> ")";
 	rule_t algo = algo_dlib_rvm | algo_dlib_krls;
 
-	rule_t model_gfs = str_p("GFS");
+	rule_t model_gfs = str_p("GFS")[assign_a(currfeat.model)];
 	rule_t model = model_gfs;
-
-	rule_t reltime = int_p >> ":00:00";
-
-	rule_t location = "POINT(" >> real_p >> real_p >> ")";
-
-	rule_t level = int_p;
-
-	rule_t param = +upper_p;
-
-	rule_t weather_feature = "FEATURE(" >> model >> reltime >> location >> level >> param >> ")";
+	rule_t reltime = int_p[assignhour(currfeat.reltime)] >> ":00:00";
+	rule_t location = "POINT(" >> real_p[bind(setlon, ref(currfeat.location), _1)]
+                               >> real_p[bind(setlat, ref(currfeat.location), _1)] >> ")";
+	rule_t level = int_p[assign_a(currfeat.level)];
+	rule_t param = (+upper_p)[assign_a(currfeat.param)];
+	rule_t weather_feature = ("FEATURE(" >> model >> reltime >> location >> level >> param >> ")")[push_back_a(features, currfeat)];
 
 	rule_t solution_description = algo >> weather_feature % ' ';
 
     parse_info<> info = parse(solution_description_.c_str(), solution_description, space_p);
     if(!info.full)
         throw std::runtime_error("failed to parse solution description");
+
+    std::copy(features.begin(), features.end(), std::inserter(features_desc_, features_desc_.end()));
 #endif
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
