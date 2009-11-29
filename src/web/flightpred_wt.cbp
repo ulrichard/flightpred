@@ -19,9 +19,9 @@
 					<Add directory="../../3rd-party/ggl/boost/ggl" />
 				</Compiler>
 				<Linker>
-					<Add library="wtd" />
-					<Add library="wtextd" />
-					<Add library="wthttpd" />
+					<Add library="wt" />
+					<Add library="wtext" />
+					<Add library="wthttp" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
 				</Linker>
@@ -59,8 +59,6 @@
 		<Unit filename="WeatherMap.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
-		<Unit filename="../../www_docroot/googlemaps_addons/BDCCArrow.js" />
-		<Unit filename="../../www_docroot/googlemaps_addons/BDCCCircle.js" />
 		<Extensions>
 			<envvars />
 			<code_completion />

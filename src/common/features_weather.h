@@ -45,6 +45,8 @@ public:
 
     std::vector<double> get_features(const std::set<feat_desc> &descriptions, const boost::gregorian::date &day, const bool future);
 
+    boost::gregorian::date_period get_feature_date_period(const bool future_table);
+
 private:
     void generate_features(feat_desc feat, const std::vector<geometry::point_ll_deg> &locations,
         const boost::posix_time::time_duration &from, const boost::posix_time::time_duration &to, std::set<feat_desc> &features);

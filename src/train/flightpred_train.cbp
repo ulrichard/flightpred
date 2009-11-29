@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--forecast" />
+				<Option parameters="--init-population --name Fiesch" />
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-Wmain" />
@@ -63,6 +63,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add directory="../" />
 		</Compiler>
 		<Unit filename="../../scripts/create_flightpred_db.sql" />
 		<Unit filename="../common/features_weather.cpp" />
@@ -81,6 +82,8 @@
 		<Unit filename="../common/lm_svm_dlib.h" />
 		<Unit filename="../common/solution_config.cpp" />
 		<Unit filename="../common/solution_config.h" />
+		<Unit filename="../common/solution_manager.cpp" />
+		<Unit filename="../common/solution_manager.h" />
 		<Unit filename="area_mgr.cpp" />
 		<Unit filename="area_mgr.h" />
 		<Unit filename="extract_features_flight.cpp" />

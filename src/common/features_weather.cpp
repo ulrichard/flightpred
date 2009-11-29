@@ -156,12 +156,12 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
     sstr << "SELECT pred_time, AsText(location) as loc, level, parameter, value FROM " << table_name << " "
          << "WHERE pred_time >= '" << bgreg::to_iso_extended_string(day - bgreg::days(1)) << " 00:00:00' "
          << "AND   pred_time <  '" << bgreg::to_iso_extended_string(day + bgreg::days(2)) << " 00:00:00' "
-         << "AND ( ";
+         << "AND   location IN(";
     for(vector<point_ll_deg>::const_iterator it = locations.begin(); it != locations.end(); ++it)
     {
         if(it != locations.begin())
-            sstr << " OR ";
-        sstr << "location = ST_GeomFromText('" << geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
+            sstr << ", ";
+        sstr << "ST_GeomFromText('" << geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
     }
     sstr << ")";
     pqxx::result res = trans.exec(sstr.str());
@@ -210,6 +210,30 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
         values.push_back(it->second);
 
     return values;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+bgreg::date_period features_weather::get_feature_date_period(const bool future_table)
+{
+    pqxx::connection conn(db_conn_str_);
+    pqxx::transaction<> trans(conn, "collect weather features");
+    const string table_name(future_table ? "weather_pred_future" : "weather_pred");
+    std::stringstream sstr;
+    sstr << "SELECT pred_time FROM " << table_name << " " << "ORDER BY pred_time ASC LIMIT 5";
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("no weather features found.");
+    string strfrom;
+    res[0][0].to(strfrom);
+    const bpt::ptime ptfrom = bpt::time_from_string(strfrom);
+    sstr << "SELECT pred_time FROM " << table_name << " " << "ORDER BY pred_time DESC LIMIT 5";
+    res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("no weather features found.");
+    string strto;
+    res[0][0].to(strto);
+    const bpt::ptime ptto = bpt::time_from_string(strto);
+
+    return bgreg::date_period(ptfrom.date(), ptto.date());
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

@@ -10,6 +10,7 @@
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 104000
   #include <boost/spirit/include/qi_core.hpp>
@@ -29,6 +30,7 @@ using geometry::point_ll_deg;
 using boost::shared_ptr;
 using boost::bind;
 using boost::ref;
+using boost::lexical_cast;
 using std::string;
 using std::vector;
 using std::map;
@@ -71,14 +73,14 @@ vector<shared_ptr<solution_config> > solution_config::get_initial_generation(con
     algo_desc.push_back("DLIB_RVM(RBF(0.005))");
     algo_desc.push_back("DLIB_RVM(RBF(0.001))");
     algo_desc.push_back("DLIB_RVM(RBF(0.0001))");
-    algo_desc.push_back("DLIB_KRLS(RBF(0.01),   0.01)");
-    algo_desc.push_back("DLIB_KRLS(RBF(0.01),   0.001)");
-    algo_desc.push_back("DLIB_KRLS(RBF(0.01),   0.0001)");
-    algo_desc.push_back("DLIB_KRLS(RBF(0.01),   0.00001)");
-    algo_desc.push_back("DLIB_KRLS(RBF(0.007),  0.001)");
-    algo_desc.push_back("DLIB_KRLS(RBF(0.005),  0.001)");
-    algo_desc.push_back("DLIB_KRLS(RBF(0.001),  0.001)");
-    algo_desc.push_back("DLIB_KRLS(RBF(0.0001), 0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.01)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.0001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.00001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.007)  0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.005)  0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.001)  0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.0001) 0.001)");
 
 
     vector<shared_ptr<solution_config> > solutions;
@@ -111,36 +113,31 @@ void solution_config::decode()
 
     features_weather::feat_desc currfeat;
     vector<features_weather::feat_desc> features;
-    double currgamma;
+    double currgamma, currfact;
 
     void (point_ll_deg::*setlon)(const double &v) = &point_ll_deg::lon;
     void (point_ll_deg::*setlat)(const double &v) = &point_ll_deg::lat;
-
-//    typedef char                    char_t;
-//	typedef file_iterator <char_t>  iterator_t;
-//	typedef scanner<iterator_t>     scanner_t;
-//	typedef rule<scanner_t>         rule_t;
-	typedef rule<>         rule_t;
+	typedef rule<> rule_t;
 
 	rule_t kernel_dlib_rbf = "RBF(" >> ureal_p[assign_a(currgamma)] >> ")";
 	rule_t algo_dlib_rvm  = "DLIB_RVM(" >> kernel_dlib_rbf >> ")";
-	rule_t algo_dlib_krls = "DLIB_KRLS(" >> kernel_dlib_rbf >> ")";
+	rule_t algo_dlib_krls = "DLIB_KRLS(" >> kernel_dlib_rbf >> *blank_p >> ureal_p[assign_a(currfact)] >> ")";
 	rule_t algo = algo_dlib_rvm | algo_dlib_krls;
 
 	rule_t model_gfs = str_p("GFS")[assign_a(currfeat.model)];
 	rule_t model = model_gfs;
 	rule_t reltime = int_p[assignhour(currfeat.reltime)] >> ":00:00";
 	rule_t location = "POINT(" >> real_p[bind(setlon, ref(currfeat.location), _1)]
-                               >> real_p[bind(setlat, ref(currfeat.location), _1)] >> ")";
+                    >> blank_p >> real_p[bind(setlat, ref(currfeat.location), _1)] >> ")";
 	rule_t level = int_p[assign_a(currfeat.level)];
 	rule_t param = (+upper_p)[assign_a(currfeat.param)];
-	rule_t weather_feature = ("FEATURE(" >> model >> reltime >> location >> level >> param >> ")")[push_back_a(features, currfeat)];
+	rule_t weather_feature = ("FEATURE(" >> model >> blank_p >> reltime >> blank_p >> location >> blank_p >> level >> blank_p >> param >> ")")[push_back_a(features, currfeat)];
 
-	rule_t solution_description = algo >> weather_feature % ' ';
+	rule_t solution_description = algo >> blank_p >> weather_feature % blank_p;
 
     parse_info<> info = parse(solution_description_.c_str(), solution_description, space_p);
-    if(!info.full)
-        throw std::runtime_error("failed to parse solution description");
+    if(!info.hit || info.length < solution_description_.length() - 1)
+        throw std::runtime_error("failed to parse solution description : " + string(info.stop) + " " + lexical_cast<string>(features.size()));
 
     std::copy(features.begin(), features.end(), std::inserter(features_desc_, features_desc_.end()));
 #endif
