@@ -1,7 +1,7 @@
 PROJECT(flightpred_train)
 SET(CMAKE_MODULE_PATH ${flightpred_train_SOURCE_DIR})
 
-ADD_EXECUTABLE(flightpred_train area_mgr.cpp extract_features_flight.cpp train_svm.cpp main.cpp)
+ADD_EXECUTABLE(flightpred_train area_mgr.cpp main.cpp)
 TARGET_LINK_LIBRARIES(flightpred_train flightpred_common boost_program_options-mt boost_filesystem-mt boost_date_time-mt boost_system-mt boost_thread-mt json_spirit pqxx grib_api )
 
 SET_TARGET_PROPERTIES(

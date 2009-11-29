@@ -6,6 +6,7 @@
 #include "common/grab_flights.h"
 #include "common/forecast.h"
 #include "common/geo_parser.h"
+#include "common/solution_manager.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
 // boost
@@ -20,7 +21,9 @@ using namespace flightpred;
 namespace po    = boost::program_options;
 namespace bgreg = boost::gregorian;
 using boost::lexical_cast;
+using boost::shared_ptr;
 using std::string;
+using std::vector;
 using std::cout;
 using std::endl;
 
@@ -49,9 +52,9 @@ int main(int argc, char* argv[])
             ("register-area",      "register a flight area for prediction (name, position, area_radius[km])")
             ("get-weather",        "get past weather prediction grib data for central europe (start_date, end_date, download_pack)")
             ("init-population",    "create an initial generation 0 of solutions (name)")
-            ("evolution-single",   "evolve a single generation (name)")
-            ("evolution-converge", "run the evolution until the progress falls below a threshold (name)")
-            ("train",		       "train the system (name, start_date, end_date)")
+//            ("evolution-single",   "evolve a single generation (name)")
+//            ("evolution-converge", "run the evolution until the progress falls below a threshold (name)")
+            ("train",		       "train the system with the best performing solution found so far (name, start_date, end_date)")
             ("get-future-weather", "get future weather prediction grib data for central europe (download_pack)")
             ("forecast",           "predict possible flights for the next few days")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
@@ -108,11 +111,16 @@ int main(int argc, char* argv[])
 
         if(vm.count("init-population"))
         {
+            solution_manager mgr(db_conn_str);
 
+            if(name.length())
+                mgr.initialize_population(name);
+            else
+                mgr.initialize_populations();
 
             show_help_msg = false;
         }
-
+/*
         if(vm.count("evolution-single"))
         {
 
@@ -124,7 +132,7 @@ int main(int argc, char* argv[])
 
             show_help_msg = false;
         }
-
+*/
         if(vm.count("train"))
         {
             train_svm trainer(db_conn_str);

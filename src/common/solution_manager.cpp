@@ -1,11 +1,12 @@
 // flightpred
-#include "solution_manager.h"
-#include "features_weather.h"
+#include "common/solution_manager.h"
+#include "common/features_weather.h"
+#include "common/extract_features_flight.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
 // ggl (boost sandbox)
-//#include <geometry/io/wkt/fromwkt.hpp>
+#include <geometry/io/wkt/fromwkt.hpp>
 // boost
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -49,6 +50,8 @@ void solution_manager::initialize_populations()
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::initialize_population(const std::string &site_name)
 {
+    pqxx::connection conn(db_conn_str_);
+    pqxx::transaction<> trans(conn, "initialize populations");
     feature_extractor_flight flights(db_conn_str_);
     features_weather         weather(db_conn_str_);
     vector<shared_ptr<solution_config> > solutions = solution_config::get_initial_generation(site_name, db_conn_str_);
