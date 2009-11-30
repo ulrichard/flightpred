@@ -17,7 +17,7 @@ namespace flightpred
 class solution_manager : public boost::noncopyable
 {
 public:
-    solution_manager(const std::string &db_conn_str) : db_conn_str_(db_conn_str_) { }
+    solution_manager(const std::string &db_conn_str) : db_conn_str_(db_conn_str) { }
     virtual ~solution_manager() { };
 
     void initialize_population(const std::string &site_name);
