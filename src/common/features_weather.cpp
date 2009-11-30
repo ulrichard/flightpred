@@ -54,15 +54,17 @@ inline void point_at_distance(P1 const& p1, double distance, double tc, double r
 } // namespace geometry
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/*
 set<features_weather::feat_desc> features_weather::decode_feature_desc(const std::string &desc)
 {
     // todo : implement
     set<feat_desc> features;
     return features;
 }
+*/
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void features_weather::generate_features(features_weather::feat_desc feat, const vector<point_ll_deg> &locations,
-    const bpt::time_duration &from, const bpt::time_duration &to, set<feat_desc> &features)
+    const bpt::time_duration &from, const bpt::time_duration &to, set<feat_desc> &features) const
 {
     for(vector<geometry::point_ll_deg>::const_iterator itl = locations.begin(); itl != locations.end(); ++itl)
     {
@@ -75,7 +77,7 @@ void features_weather::generate_features(features_weather::feat_desc feat, const
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-set<features_weather::feat_desc> features_weather::get_standard_features(const point_ll_deg &site_location)
+set<features_weather::feat_desc> features_weather::get_standard_features(const point_ll_deg &site_location) const
 {
     // get the closest 4 points of the grid
     const grib_pred_model_gfs gfsmodel;
@@ -139,7 +141,7 @@ struct point_ll_deg_sorter
     }
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-vector<double> features_weather::get_features(const set<features_weather::feat_desc> &descriptions, const bgreg::date &day, const bool future)
+vector<double> features_weather::get_features(const set<features_weather::feat_desc> &descriptions, const bgreg::date &day, const bool future) const
 {
     static const size_t PG_SIR_WGS84 = 4326;
     pqxx::connection conn(db_conn_str_);
@@ -212,7 +214,7 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
     return values;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-bgreg::date_period features_weather::get_feature_date_period(const bool future_table)
+bgreg::date_period features_weather::get_feature_date_period(const bool future_table) const
 {
     pqxx::connection conn(db_conn_str_);
     pqxx::transaction<> trans(conn, "collect weather features");
@@ -286,6 +288,21 @@ bool features_weather::feat_desc::operator<(const features_weather::feat_desc &r
     }
     return false;
 }
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/*
+const vector<double> & features_weather_cached::get_features(const set<features_weather::feat_desc> &descriptions, const bool future)
+{
+    CacheType::iterator fit = cache_.find(descriptions);
+    if(fit != cache_.end())
+        return fit->second;
+
+    return cache_.insert(std::make_pair(descriptions, featw_.get_features(descriptions, day_, future))).first->second;
+}
+*/
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 std::ostream & flightpred::operator<<(std::ostream &ostr, const features_weather::feat_desc &feat)
 {

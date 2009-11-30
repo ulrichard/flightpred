@@ -92,7 +92,7 @@ public:
         deserialize(normalizer_,  dbstrm);
         dlib::deserialize(learnedfunc_, dbstrm);
 
-        std::cout << pred_name_ << " has " << learnedfunc_.support_vectors.nr() << " support vectors." << std::endl;
+        std::cout << pred_name_ << " has " << learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
     }
 
 protected:
@@ -174,7 +174,7 @@ public:
 
         this->learnedfunc_ = trainer.get_decision_function();
 
-        std::cout << "the resulting function has " << this->learnedfunc_.support_vectors.nr() << " support vectors." << std::endl;
+        std::cout << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
     }
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

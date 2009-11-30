@@ -31,7 +31,7 @@ public:
 protected:
     const std::string pred_name_;
     const std::string db_conn_str_;
-
+/*
     // partition the training samples and lables into equal ranges
     template<class ForwardRange, class outContT>
     void partition_range(ForwardRange rngin, const size_t max_partition_size, std::insert_iterator<outContT> outit)
@@ -53,6 +53,7 @@ protected:
         }
 
     }
+*/
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred

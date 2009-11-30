@@ -1,7 +1,7 @@
 
 // flightpred
 #include "area_mgr.h"
-#include "train_svm.h"
+#include "common/train_svm.h"
 #include "common/grab_grib.h"
 #include "common/grab_flights.h"
 #include "common/forecast.h"

@@ -22,6 +22,11 @@ public:
 
     static std::vector<boost::shared_ptr<solution_config> > get_initial_generation(const std::string &site_name, const std::string &db_conn_str);
 
+    const std::string & get_description() const { return solution_description_; }
+    const std::set<features_weather::feat_desc> & get_weather_feature_desc() const { return features_desc_; }
+
+    boost::shared_ptr<learning_machine> get_decision_function(const std::string &eval_name);
+
 protected:
     solution_config(const std::string &site_name, const std::string &db_conn_str, const std::string &solution_description)
         : site_name_(site_name), db_conn_str_(db_conn_str), solution_description_(solution_description)

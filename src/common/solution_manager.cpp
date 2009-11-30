@@ -11,6 +11,7 @@
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/timer.hpp>
 
 using namespace flightpred;
 using geometry::point_ll_deg;
@@ -72,31 +73,91 @@ void solution_manager::initialize_population(const std::string &site_name)
     if(!geometry::from_wkt(tmpstr, pred_location))
         throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
 
+    sstr.str("");
+    sstr << "DELETE FROM trained_solutions WHERE generation=0 AND pred_site_id=" << pred_site_id;
+    trans.exec(sstr.str());
 
+    std::cout << "collecting features and labels" <<  std::endl;
+
+    vector<double> training_labels;
+    map<bgreg::date, double> validation_labels;
     for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
     {
         if(used_for_training(*dit))
         {
-
+            const vector<double> valflights = flights.get_features(pred_site_id, *dit);
+            training_labels.push_back(valflights[1]); // we're only interested in the max distance for the evolution
         }
 
-        BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
-        {
-
-        }
-
-    }
-
-
-
-    for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
-    {
         if(used_for_validation(*dit))
         {
-
+            const vector<double> valflights = flights.get_features(pred_site_id, *dit);
+            validation_labels[*dit] = valflights[1]; // we're only interested in the max distance for evolution
         }
-
     }
+
+    set<set<features_weather::feat_desc> > featureconfigurations;
+    BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
+        featureconfigurations.insert(solution->get_weather_feature_desc());
+
+    typedef map<set<features_weather::feat_desc>, map<bgreg::date, vector<double> > > WeatherFeatureCacheType;
+    WeatherFeatureCacheType  weatherdata;
+    for(set<set<features_weather::feat_desc> >::iterator fit = featureconfigurations.begin(); fit != featureconfigurations.end(); ++fit)
+    {
+        for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
+        {
+            if(used_for_training(*dit))
+            {
+                const vector<double> valweather = weather.get_features(*fit, *dit, false);
+                assert(valweather.size() == fit->size());
+
+                vector<double> &samples = weatherdata[*fit][*dit];
+                // put together the values to feed to the svm
+                samples.push_back(dit->year());
+                samples.push_back(dit->day_of_year());
+                samples.push_back(dit->day_of_week());
+                std::copy(valweather.begin(), valweather.end(), std::back_inserter(samples));
+            }
+        }
+    }
+
+    // train
+    static const string eval_name("max_dist");
+    BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
+    {
+        std::cout << "train the support vector machine" <<  std::endl;
+        learning_machine::SampleType samples;
+        for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
+            if(used_for_training(*dit))
+                samples.push_back(weatherdata[solution->get_weather_feature_desc()][*dit]);
+        boost::timer btim;
+        solution->get_decision_function(eval_name)->train(samples, training_labels);
+        const double traintime = btim.elapsed();
+        std::cout << "training took " << btim.elapsed() << " sec" << std::endl;
+
+        // validate
+        double sum_real = 0, sum_err = 0;
+        for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
+        {
+            if(used_for_validation(*dit))
+            {
+                const vector<double> &samples = weatherdata[solution->get_weather_feature_desc()][*dit];
+                const double predval   = solution->get_decision_function(eval_name)->eval(samples);
+                const double & realval = validation_labels[*dit];
+                sum_real += realval;
+                sum_err  += fabs(realval - predval);
+            }
+        }
+        const double perf = sum_err / sum_real;
+
+        sstr.str("");
+        sstr << "INSERT INTO trained_solutions (generation, pred_site_id, configuration, score, train_time, num_features) VALUES "
+             << "(0, " << pred_site_id << ", '" << solution->get_description() << "', " << perf << ", "
+             << traintime << ", " << solution->get_weather_feature_desc().size() << ")";
+        trans.exec(sstr.str());
+    }
+
+    trans.commit();
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
