@@ -12,6 +12,8 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/timer.hpp>
+// std lib
+#include <iostream>
 
 using namespace flightpred;
 using geometry::point_ll_deg;

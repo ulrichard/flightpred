@@ -227,6 +227,7 @@ bgreg::date_period features_weather::get_feature_date_period(const bool future_t
     string strfrom;
     res[0][0].to(strfrom);
     const bpt::ptime ptfrom = bpt::time_from_string(strfrom);
+    sstr.str("");
     sstr << "SELECT pred_time FROM " << table_name << " " << "ORDER BY pred_time DESC LIMIT 5";
     res = trans.exec(sstr.str());
     if(!res.size())
