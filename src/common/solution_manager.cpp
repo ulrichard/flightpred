@@ -12,6 +12,7 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/timer.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
 // std lib
 #include <iostream>
 
@@ -79,24 +80,32 @@ void solution_manager::initialize_population(const std::string &site_name)
     sstr << "DELETE FROM trained_solutions WHERE generation=0 AND pred_site_id=" << pred_site_id;
     trans.exec(sstr.str());
 
-    std::cout << "collecting features and labels" <<  std::endl;
+    std::cout << "collecting labels" <<  std::endl;
+
+    sstr.str("");
+    sstr << "SELECT flight_date, MAX(distance) FROM flights INNER JOIN sites "
+         << "ON flights.site_id = sites.site_id "
+         << "WHERE pred_site_id = " << pred_site_id << " "
+         << "GROUP BY flight_date "
+         << "ORDER BY flight_date ASC";
+    res = trans.exec(sstr.str());
+    map<bgreg::date, double> max_distances;
+    for(size_t i=0; i<res.size(); ++i)
+    {
+        string datestr;
+        res[i][0].to(datestr);
+        bgreg::date day(bgreg::from_string(datestr));
+        double max_dist;
+        res[i][1].to(max_dist);
+        if(max_dist < 1.0)
+            max_dist = 0.0;
+        max_distances[day] = max_dist;
+    }
 
     vector<double> training_labels;
-    map<bgreg::date, double> validation_labels;
     for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
-    {
         if(used_for_training(*dit))
-        {
-            const vector<double> valflights = flights.get_features(pred_site_id, *dit);
-            training_labels.push_back(valflights[1]); // we're only interested in the max distance for the evolution
-        }
-
-        if(used_for_validation(*dit))
-        {
-            const vector<double> valflights = flights.get_features(pred_site_id, *dit);
-            validation_labels[*dit] = valflights[1]; // we're only interested in the max distance for evolution
-        }
-    }
+            training_labels.push_back(max_distances[*dit]);
 
     set<set<features_weather::feat_desc> > featureconfigurations;
     BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
@@ -108,8 +117,10 @@ void solution_manager::initialize_population(const std::string &site_name)
     {
         for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
         {
-            if(used_for_training(*dit))
+            if(used_for_training(*dit) || used_for_validation(*dit))
             {
+                std::cout << "collecting features for " << bgreg::to_iso_extended_string(*dit) << std::endl;
+
                 const vector<double> valweather = weather.get_features(*fit, *dit, false);
                 assert(valweather.size() == fit->size());
 
@@ -145,7 +156,7 @@ void solution_manager::initialize_population(const std::string &site_name)
             {
                 const vector<double> &samples = weatherdata[solution->get_weather_feature_desc()][*dit];
                 const double predval   = solution->get_decision_function(eval_name)->eval(samples);
-                const double & realval = validation_labels[*dit];
+                const double & realval = max_distances[*dit];
                 sum_real += realval;
                 sum_err  += fabs(realval - predval);
             }

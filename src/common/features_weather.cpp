@@ -236,7 +236,7 @@ bgreg::date_period features_weather::get_feature_date_period(const bool future_t
     res[0][0].to(strto);
     const bpt::ptime ptto = bpt::time_from_string(strto);
 
-    return bgreg::date_period(ptfrom.date(), ptto.date());
+    return bgreg::date_period(ptfrom.date() + bgreg::days(1), ptto.date() - bgreg::days(1));
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
