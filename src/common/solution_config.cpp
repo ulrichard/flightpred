@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/array.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 104000
   #include <boost/spirit/include/qi_core.hpp>
@@ -31,6 +32,7 @@ using boost::shared_ptr;
 using boost::bind;
 using boost::ref;
 using boost::lexical_cast;
+using boost::array;
 using std::string;
 using std::vector;
 using std::map;
@@ -103,6 +105,48 @@ private:
     boost::posix_time::time_duration &tdur_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+struct assign_dlib_rvm_rbf
+{
+    assign_dlib_rvm_rbf(const std::string &db_conn_str, map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma)
+        : db_conn_str_(db_conn_str), learning_machines_(learning_machines), gamma_(gamma) { }
+
+    template<class iterT>
+    void operator()(iterT begin, iterT end) const
+    {
+        static const size_t num_fl_lbl = 5;
+        const array<string, num_fl_lbl> eval_names = {"num_flight", "max_dist", "avg_dist", "max_dur", "avg_dur"};
+        typedef lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > krlsT;
+
+        for(array<string, num_fl_lbl>::const_iterator it = eval_names.begin(); it != eval_names.end(); ++it)
+            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, db_conn_str_, gamma_));
+    }
+private:
+    const std::string db_conn_str_;
+    map<string, shared_ptr<learning_machine> > &learning_machines_;
+    double &gamma_;
+};
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+struct assign_dlib_krls_rbf
+{
+    assign_dlib_krls_rbf(const std::string &db_conn_str, map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma)
+        : db_conn_str_(db_conn_str), learning_machines_(learning_machines), gamma_(gamma) { }
+
+    template<class iterT>
+    void operator()(iterT begin, iterT end) const
+    {
+        static const size_t num_fl_lbl = 5;
+        const array<string, num_fl_lbl> eval_names = {"num_flight", "max_dist", "avg_dist", "max_dur", "avg_dur"};
+        typedef lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > krlsT;
+
+        for(array<string, num_fl_lbl>::const_iterator it = eval_names.begin(); it != eval_names.end(); ++it)
+            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, db_conn_str_, gamma_));
+    }
+private:
+    const std::string db_conn_str_;
+    map<string, shared_ptr<learning_machine> > &learning_machines_;
+    double &gamma_;
+};
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_config::decode()
 {
     features_desc_.clear();
@@ -120,8 +164,10 @@ void solution_config::decode()
 	typedef rule<> rule_t;
 
 	rule_t kernel_dlib_rbf = "RBF(" >> ureal_p[assign_a(currgamma)] >> ")";
-	rule_t algo_dlib_rvm  = "DLIB_RVM(" >> kernel_dlib_rbf >> ")";
-	rule_t algo_dlib_krls = "DLIB_KRLS(" >> kernel_dlib_rbf >> *blank_p >> ureal_p[assign_a(currfact)] >> ")";
+	rule_t algo_dlib_rvm  = ("DLIB_RVM(" >> kernel_dlib_rbf >> ")")
+            [assign_dlib_rvm_rbf(db_conn_str_, learning_machines_, currgamma)];
+	rule_t algo_dlib_krls = ("DLIB_KRLS(" >> kernel_dlib_rbf >> *blank_p >> ureal_p[assign_a(currfact)] >> ")")
+            [assign_dlib_krls_rbf(db_conn_str_, learning_machines_, currgamma)];
 	rule_t algo = algo_dlib_rvm | algo_dlib_krls;
 
 	rule_t model_gfs = str_p("GFS")[assign_a(currfeat.model)];

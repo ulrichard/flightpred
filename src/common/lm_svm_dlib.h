@@ -129,11 +129,11 @@ public:
         this->normalizer_.train(samples);
         std::transform(samples.begin(), samples.end(), samples.begin(), this->normalizer_);
 
-        std::cout << "train therelevance vector machine" << std::endl;
+        std::cout << "train the relevance vector machine" << std::endl;
         dlib::rvm_regression_trainer<kernel_type> trainer;
         trainer.set_kernel(kernel_type(this->gamma_));
         this->learnedfunc_ = trainer.train(samples, lables);
-        std::cout << "the resulting function has " << this->learnedfunc_.support_vectors.nr() << " support vectors." << std::endl;
+        std::cout << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
     }
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
