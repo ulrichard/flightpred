@@ -42,10 +42,9 @@ using std::set;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-vector<shared_ptr<solution_config> > solution_config::get_initial_generation(const std::string &site_name, const std::string &db_conn_str)
+vector<shared_ptr<solution_config> > solution_config::get_initial_generation(const std::string &site_name)
 {
-    pqxx::connection conn(db_conn_str);
-    pqxx::transaction<> trans(conn, "initial generation");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "initial generation");
 
     // get the id and geographic position of the prediction site
     std::stringstream sstr;
@@ -63,7 +62,7 @@ vector<shared_ptr<solution_config> > solution_config::get_initial_generation(con
         throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
 
     // get the default feature descriptions of the weather data
-    features_weather weather(db_conn_str);
+    features_weather weather;
     const set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
     sstr.str("");
     std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
@@ -87,7 +86,7 @@ vector<shared_ptr<solution_config> > solution_config::get_initial_generation(con
 
     vector<shared_ptr<solution_config> > solutions;
     BOOST_FOREACH(const string &desc, algo_desc)
-        solutions.push_back(shared_ptr<solution_config>(new solution_config(site_name, db_conn_str, desc + " " + weather_feat_desc)));
+        solutions.push_back(shared_ptr<solution_config>(new solution_config(site_name, desc + " " + weather_feat_desc)));
 
 
     return solutions;
@@ -107,42 +106,36 @@ private:
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct assign_dlib_rvm_rbf
 {
-    assign_dlib_rvm_rbf(const std::string &db_conn_str, map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma)
-        : db_conn_str_(db_conn_str), learning_machines_(learning_machines), gamma_(gamma) { }
+    assign_dlib_rvm_rbf(map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma)
+        : learning_machines_(learning_machines), gamma_(gamma) { }
 
     template<class iterT>
     void operator()(iterT begin, iterT end) const
     {
-        static const size_t num_fl_lbl = 5;
-        const array<string, num_fl_lbl> eval_names = {"num_flight", "max_dist", "avg_dist", "max_dur", "avg_dur"};
         typedef lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > krlsT;
 
-        for(array<string, num_fl_lbl>::const_iterator it = eval_names.begin(); it != eval_names.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, db_conn_str_, gamma_));
+        for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
+            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, gamma_));
     }
 private:
-    const std::string db_conn_str_;
     map<string, shared_ptr<learning_machine> > &learning_machines_;
     double &gamma_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct assign_dlib_krls_rbf
 {
-    assign_dlib_krls_rbf(const std::string &db_conn_str, map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma)
-        : db_conn_str_(db_conn_str), learning_machines_(learning_machines), gamma_(gamma) { }
+    assign_dlib_krls_rbf(map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma)
+        : learning_machines_(learning_machines), gamma_(gamma) { }
 
     template<class iterT>
     void operator()(iterT begin, iterT end) const
     {
-        static const size_t num_fl_lbl = 5;
-        const array<string, num_fl_lbl> eval_names = {"num_flight", "max_dist", "avg_dist", "max_dur", "avg_dur"};
         typedef lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > krlsT;
 
-        for(array<string, num_fl_lbl>::const_iterator it = eval_names.begin(); it != eval_names.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, db_conn_str_, gamma_));
+        for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
+            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, gamma_));
     }
 private:
-    const std::string db_conn_str_;
     map<string, shared_ptr<learning_machine> > &learning_machines_;
     double &gamma_;
 };
@@ -165,9 +158,9 @@ void solution_config::decode()
 
 	rule_t kernel_dlib_rbf = "RBF(" >> ureal_p[assign_a(currgamma)] >> ")";
 	rule_t algo_dlib_rvm  = ("DLIB_RVM(" >> kernel_dlib_rbf >> ")")
-            [assign_dlib_rvm_rbf(db_conn_str_, learning_machines_, currgamma)];
+            [assign_dlib_rvm_rbf(learning_machines_, currgamma)];
 	rule_t algo_dlib_krls = ("DLIB_KRLS(" >> kernel_dlib_rbf >> *blank_p >> ureal_p[assign_a(currfact)] >> ")")
-            [assign_dlib_krls_rbf(db_conn_str_, learning_machines_, currgamma)];
+            [assign_dlib_krls_rbf(learning_machines_, currgamma)];
 	rule_t algo = algo_dlib_rvm | algo_dlib_krls;
 
 	rule_t model_gfs = str_p("GFS")[assign_a(currfeat.model)];

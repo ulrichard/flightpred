@@ -38,7 +38,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--train --name Fiesch --start_date &apos;2009-08-01&apos; --end_date &apos;2009-08-31&apos;" />
+				<Option parameters="--init-population --name Fiesch" />
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-O3" />
@@ -70,6 +70,8 @@
 		<Unit filename="../common/extract_features_flight.h" />
 		<Unit filename="../common/features_weather.cpp" />
 		<Unit filename="../common/features_weather.h" />
+		<Unit filename="../common/flightpred_globals.cpp" />
+		<Unit filename="../common/flightpred_globals.h" />
 		<Unit filename="../common/forecast.cpp" />
 		<Unit filename="../common/forecast.h" />
 		<Unit filename="../common/geo_parser.cpp" />

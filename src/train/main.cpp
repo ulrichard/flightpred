@@ -7,6 +7,7 @@
 #include "common/forecast.h"
 #include "common/geo_parser.h"
 #include "common/solution_manager.h"
+#include "common/flightpred_globals.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
 // boost
@@ -78,6 +79,7 @@ int main(int argc, char* argv[])
         dtend   = bgreg::from_string(end_date);
         const string db_conn_str = "host=" + db_host + " port=" + lexical_cast<string>(db_port)
                                  + " dbname=" + db_name + " user=" + db_user + " password=" + db_password;
+        flightpred_db::init(db_conn_str);
         const geometry::point_ll_deg pos = parse_position(position);
 
 
@@ -85,14 +87,14 @@ int main(int argc, char* argv[])
 
         if(vm.count("get-flights"))
         {
-            flight_grabber gr(flight_grabber::XCONTEST, db_conn_str);
+            flight_grabber gr(flight_grabber::XCONTEST);
             gr.grab_flights(dtstart, dtend);
             show_help_msg = false;
         }
 
         if(vm.count("register-area"))
         {
-            area_mgr am(db_conn_str);
+            area_mgr am;
             am.add_area(name, pos, area_radius);
             show_help_msg = false;
         }
@@ -101,7 +103,7 @@ int main(int argc, char* argv[])
         {
             if(pred_model == "GFS")
             {
-                grib_grabber_gfs_past gr(db_conn_str, download_pack);
+                grib_grabber_gfs_past gr(download_pack);
                 gr.grab_grib(dtstart, dtend);
             }
             else
@@ -111,7 +113,7 @@ int main(int argc, char* argv[])
 
         if(vm.count("init-population"))
         {
-            solution_manager mgr(db_conn_str);
+            solution_manager mgr;
 
             if(name.length())
                 mgr.initialize_population(name);
@@ -135,7 +137,7 @@ int main(int argc, char* argv[])
 */
         if(vm.count("train"))
         {
-            train_svm trainer(db_conn_str);
+            train_svm trainer;
             if(name.length())
                 trainer.train(name, dtstart, dtend);
             else
@@ -147,7 +149,7 @@ int main(int argc, char* argv[])
         {
             if(pred_model == "GFS")
             {
-                grib_grabber_gfs_future gr(db_conn_str, download_pack);
+                grib_grabber_gfs_future gr(download_pack);
                 gr.grab_grib(boost::posix_time::hours(24 * 4));
             }
             else
@@ -157,7 +159,7 @@ int main(int argc, char* argv[])
 
         if(vm.count("forecast"))
         {
-            forecast fcst(db_conn_str);
+            forecast fcst;
             fcst.prediction_run(3);
             show_help_msg = false;
         }

@@ -1,5 +1,6 @@
 // flightpred
 #include "grab_flights.h"
+#include "common/flightpred_globals.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -20,8 +21,8 @@ namespace bgreg = boost::gregorian;
 using boost::bind;
 using std::string;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-flight_grabber::flight_grabber(flight_grabber::Contest cont, const std::string &db_conn_str)
-    : cont_(cont), db_conn_str_(db_conn_str)
+flight_grabber::flight_grabber(flight_grabber::Contest cont)
+    : cont_(cont)
 {
 
 }
@@ -122,8 +123,7 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::write_flight_to_db(const flight &fl)
 {
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "insert flight");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "insert flight");
     // contest
     string sqls = "SELECT contest_id FROM contests WHERE contest_name='" + get_contest_name(cont_) + "'";
     pqxx::result res = trans.exec(sqls);

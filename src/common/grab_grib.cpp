@@ -1,6 +1,7 @@
 // flightpred
-#include "grab_grib.h"
-#include "geo_parser.h"
+#include "common/grab_grib.h"
+#include "common/geo_parser.h"
+#include "common/flightpred_globals.h"
 // grib api
 #include "grib_api.h"
 // postgre
@@ -61,17 +62,16 @@ using std::stringstream;
 // a description of the grib data fields can be found at:
 // http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2f00.shtml
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-grib_grabber::grib_grabber(const string &modelname, const string &db_conn_str, size_t download_pack, const bool is_future)
-    : db_conn_str_(db_conn_str), baseurl_(get_base_url(db_conn_str, modelname, is_future)), modelname_(modelname),
-      db_model_id_(get_model_id(db_conn_str, modelname)), download_pack_(download_pack), is_future_(is_future)
+grib_grabber::grib_grabber(const string &modelname, size_t download_pack, const bool is_future)
+    : baseurl_(get_base_url(modelname, is_future)), modelname_(modelname),
+      db_model_id_(get_model_id(modelname)), download_pack_(download_pack), is_future_(is_future)
 {
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-string grib_grabber::get_base_url(const string &db_conn_str, const string &model, bool future)
+string grib_grabber::get_base_url(const string &model, bool future)
 {
-    pqxx::connection conn(db_conn_str);
-    pqxx::transaction<> trans(conn, "get model details");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "get model details");
 
     std::stringstream sstr;
     sstr << "SELECT grid_step, url_past, url_future FROM weather_models where model_name ='" << model << "'";
@@ -83,10 +83,9 @@ string grib_grabber::get_base_url(const string &db_conn_str, const string &model
     return url;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-size_t grib_grabber::get_model_id(const string &db_conn_str, const string &model)
+size_t grib_grabber::get_model_id(const string &model)
 {
-    pqxx::connection conn(db_conn_str);
-    pqxx::transaction<> trans(conn, "get model details");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "get model details");
 
     std::stringstream sstr;
     sstr << "SELECT model_id FROM weather_models where model_name ='" << model << "'";
@@ -293,8 +292,7 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
     if(err != GRIB_SUCCESS)
         throw std::runtime_error("failed to create grib iterator - error code: " + lexical_cast<string>(err));
 
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "insert grib data");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "insert grib data");
 
     int count = 0;
     double lat, lon, value;
@@ -406,8 +404,7 @@ struct pnt_ll_deg_dist_sorter
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(const double gridres, const size_t pnts_per_site) const
 {
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "get training locations");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "get training locations");
 
     pqxx::result res = trans.exec("SELECT AsText(location) AS loc FROM pred_sites");
     if(!res.size())

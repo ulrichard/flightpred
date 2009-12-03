@@ -17,7 +17,7 @@ namespace flightpred
 class solution_manager : public boost::noncopyable
 {
 public:
-    solution_manager(const std::string &db_conn_str) : db_conn_str_(db_conn_str) { }
+    solution_manager() { }
     virtual ~solution_manager() { };
 
     void initialize_population(const std::string &site_name);
@@ -28,7 +28,6 @@ private:
     const bool used_for_training(const boost::gregorian::date &day) const;
     const bool used_for_validation(const boost::gregorian::date &day) const;
 
-    const std::string db_conn_str_;
     const std::vector<boost::gregorian::date> training_days;
     const std::vector<boost::gregorian::date> validation_days;
 };

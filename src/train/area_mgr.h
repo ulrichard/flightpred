@@ -14,12 +14,11 @@ namespace flightpred
 class area_mgr : public boost::noncopyable
 {
 public:
-    area_mgr(const std::string &db_conn_str) : db_conn_str_(db_conn_str) { }
+    area_mgr() { }
     ~area_mgr() { }
 
     void add_area(const std::string &name, const geometry::point_ll_deg &pos, double area_radius);
 private:
-    const std::string db_conn_str_;
     static const size_t PG_SIR_WGS84 = 4326;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

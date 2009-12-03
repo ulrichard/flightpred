@@ -38,7 +38,7 @@ public:
         XCONTEST
     };
 
-    flight_grabber(Contest cont, const std::string &db_conn_str);
+    flight_grabber(Contest cont);
     ~flight_grabber() {}
 
     static std::string get_contest_name(Contest cont);
@@ -50,7 +50,6 @@ private:
     void write_flight_to_db(const flight &fl);
 
     const Contest cont_;
-    const std::string db_conn_str_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 }; // namespace flightpred

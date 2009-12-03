@@ -2,6 +2,7 @@
 #include "common/solution_manager.h"
 #include "common/features_weather.h"
 #include "common/extract_features_flight.h"
+#include "common/flightpred_globals.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
@@ -32,8 +33,7 @@ void solution_manager::initialize_populations()
     vector<string> sites;
 
     {
-        pqxx::connection conn(db_conn_str_);
-        pqxx::transaction<> trans(conn, "initialize populations");
+        pqxx::transaction<> trans(flightpred_db::get_conn(), "initialize populations");
 
         // get the id of the prediction site
         std::stringstream sstr;
@@ -54,17 +54,16 @@ void solution_manager::initialize_populations()
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::initialize_population(const std::string &site_name)
 {
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "initialize populations");
-    feature_extractor_flight flights(db_conn_str_);
-    features_weather         weather(db_conn_str_);
-    vector<shared_ptr<solution_config> > solutions = solution_config::get_initial_generation(site_name, db_conn_str_);
+    feature_extractor_flight flights;
+    features_weather         weather;
+    vector<shared_ptr<solution_config> > solutions = solution_config::get_initial_generation(site_name);
     const bgreg::date_period dates = weather.get_feature_date_period(false);
+    pqxx::transaction<> trans1(flightpred_db::get_conn(), "initialize populations");
 
     // get the id and geographic position of the prediction site
     std::stringstream sstr;
     sstr << "SELECT pred_site_id, AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name << "'";
-    pqxx::result res = trans.exec(sstr.str());
+    pqxx::result res = trans1.exec(sstr.str());
     if(!res.size())
         throw std::invalid_argument("site not found : " + site_name);
     size_t tmp_pred_site_id;
@@ -78,7 +77,7 @@ void solution_manager::initialize_population(const std::string &site_name)
 
     sstr.str("");
     sstr << "DELETE FROM trained_solutions WHERE generation=0 AND pred_site_id=" << pred_site_id;
-    trans.exec(sstr.str());
+    trans1.exec(sstr.str());
 
     std::cout << "collecting labels" <<  std::endl;
 
@@ -88,7 +87,7 @@ void solution_manager::initialize_population(const std::string &site_name)
          << "WHERE pred_site_id = " << pred_site_id << " "
          << "GROUP BY flight_date "
          << "ORDER BY flight_date ASC";
-    res = trans.exec(sstr.str());
+    res = trans1.exec(sstr.str());
     map<bgreg::date, double> max_distances;
     for(size_t i=0; i<res.size(); ++i)
     {
@@ -101,6 +100,7 @@ void solution_manager::initialize_population(const std::string &site_name)
             max_dist = 0.0;
         max_distances[day] = max_dist;
     }
+    trans1.commit();
 
     vector<double> training_labels;
     for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
@@ -135,6 +135,7 @@ void solution_manager::initialize_population(const std::string &site_name)
     }
 
     // train
+    pqxx::transaction<> trans2(flightpred_db::get_conn(), "initialize populations -> train");
     static const string eval_name("max_dist");
     BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
     {
@@ -157,20 +158,24 @@ void solution_manager::initialize_population(const std::string &site_name)
                 const vector<double> &samples = weatherdata[solution->get_weather_feature_desc()][*dit];
                 const double predval   = solution->get_decision_function(eval_name)->eval(samples);
                 const double & realval = max_distances[*dit];
+                const double err = fabs(realval - predval);
                 sum_real += realval;
-                sum_err  += fabs(realval - predval);
+                sum_err  += err;
+                std::cout << bgreg::to_iso_extended_string(*dit) << " " << realval << " " << predval << " " << err << std::endl;
             }
         }
         const double perf = sum_err / sum_real;
+
+        std::cout << "result of validation : total km = " << sum_real << " total error = " << sum_err << " perf = " << perf << std::endl;
 
         sstr.str("");
         sstr << "INSERT INTO trained_solutions (generation, pred_site_id, configuration, score, train_time, num_features) VALUES "
              << "(0, " << pred_site_id << ", '" << solution->get_description() << "', " << perf << ", "
              << traintime << ", " << solution->get_weather_feature_desc().size() << ")";
-        trans.exec(sstr.str());
+        trans2.exec(sstr.str());
     }
 
-    trans.commit();
+    trans2.commit();
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

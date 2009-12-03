@@ -1,6 +1,7 @@
 // flightpred
 #include "features_weather.h"
 #include "grib_pred_model.h"
+#include "flightpred_globals.h"
 //#include "area_mgr.h"
 // postgre
 #include <pqxx/pqxx>
@@ -144,8 +145,7 @@ struct point_ll_deg_sorter
 vector<double> features_weather::get_features(const set<features_weather::feat_desc> &descriptions, const bgreg::date &day, const bool future) const
 {
     static const size_t PG_SIR_WGS84 = 4326;
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "collect weather features");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "collect weather features");
 
     vector<point_ll_deg> locations;
     std::transform(descriptions.begin(), descriptions.end(), std::inserter(locations, locations.end()),
@@ -216,8 +216,7 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 bgreg::date_period features_weather::get_feature_date_period(const bool future_table) const
 {
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "collect weather features");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "collect weather features");
     const string table_name(future_table ? "weather_pred_future" : "weather_pred");
     std::stringstream sstr;
     sstr << "SELECT pred_time FROM " << table_name << " " << "ORDER BY pred_time ASC LIMIT 5";

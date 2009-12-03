@@ -23,7 +23,7 @@ namespace flightpred
 class forecast : public boost::noncopyable
 {
 public:
-    forecast(const std::string &db_conn_str) : db_conn_str_(db_conn_str) { }
+    forecast() { }
     ~forecast() { };
 
     std::map<std::string, double> predict(const std::string &site_name, const boost::gregorian::date &pred_day);
@@ -37,7 +37,7 @@ private:
     {
         // get the feature description
 //      const std::set<features_weather::feat_desc> features_weather::decode_feature_desc(feature_desc_);
-        features_weather weather(db_conn_str_);
+        features_weather weather;
         const std::set<features_weather::feat_desc> features = weather.get_standard_features(pred_location_);
 
         // collect the features
@@ -49,7 +49,6 @@ private:
         std::copy(valweather.begin(), valweather.end(), insit);
     }
 
-    const std::string       db_conn_str_;
     std::string             site_name_;
     size_t                  solution_id_;
     std::string             feature_desc_;

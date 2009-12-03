@@ -2,7 +2,8 @@
 #define LM_SVM_DLIB_H_INCLUDED
 
 // flightpred
-#include <common/learning_machine.h>
+#include "common/learning_machine.h"
+#include "common/flightpred_globals.h"
 // dlib
 #include <dlib/svm.h>
 // postgre
@@ -22,8 +23,8 @@ template<class kernel_type>
 class lm_dlib_base : public learning_machine
 {
 protected:
-    lm_dlib_base(const std::string &pred_name, const std::string &db_conn_str, const double gamma)
-      : learning_machine(pred_name, db_conn_str), gamma_(gamma) { }
+    lm_dlib_base(const std::string &pred_name, const double gamma)
+      : learning_machine(pred_name), gamma_(gamma) { }
 
 public:
     typedef typename kernel_type::sample_type sample_type;
@@ -47,8 +48,7 @@ public:
 
     virtual void write_to_db(const size_t conf_id)
     {
-        pqxx::connection conn(db_conn_str_);
-        pqxx::transaction<> trans(conn, "write svm to db");
+        pqxx::transaction<> trans(flightpred_db::get_conn(), "write svm to db");
 
         size_t oid_blob = 0;
         {
@@ -76,8 +76,7 @@ public:
 
     virtual void read_from_db(const size_t conf_id)
     {
-        pqxx::connection conn(db_conn_str_);
-        pqxx::transaction<> trans(conn, "read svm from db");
+        pqxx::transaction<> trans(flightpred_db::get_conn(), "read svm from db");
 
         std::stringstream sstr;
         sstr << "SELECT " << pred_name_ << " FROM trained_solutions WHERE train_sol_id=" << conf_id;
@@ -106,8 +105,8 @@ class lm_dlib_rvm : public lm_dlib_base<kernel_type>
 {
     typedef typename kernel_type::sample_type sample_type;
 public:
-    lm_dlib_rvm(const std::string &pred_name, const std::string &db_conn_str, const double gamma)
-     : lm_dlib_base<kernel_type>(pred_name, db_conn_str, gamma) { };
+    lm_dlib_rvm(const std::string &pred_name, const double gamma)
+     : lm_dlib_base<kernel_type>(pred_name, gamma) { };
     virtual ~lm_dlib_rvm() { };
 
     virtual void train(const learning_machine::SampleType &samplesin, const std::vector<double> &lables)
@@ -142,8 +141,8 @@ class lm_dlib_krls : public lm_dlib_base<kernel_type>
 {
     typedef typename kernel_type::sample_type sample_type;
 public:
-    lm_dlib_krls(const std::string &pred_name, const std::string &db_conn_str, const double gamma)
-     : lm_dlib_base<kernel_type>(pred_name, db_conn_str, gamma) { };
+    lm_dlib_krls(const std::string &pred_name, const double gamma)
+     : lm_dlib_base<kernel_type>(pred_name, gamma) { };
     virtual ~lm_dlib_krls() { };
 
     virtual void train(const learning_machine::SampleType &samplesin, const std::vector<double> &lables)

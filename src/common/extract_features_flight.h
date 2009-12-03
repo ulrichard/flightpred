@@ -17,13 +17,12 @@ namespace flightpred
 class feature_extractor_flight : public boost::noncopyable
 {
 public:
-    feature_extractor_flight(const std::string &db_conn_str) : db_conn_str_(db_conn_str) {}
+    feature_extractor_flight()  {}
     virtual ~feature_extractor_flight() {}
 
     std::vector<double> get_features(size_t pred_site_id, const boost::gregorian::date &day);
 
 private:
-    const std::string db_conn_str_;
 };
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

@@ -1,6 +1,7 @@
 // flightpred
-#include "area_mgr.h"
+#include "train/area_mgr.h"
 #include "common/geo_parser.h"
+#include "common/flightpred_globals.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -55,8 +56,7 @@ inline void point_at_distance(P1 const& p1, double distance, double tc, double r
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area_radius)
 {
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "manage flight areas");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "manage flight areas");
     vector<tuple<size_t, string, point_ll_deg> > pred_sites;
     stringstream sstr;
 

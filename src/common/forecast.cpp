@@ -1,6 +1,7 @@
 // flightpred
 #include "forecast.h"
 #include "common/lm_svm_dlib.h"
+#include "common/flightpred_globals.h"
 // postgre
 #include <pqxx/pqxx>
 //#include <pqxx/largeobject>
@@ -40,16 +41,13 @@ map<string, double> forecast::predict(const string &site_name, const bgreg::date
     load_features(pred_day, std::inserter(samp, samp.end()));
 
     // feed samples to the learned functions
-    const size_t num_fl_lbl = 5;
-    const array<string, num_fl_lbl> svm_names = {"svm_num_flight", "svm_max_dist", "svm_avg_dist", "svm_max_dur", "svm_avg_dur"};
-
     map<string, double> predval;
-    for(size_t k=0; k<num_fl_lbl; ++k)
+    for(size_t k=0; k<flightpred_globals::pred_values.size(); ++k)
     {
         double val = learnedfunctions_[k].eval(samp);
         if(isnan(val) || val < 0.0)
            val = 0.0;
-        predval[svm_names[k]] = val;
+        predval["svm_" + flightpred_globals::pred_values[k]] = val;
     }
 
     return predval;
@@ -57,8 +55,7 @@ map<string, double> forecast::predict(const string &site_name, const bgreg::date
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void forecast::load_learned_functins(const std::string &site_name)
 {
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "flight forecast");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "flight forecast");
 
     std::stringstream sstr;
     sstr << "SELECT pred_site_id, AsText(location) as loc FROM pred_sites where site_name='" << site_name << "'";
@@ -75,8 +72,6 @@ void forecast::load_learned_functins(const std::string &site_name)
         throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
 
     std::cout << "collecting features and running SVM for " << site_name << std::endl;
-    const size_t num_fl_lbl = 5;
-    const array<string, num_fl_lbl> svm_names = {"svm_num_flight", "svm_max_dist", "svm_avg_dist", "svm_max_dur", "svm_avg_dur"};
     sstr.str("");
     sstr << "SELECT train_sol_id, configuration, score, train_time, generation FROM trained_solutions WHERE "
          << "pred_site_id=" << pred_site_id << " ORDER BY score DESC, generation DESC";
@@ -86,25 +81,22 @@ void forecast::load_learned_functins(const std::string &site_name)
 
     res[0]["train_sol_id"].to(solution_id_);
     res[0]["configuration"].to(feature_desc_);
+    trans.commit();
 
     // de-serialize the svm's from the database blob
-    for(size_t j=0; j<num_fl_lbl; ++j)
+    for(size_t j=0; j<flightpred_globals::pred_values.size(); ++j)
     {
 //        typedef lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibtrainer;
         typedef lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibtrainer;
-        learnedfunctions_.push_back(new dlibtrainer(svm_names[j], db_conn_str_, 0.01));
+        learnedfunctions_.push_back(new dlibtrainer("svm_" + flightpred_globals::pred_values[j], 0.01));
         learnedfunctions_.back().read_from_db(solution_id_);
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void forecast::prediction_run(const size_t pred_days)
 {
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "web prediction");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "flight prediction");
     const bgreg::date today(boost::posix_time::second_clock::universal_time().date());
-    const size_t num_fl_lbl = 5;
-    const array<string, num_fl_lbl> pred_names = {"num_flight", "max_dist", "avg_dist", "max_dur", "avg_dur"};
-
 
     std::stringstream sstr;
     sstr << "SELECT pred_site_id, site_name FROM pred_sites";
@@ -128,15 +120,15 @@ void forecast::prediction_run(const size_t pred_days)
         {
             const bgreg::date day(today + bgreg::days(j));
 
-           // let the machine make it's (educated) guesses
+            // let the machine make it's (educated) guesses
             map<string, double> predres = predict(it->second, day);
 
             sstr.str("");
             sstr << "INSERT INTO flight_pred (pred_site_id, train_sol_id,";
-            std::copy(pred_names.begin(), pred_names.end(), std::ostream_iterator<string>(sstr, ", "));
+            std::copy(flightpred_globals::pred_values.begin(), flightpred_globals::pred_values.end(), std::ostream_iterator<string>(sstr, ", "));
             sstr << "calculated, pred_day) VALUES (" << it->first << ", " << solution_id_ << ", ";
 
-            BOOST_FOREACH(string predname, pred_names)
+            BOOST_FOREACH(string predname, flightpred_globals::pred_values)
             {
                 double val = predres["svm_" + predname];
                 sstr << val << ", ";
