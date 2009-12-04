@@ -141,8 +141,8 @@ class lm_dlib_krls : public lm_dlib_base<kernel_type>
 {
     typedef typename kernel_type::sample_type sample_type;
 public:
-    lm_dlib_krls(const std::string &pred_name, const double gamma)
-     : lm_dlib_base<kernel_type>(pred_name, gamma) { };
+    lm_dlib_krls(const std::string &pred_name, const double gamma, const double fact)
+     : lm_dlib_base<kernel_type>(pred_name, gamma), fact_(fact) { };
     virtual ~lm_dlib_krls() { };
 
     virtual void train(const learning_machine::SampleType &samplesin, const std::vector<double> &lables)
@@ -166,7 +166,7 @@ public:
         std::transform(samples.begin(), samples.end(), samples.begin(), this->normalizer_);
 
         std::cout << "train the kernel recursive least squares algorithm" << std::endl;
-        dlib::krls<kernel_type> trainer(kernel_type(this->gamma_), 0.001);
+        dlib::krls<kernel_type> trainer(kernel_type(this->gamma_), fact_);
 
         for(size_t i=0; i<lables.size(); ++i)
             trainer.train(samples[i], lables[i]);
@@ -175,6 +175,8 @@ public:
 
         std::cout << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
     }
+private:
+    double fact_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred

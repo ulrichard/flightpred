@@ -88,7 +88,7 @@ void forecast::load_learned_functins(const std::string &site_name)
     {
 //        typedef lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibtrainer;
         typedef lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibtrainer;
-        learnedfunctions_.push_back(new dlibtrainer("svm_" + flightpred_globals::pred_values[j], 0.01));
+        learnedfunctions_.push_back(new dlibtrainer("svm_" + flightpred_globals::pred_values[j], 0.01, 0.01));
         learnedfunctions_.back().read_from_db(solution_id_);
     }
 }

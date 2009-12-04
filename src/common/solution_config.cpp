@@ -124,20 +124,22 @@ private:
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct assign_dlib_krls_rbf
 {
-    assign_dlib_krls_rbf(map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma)
-        : learning_machines_(learning_machines), gamma_(gamma) { }
+    assign_dlib_krls_rbf(map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma, double &fact)
+        : learning_machines_(learning_machines), gamma_(gamma), fact_(fact) { }
 
     template<class iterT>
     void operator()(iterT begin, iterT end) const
     {
         typedef lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > krlsT;
 
+        assert(5 == flightpred_globals::pred_values.size());
         for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, gamma_));
+            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, gamma_, fact_));
     }
 private:
     map<string, shared_ptr<learning_machine> > &learning_machines_;
     double &gamma_;
+    double &fact_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_config::decode()
@@ -160,7 +162,7 @@ void solution_config::decode()
 	rule_t algo_dlib_rvm  = ("DLIB_RVM(" >> kernel_dlib_rbf >> ")")
             [assign_dlib_rvm_rbf(learning_machines_, currgamma)];
 	rule_t algo_dlib_krls = ("DLIB_KRLS(" >> kernel_dlib_rbf >> *blank_p >> ureal_p[assign_a(currfact)] >> ")")
-            [assign_dlib_krls_rbf(learning_machines_, currgamma)];
+            [assign_dlib_krls_rbf(learning_machines_, currgamma, currfact)];
 	rule_t algo = algo_dlib_rvm | algo_dlib_krls;
 
 	rule_t model_gfs = str_p("GFS")[assign_a(currfeat.model)];
