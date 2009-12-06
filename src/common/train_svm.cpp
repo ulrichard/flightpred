@@ -69,15 +69,16 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         res[i]["flight_date"].to(datestr);
         bgreg::date day(bgreg::from_string(datestr));
         double dval;
-        for(size_t i=0; i<5; ++i)
+        for(size_t j=0; j<5; ++j)
         {
-            res[i][1 + i].to(dval);
+            res[i][1 + j].to(dval);
             if(dval < 1.0)
                 dval = 0.0;
-            labelsbydate[day][i] = dval;
+            labelsbydate[day][j] = dval;
         }
     }
     trans1.commit();
+    std::cout << labelsbydate.size() << " dates with flights" << std::endl;
 
     //load the configuration with the best score
     solution_manager solmgr;
@@ -93,13 +94,19 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     array<vector<double>, 5> labels;
     for(bgreg::date day = from; day <= to; day += bgreg::days(1))
     {
-        for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
-            labels[i].push_back(labelsbydate[day][i]);
+        if(labelsbydate.find(day) != labelsbydate.end())
+        {
+            for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
+                labels[i].push_back(labelsbydate[day][i]);
+        }
+        else
+            for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
+                labels[i].push_back(0.0);
 
         std::cout << "collecting features for " << bgreg::to_iso_extended_string(day)
-                  << " "     << labelsbydate[day][0] << " flights "
-                  << " max " << labelsbydate[day][1] << " km "
-                  << " avg " << labelsbydate[day][2] << " km" << std::endl;
+                  << " "     << labels[0].back() << " flights "
+                  << " max " << labels[1].back() << " km "
+                  << " avg " << labels[2].back() << " km" << std::endl;
         const vector<double> valweather = weather.get_features(features, day, false);
         assert(valweather.size() == features.size());
 
