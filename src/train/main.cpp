@@ -14,6 +14,8 @@
 #include <boost/program_options.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
+#include <boost/ref.hpp>
 // standard library
 #include <iostream>
 #include <string>
@@ -29,6 +31,26 @@ using std::cout;
 using std::endl;
 
 
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+vector<string> get_sitem_names()
+{
+    vector<string> sites;
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "get site names");
+
+    std::stringstream sstr;
+    sstr << "SELECT site_name FROM pred_sites";
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::invalid_argument("no sites found");
+    for(size_t i=0; i<res.size(); ++i)
+    {
+        string tmpstr;
+        res[i][0].to(tmpstr);
+        sites.push_back(tmpstr);
+    }
+
+    return sites;
+}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 int main(int argc, char* argv[])
 {
@@ -82,6 +104,7 @@ int main(int argc, char* argv[])
         flightpred_db::init(db_conn_str);
         const geometry::point_ll_deg pos = parse_position(position);
 
+        const vector<string> site_names = get_sitem_names();
 
         bool show_help_msg = true;
 
@@ -118,7 +141,8 @@ int main(int argc, char* argv[])
             if(name.length())
                 mgr.initialize_population(name);
             else
-                mgr.initialize_populations();
+                std::for_each(site_names.begin(), site_names.end(),
+                    boost::bind(&solution_manager::initialize_population, boost::ref(mgr), _1));
 
             show_help_msg = false;
         }
@@ -141,7 +165,9 @@ int main(int argc, char* argv[])
             if(name.length())
                 trainer.train(name, dtstart, dtend);
             else
-                trainer.train_all(dtstart, dtend);
+                std::for_each(site_names.begin(), site_names.end(),
+                    boost::bind(&train_svm::train, boost::ref(trainer), _1, dtstart, dtend));
+
             show_help_msg = false;
         }
 

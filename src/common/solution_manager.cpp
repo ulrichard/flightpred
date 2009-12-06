@@ -27,30 +27,7 @@ using std::vector;
 using std::map;
 using std::set;
 
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void solution_manager::initialize_populations()
-{
-    vector<string> sites;
 
-    {
-        pqxx::transaction<> trans(flightpred_db::get_conn(), "initialize populations");
-
-        // get the id of the prediction site
-        std::stringstream sstr;
-        sstr << "SELECT site_name FROM pred_sites";
-        pqxx::result res = trans.exec(sstr.str());
-        if(!res.size())
-            throw std::invalid_argument("no sites found");
-        for(size_t i=0; i<res.size(); ++i)
-        {
-            string tmpstr;
-            res[i][0].to(tmpstr);
-            sites.push_back(tmpstr);
-        }
-    }
-
-    std::for_each(sites.begin(), sites.end(), boost::bind(&solution_manager::initialize_population, this, _1));
-}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::initialize_population(const std::string &site_name)
 {
@@ -164,7 +141,7 @@ void solution_manager::initialize_population(const std::string &site_name)
                 std::cout << bgreg::to_iso_extended_string(*dit) << " " << realval << " " << predval << " " << err << std::endl;
             }
         }
-        const double perf = sum_err / sum_real;
+        const double perf = sum_real / sum_err;
 
         std::cout << "result of validation : total km = " << sum_real << " total error = " << sum_err << " perf = " << perf << std::endl;
 
@@ -189,4 +166,32 @@ const bool solution_manager::used_for_validation(const bgreg::date &day) const
     return day.day_of_week() == 6; // saturday
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+std::auto_ptr<solution_config> solution_manager::load_best_solution(const std::string &site_name, const bool onlyFullyTrained)
+{
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "load_best_solution");
+
+    std::stringstream sstr;
+    sstr << "SELECT pred_site_id FROM pred_sites where site_name='" << site_name << "'";
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::invalid_argument("site not found: " + site_name);
+
+    size_t pred_site_id;
+    res[0]["pred_site_id"].to(pred_site_id);
+
+    sstr.str("");
+    sstr << "SELECT train_sol_id, configuration, score, train_time, generation FROM trained_solutions WHERE ";
+    if(onlyFullyTrained)
+        sstr << "num_samples_prod > 300 AND ";
+    sstr << "pred_site_id=" << pred_site_id << " ORDER BY score DESC, generation DESC";
+    res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("no configuration found for : " + site_name);
+
+    size_t solution_id;
+    res[0]["train_sol_id"].to(solution_id);
+    trans.commit();
+
+    return solution_config::load_from_db(solution_id);
+}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

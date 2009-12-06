@@ -47,7 +47,7 @@ map<string, double> forecast::predict(const string &site_name, const bgreg::date
         double val = learnedfunctions_[k].eval(samp);
         if(isnan(val) || val < 0.0)
            val = 0.0;
-        predval["svm_" + flightpred_globals::pred_values[k]] = val;
+        predval[flightpred_globals::pred_values[k]] = val;
     }
 
     return predval;
@@ -88,7 +88,7 @@ void forecast::load_learned_functins(const std::string &site_name)
     {
 //        typedef lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibtrainer;
         typedef lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibtrainer;
-        learnedfunctions_.push_back(new dlibtrainer("svm_" + flightpred_globals::pred_values[j], 0.01, 0.01));
+        learnedfunctions_.push_back(new dlibtrainer(flightpred_globals::pred_values[j], 0.01, 0.01));
         learnedfunctions_.back().read_from_db(solution_id_);
     }
 }
@@ -130,7 +130,7 @@ void forecast::prediction_run(const size_t pred_days)
 
             BOOST_FOREACH(string predname, flightpred_globals::pred_values)
             {
-                double val = predres["svm_" + predname];
+                double val = predres[predname];
                 sstr << val << ", ";
                 std::cout << it->second << " " << bgreg::to_iso_extended_string(day) << " "
                           << predname << " " << val << std::endl;

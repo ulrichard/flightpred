@@ -41,6 +41,32 @@ using std::set;
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+solution_config::solution_config(const size_t db_id)
+{
+    train_sol_id_ = db_id;
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "load solution config");
+
+    std::stringstream sstr;
+    sstr << "SELECT configuration, site_name FROM trained_solutions INNER JOIN pred_sites "
+         << "ON trained_solutions.pred_site_id = pred_sites.pred_site_id "
+         << "WHERE train_sol_id=" << train_sol_id_;
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("no trained_solution found for  train_sol_id=" + db_id);
+
+    res[0]["configuration"].to(solution_description_);
+    res[0]["site_name"].to(site_name_);
+    trans.commit();
+
+    decode();
+
+    assert(features_desc_.size() > 40);
+    assert(learning_machines_.size() >= 1);
+
+    // de-serialize the svm's from the database blob
+    for(std::map<std::string, boost::shared_ptr<learning_machine> >::iterator it = learning_machines_.begin(); it != learning_machines_.end(); ++it)
+        it->second->read_from_db(train_sol_id_);
+}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 vector<shared_ptr<solution_config> > solution_config::get_initial_generation(const std::string &site_name)
 {
@@ -192,5 +218,3 @@ shared_ptr<learning_machine> solution_config::get_decision_function(const std::s
     return fit->second;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-
-

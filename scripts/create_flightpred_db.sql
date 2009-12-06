@@ -58,19 +58,21 @@ INSERT INTO pred_sites (site_name, location, country) values ('Uetliberg',   Geo
 
 CREATE TABLE trained_solutions
 (
-	train_sol_id    SERIAL PRIMARY KEY,
-	pred_site_id   int,
-	configuration  text,
-	svm_num_flight oid,
-	svm_max_dist   oid,
-	svm_avg_dist   oid,
-	svm_max_dur    oid,
-	svm_avg_dur    oid,
-	score          real,
-	train_time     real,
-	generation     int,
-	num_samples    int,
-	num_features   int,
+	train_sol_id     SERIAL PRIMARY KEY,
+	pred_site_id     int,
+	configuration    text,
+	num_flight   	 oid,
+	max_dist     	 oid,
+	avg_dist     	 oid,
+	max_dur      	 oid,
+	avg_dur      	 oid,
+	score            real,
+	train_time       real,
+	train_time_prod  real,
+	generation       int,
+	num_samples      int,
+	num_samples_prod int,
+	num_features     int,
 	CONSTRAINT FK_pred_site_id FOREIGN KEY(pred_site_id) REFERENCES pred_sites(pred_site_id) ON DELETE CASCADE
 );
 

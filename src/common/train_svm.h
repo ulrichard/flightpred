@@ -20,7 +20,6 @@ public:
     virtual ~train_svm() { }
 
     void train(const std::string &site_name, const boost::gregorian::date &from, const boost::gregorian::date &to);
-    void train_all(const boost::gregorian::date &from, const boost::gregorian::date &to);
 
 
 private:

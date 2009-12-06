@@ -2,7 +2,8 @@
 #include "train_svm.h"
 #include "extract_features_flight.h"
 #include "common/features_weather.h"
-#include "common/lm_svm_dlib.h"
+#include "common/solution_manager.h"
+#include "common/flightpred_globals.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
@@ -29,31 +30,7 @@ using std::string;
 using std::cout;
 using std::endl;
 
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void train_svm::train_all(const bgreg::date &from, const bgreg::date &to)
-{
-    vector<string> sites;
 
-    {
-        pqxx::transaction<> trans(flightpred_db::get_conn(), "collect features");
-
-        // get the id of the prediction site
-        std::stringstream sstr;
-        sstr << "SELECT site_name FROM pred_sites";
-        pqxx::result res = trans.exec(sstr.str());
-        if(!res.size())
-            throw std::invalid_argument("no sites found");
-        for(size_t i=0; i<res.size(); ++i)
-        {
-            string tmpstr;
-            res[i][0].to(tmpstr);
-            sites.push_back(tmpstr);
-        }
-        trans.commit();
-    }
-
-    std::for_each(sites.begin(), sites.end(), boost::bind(&train_svm::train, this, _1, from, to));
-}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to)
 {
@@ -76,9 +53,14 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     if(!geometry::from_wkt(tmpstr, pred_location))
         throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
     trans1.commit();
+
+    //load the configuration with the best score
+    solution_manager solmgr;
+    std::auto_ptr<solution_config> sol = solmgr.load_best_solution(site_name, false);
+
     // get the feature descriptions of the weather data
-//    const set<features_weather::feat_desc> features = weather.decode_feature_desc("here comes the description");
-    const set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
+    const set<features_weather::feat_desc> &features = sol->get_weather_feature_desc();
+//    const set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
 
     cout << "collecting features for " << site_name << endl;
     learning_machine::SampleType      training_samples;
@@ -106,56 +88,22 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         std::copy(valweather.begin(), valweather.end(), std::back_inserter(training_samples.back()));
     }
 
-    pqxx::transaction<> trans2(flightpred_db::get_conn(), "collect features 2");
-    const size_t generation = 0;
-    std::cout << "registering the config in the db for " << site_name << std::endl;
-    // delete previous default configuratinos
-    if(generation == 0)
-    {
-        sstr.str("");
-        sstr << "DELETE FROM trained_solutions WHERE configuration='SVM(RBF 0.05) ";
-        std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
-        sstr << "' AND pred_site_id=" << pred_site_id << " AND generation=0";
-        res = trans2.exec(sstr.str());
-    }
-    // register the solution in the db
-    sstr.str("");
-    sstr << "INSERT INTO trained_solutions (pred_site_id, configuration, generation) "
-         << "VALUES (" << pred_site_id << ", 'SVM(RBF 0.05) ";
-    std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
-    sstr << "', " << generation << ")";
-    res = trans2.exec(sstr.str());
-    // get the id
-    sstr.str("");
-    sstr << "SELECT train_sol_id FROM trained_solutions WHERE configuration='SVM(RBF 0.05) ";
-    std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
-        sstr << "' AND pred_site_id=" << pred_site_id << " AND generation=" << generation;
-    res = trans2.exec(sstr.str());
-    if(!res.size())
-        throw std::runtime_error("newly inserted record not found");
-    size_t conf_id;
-    res[0][0].to(conf_id);
-    trans2.commit();
-
     double traintime = 0.0;
     for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
     {
         std::cout << "train the support vector machine for " << flightpred_globals::pred_values[i] << " at site: " << site_name <<  std::endl;
         boost::timer btim;
-        const double gamma = 0.01;
-//        lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibsvmtrainer(svm_names[i], gamma);
-        lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > dlibsvmtrainer("svm_" + flightpred_globals::pred_values[i], gamma, 0.01);
-        dlibsvmtrainer.train(training_samples, labels[i]);
+        sol->get_decision_function(flightpred_globals::pred_values[i])->train(training_samples, labels[i]);
         traintime += btim.elapsed();
         std::cout << "training took " << btim.elapsed() / 60.0 << " min" << std::endl;
-        dlibsvmtrainer.write_to_db(conf_id);
+        sol->get_decision_function(flightpred_globals::pred_values[i])->write_to_db(sol->get_solution_id());
     }
 
     pqxx::transaction<> trans3(flightpred_db::get_conn(), "update training info");
     sstr.str("");
-    sstr << "UPDATE trained_solutions SET train_time=" << traintime << ", num_samples=" << training_samples.size()
+    sstr << "UPDATE trained_solutions SET train_time_prod=" << traintime << ", num_samples_prod=" << training_samples.size()
          << ", num_features=" << training_samples.front().size()
-         << "  WHERE train_sol_id=" << conf_id;
+         << "  WHERE train_sol_id=" << sol->get_solution_id();
     res = trans3.exec(sstr.str());
     trans3.commit();
 }

@@ -21,15 +21,12 @@ public:
     virtual ~solution_manager() { };
 
     void initialize_population(const std::string &site_name);
-    void initialize_populations();
 
+    std::auto_ptr<solution_config> load_best_solution(const std::string &site_name, const bool onlyFullyTrained);
 
 private:
     const bool used_for_training(const boost::gregorian::date &day) const;
     const bool used_for_validation(const boost::gregorian::date &day) const;
-
-    const std::vector<boost::gregorian::date> training_days;
-    const std::vector<boost::gregorian::date> validation_days;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred

@@ -18,16 +18,19 @@ namespace flightpred
 class solution_config : public boost::noncopyable
 {
 public:
-    virtual ~solution_config() { };
+     virtual ~solution_config() { };
 
     static std::vector<boost::shared_ptr<solution_config> > get_initial_generation(const std::string &db_conn_str);
+    static std::auto_ptr<solution_config> load_from_db(const size_t db_id) { return std::auto_ptr<solution_config>(new solution_config(db_id)); }
 
+    const size_t get_solution_id() const { return train_sol_id_; }
     const std::string & get_description() const { return solution_description_; }
     const std::set<features_weather::feat_desc> & get_weather_feature_desc() const { return features_desc_; }
 
     boost::shared_ptr<learning_machine> get_decision_function(const std::string &eval_name);
 
 protected:
+    solution_config(const size_t db_id);
     solution_config(const std::string &site_name, const std::string &solution_description)
         : site_name_(site_name), solution_description_(solution_description)
     {   decode();  }
@@ -35,7 +38,8 @@ protected:
     void decode();
 
 
-    const std::string site_name_;
+    size_t train_sol_id_;
+    std::string site_name_;
     std::string solution_description_;
     std::set<features_weather::feat_desc> features_desc_;
     std::map<std::string, boost::shared_ptr<learning_machine> > learning_machines_;

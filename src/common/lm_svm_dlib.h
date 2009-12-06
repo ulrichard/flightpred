@@ -83,6 +83,8 @@ public:
         pqxx::result res = trans.exec(sstr.str());
         if(!res.size())
             throw std::runtime_error("solution configuration not found");
+        if(res[0][0].is_null())
+            return;
         size_t oid_blob;
         res[0][0].to(oid_blob);
 
