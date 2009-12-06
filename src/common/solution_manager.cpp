@@ -1,7 +1,6 @@
 // flightpred
 #include "common/solution_manager.h"
 #include "common/features_weather.h"
-#include "common/extract_features_flight.h"
 #include "common/flightpred_globals.h"
 // postgre
 #include <pqxx/pqxx>
@@ -31,7 +30,6 @@ using std::set;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::initialize_population(const std::string &site_name)
 {
-    feature_extractor_flight flights;
     features_weather         weather;
     vector<shared_ptr<solution_config> > solutions = solution_config::get_initial_generation(site_name);
     const bgreg::date_period dates = weather.get_feature_date_period(false);
@@ -166,7 +164,7 @@ const bool solution_manager::used_for_validation(const bgreg::date &day) const
     return day.day_of_week() == 6; // saturday
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-std::auto_ptr<solution_config> solution_manager::load_best_solution(const std::string &site_name, const bool onlyFullyTrained)
+std::auto_ptr<solution_config> solution_manager::load_best_solution(const std::string &site_name, const bool onlyFullyTrained, const double maxTrainSec)
 {
     pqxx::transaction<> trans(flightpred_db::get_conn(), "load_best_solution");
 
@@ -183,6 +181,8 @@ std::auto_ptr<solution_config> solution_manager::load_best_solution(const std::s
     sstr << "SELECT train_sol_id, configuration, score, train_time, generation FROM trained_solutions WHERE ";
     if(onlyFullyTrained)
         sstr << "num_samples_prod > 300 AND ";
+    if(maxTrainSec > 0.0)
+        sstr << "train_time <= " << maxTrainSec << " AND ";
     sstr << "pred_site_id=" << pred_site_id << " ORDER BY score DESC, generation DESC";
     res = trans.exec(sstr.str());
     if(!res.size())

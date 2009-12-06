@@ -10,7 +10,6 @@ grab_grib.cpp
 grib_pred_model.cpp
 solution_config.cpp
 solution_manager.cpp
-extract_features_flight.cpp
 train_svm.cpp
 )
 

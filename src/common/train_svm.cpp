@@ -1,6 +1,5 @@
 // flightpred
-#include "train_svm.h"
-#include "extract_features_flight.h"
+#include "common/train_svm.h"
 #include "common/features_weather.h"
 #include "common/solution_manager.h"
 #include "common/flightpred_globals.h"
@@ -25,6 +24,7 @@ namespace bgreg = boost::gregorian;
 using boost::array;
 using std::vector;
 using std::set;
+using std::map;
 using std::pair;
 using std::string;
 using std::cout;
@@ -34,7 +34,6 @@ using std::endl;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to)
 {
-    feature_extractor_flight flights;
     features_weather         weather;
 
     // get the id and geographic position of the prediction site
@@ -52,6 +51,32 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     geometry::point_ll_deg pred_location;
     if(!geometry::from_wkt(tmpstr, pred_location))
         throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
+
+    // collect the labels
+    std::cout << "collecting labels" <<  std::endl;
+    sstr.str("");
+    sstr << "SELECT flight_date, COUNT(*) AS num_flights, MAX(distance) AS max_dist, AVG(distance) AS avg_dist, "
+         << "MAX(duration) AS max_dur, AVG(duration) AS avg_dur FROM flights INNER JOIN sites "
+         << "ON flights.site_id = sites.site_id "
+         << "WHERE pred_site_id = " << pred_site_id << " "
+         << "GROUP BY flight_date "
+         << "ORDER BY flight_date ASC";
+    res = trans1.exec(sstr.str());
+    map<bgreg::date, array<double, 5> > labelsbydate;
+    for(size_t i=0; i<res.size(); ++i)
+    {
+        string datestr;
+        res[i]["flight_date"].to(datestr);
+        bgreg::date day(bgreg::from_string(datestr));
+        double dval;
+        for(size_t i=0; i<5; ++i)
+        {
+            res[i][1 + i].to(dval);
+            if(dval < 1.0)
+                dval = 0.0;
+            labelsbydate[day][i] = dval;
+        }
+    }
     trans1.commit();
 
     //load the configuration with the best score
@@ -68,15 +93,13 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     array<vector<double>, 5> labels;
     for(bgreg::date day = from; day <= to; day += bgreg::days(1))
     {
-        const vector<double> valflights = flights.get_features(pred_site_id, day);
-        assert(valflights.size() == flightpred_globals::pred_values.size());
         for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
-            labels[i].push_back(valflights[i]);
+            labels[i].push_back(labelsbydate[day][i]);
 
         std::cout << "collecting features for " << bgreg::to_iso_extended_string(day)
-                  << " "     << valflights[0] << " flights "
-                  << " max " << valflights[1] << " km "
-                  << " avg " << valflights[2] << " km" << std::endl;
+                  << " "     << labelsbydate[day][0] << " flights "
+                  << " max " << labelsbydate[day][1] << " km "
+                  << " avg " << labelsbydate[day][2] << " km" << std::endl;
         const vector<double> valweather = weather.get_features(features, day, false);
         assert(valweather.size() == features.size());
 
