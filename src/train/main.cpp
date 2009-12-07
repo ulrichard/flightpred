@@ -185,8 +185,15 @@ int main(int argc, char* argv[])
 
         if(vm.count("forecast"))
         {
+            const size_t pred_days = 3;
             forecast fcst;
-            fcst.prediction_run(3);
+
+            if(name.length())
+                fcst.prediction_run(name, pred_days);
+            else
+                std::for_each(site_names.begin(), site_names.end(),
+                    boost::bind(&forecast::prediction_run, boost::ref(fcst), _1, pred_days));
+
             show_help_msg = false;
         }
 

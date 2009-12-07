@@ -2,7 +2,7 @@
 #define FORECAST_H_INCLUDED
 
 // flightpred
-#include "common/features_weather.h"
+
 #include "learning_machine.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
@@ -26,34 +26,7 @@ public:
     forecast() { }
     ~forecast() { };
 
-    std::map<std::string, double> predict(const std::string &site_name, const boost::gregorian::date &pred_day);
-    void                          prediction_run(const size_t pred_days);
-
-private:
-    void load_learned_functins(const std::string &site_name);
-
-    template<class ContainerT>
-    void load_features(const boost::gregorian::date &pred_day, std::insert_iterator<ContainerT> insit)
-    {
-        // get the feature description
-//      const std::set<features_weather::feat_desc> features_weather::decode_feature_desc(feature_desc_);
-        features_weather weather;
-        const std::set<features_weather::feat_desc> features = weather.get_standard_features(pred_location_);
-
-        // collect the features
-        const std::vector<double> valweather = weather.get_features(features, pred_day, true);
-
-        *insit++ = pred_day.year();
-        *insit++ = pred_day.day_of_year();
-        *insit++ = pred_day.day_of_week();
-        std::copy(valweather.begin(), valweather.end(), insit);
-    }
-
-    std::string             site_name_;
-    size_t                  solution_id_;
-    std::string             feature_desc_;
-    geometry::point_ll_deg  pred_location_;
-    boost::ptr_vector<learning_machine> learnedfunctions_;
+    void  prediction_run(const std::string &site_name, const size_t pred_days);
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred
