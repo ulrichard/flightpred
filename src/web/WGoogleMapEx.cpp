@@ -12,8 +12,32 @@ WGoogleMapEx::WGoogleMapEx(WContainerWidget *parent)
 {
     WApplication *app = WApplication::instance();
 
-    app->require("/googlemaps_addons/BDCCCircle.js");
-    app->require("/googlemaps_addons/BDCCArrow.js");
+//    app->require("/googlemaps_addons/BDCCCircle.js");
+//    app->require("/googlemaps_addons/BDCCArrow.js");
+
+//    app->require("http://www.bdcc.co.uk/Gmaps/BDCCCircle.js");
+//    app->require("http://www.bdcc.co.uk/Gmaps/BDCCArrow.js");
+
+/*
+    std::stringstream sstr;
+    sstr << "function onGoogleApiLoad()"
+         << "{"
+         <<     "var scriptnode1  = document.createElement('SCRIPT');"
+         <<     "scriptnode1.type = 'text/javascript';"
+         <<     "scriptnode1.src  = '/googlemaps_addons/BDCCCircle.js';"
+         <<     "var scriptnode2  = document.createElement('SCRIPT');"
+         <<     "scriptnode2.type = 'text/javascript';"
+         <<     "scriptnode2.src  = '/googlemaps_addons/BDCCArrow.js';"
+         <<     "var headnode = document.getElementsByTagName('HEAD');"
+         <<     "if(headnode[0] != null)"
+         <<     "{"
+         <<         "headnode[0].appendChild(scriptnode1);"
+         <<         "headnode[0].appendChild(scriptnode2);"
+         <<     "}"
+         << "};"
+         << "google.setOnLoadCallback(onGoogleApiLoad);";
+    app->doJavaScript(sstr.str(), true);
+*/
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void WGoogleMapEx::addMarker(const Coordinate &pos, const string &imgUrl)

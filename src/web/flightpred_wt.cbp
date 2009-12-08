@@ -53,6 +53,8 @@
 		</Compiler>
 		<Unit filename="FlightForecast.cpp" />
 		<Unit filename="FlightForecast.h" />
+		<Unit filename="Populations.cpp" />
+		<Unit filename="Populations.h" />
 		<Unit filename="WGoogleMapEx.cpp" />
 		<Unit filename="WGoogleMapEx.h" />
 		<Unit filename="WeatherMap.cpp" />

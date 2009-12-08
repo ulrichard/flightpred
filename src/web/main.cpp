@@ -2,6 +2,7 @@
 #include "main.h"
 #include "FlightForecast.h"
 #include "WeatherMap.h"
+#include "Populations.h"
 // witty
 #include <Wt/WEnvironment>
 #include <Wt/WText>
@@ -61,10 +62,11 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
         FlightForecast *forecastpanel = new FlightForecast(db_conn_str, forecast_days);
         tabw->addTab(forecastpanel, _("Flight Forecasts\n"));
 
-
         WeatherMap *weatherpanel = new WeatherMap(db_conn_str, "GFS");
         tabw->addTab(weatherpanel, _("Weather data"));
 
+        Populations *populations = new Populations(db_conn_str);
+        tabw->addTab(populations, _("Populations"));
 
         Wt::WContainerWidget *docupanel = new Wt::WContainerWidget();
         tabw->addTab(docupanel, _("Documentation"));
