@@ -125,12 +125,13 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
     chart_->resize(800, 500);
     chart_->setTitle("Population performance");
     chart_->setPlotAreaPadding(200, Wt::Right);
+    chart_->setPlotAreaPadding(30,  Wt::Bottom);
     chart_->setModel(model);
     chart_->setXSeriesColumn(0);
     chart_->setLegendEnabled(true);
-    chart_->axis(Wt::Chart::XAxis)->setFormat("%.2f");
-    chart_->axis(Wt::Chart::XAxis)->setTitle("training_time");
-    chart_->axis(Wt::Chart::YAxis)->setTitle("score");
+    chart_->axis(Wt::Chart::XAxis).setLabelFormat("%.2f");
+    chart_->axis(Wt::Chart::XAxis).setTitle("training_time");
+    chart_->axis(Wt::Chart::YAxis).setTitle("accuracy");
     for(set<string>::iterator it = confclasses.begin(); it != confclasses.end(); ++it)
     {
         Wt::Chart::WDataSeries data1(Wt::Chart::WDataSeries(1 + std::distance(confclasses.begin(), it), Wt::Chart::PointSeries, Wt::Chart::Y1Axis));
