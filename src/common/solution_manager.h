@@ -22,7 +22,7 @@ public:
 
     void initialize_population(const std::string &site_name);
 
-    std::auto_ptr<solution_config> load_best_solution(const std::string &site_name, const bool onlyFullyTrained, const double maxTrainSec = 30.0);
+    std::auto_ptr<solution_config> load_best_solution(const std::string &site_name, const bool onlyFullyTrained, const double maxTrainSec = 50.0);
 
 private:
     const bool used_for_training(const boost::gregorian::date &day) const;

@@ -52,8 +52,8 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     try
     {
         // get flight forecasts from the db
-//        db_conn_str_ = "host=localhost dbname=flightpred user=postgres password=postgres";
-        const string db_conn_str = "host=192.168.2.160 port=5432 dbname=flightpred user=postgres password=postgres";
+        const string db_conn_str = "host=localhost dbname=flightpred user=postgres password=postgres";
+//        const string db_conn_str = "host=192.168.2.160 port=5432 dbname=flightpred user=postgres password=postgres";
 
 
         Wt::WTabWidget *tabw = new Wt::WTabWidget(root());

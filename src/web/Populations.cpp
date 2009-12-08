@@ -8,10 +8,23 @@
 #include <Wt/WStandardItemModel>
 // boost
 #include <boost/any.hpp>
+#include <boost/regex.hpp>
+// std lib
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <utility>
+#include <iostream>
 
 using namespace flightpred;
-using std::string;
 using boost::any;
+using std::string;
+using std::vector;
+using std::set;
+using std::map;
+using std::pair;
+using std::make_pair;
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 Populations::Populations(const string &db_conn_str, Wt::WContainerWidget *parent)
@@ -36,13 +49,17 @@ Populations::Populations(const string &db_conn_str, Wt::WContainerWidget *parent
         areas_->addItem(site_name);
     }
     areas_->setCurrentIndex(0);
-    ShowPopulation();
+#if WT_SERIES >= 0x3
+    areas_->sactivated().connect(SLOT(this, Populations::ShowPopulation));
+#else
+    areas_->sactivated.connect(SLOT(this, Populations::ShowPopulation));
+#endif
+    ShowPopulation(areas_->currentText());
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void Populations::ShowPopulation()
+void Populations::ShowPopulation(const Wt::WString &site_name)
 {
-    const string site_name = areas_->currentText().narrow();
     if(chart_)
     {
         impl_->removeWidget(chart_);
@@ -55,40 +72,71 @@ void Populations::ShowPopulation()
     std::stringstream sstr;
     sstr << "SELECT * FROM trained_solutions INNER JOIN pred_sites ON "
          << "trained_solutions.pred_site_id = pred_sites.pred_site_id WHERE "
-         << "site_name='" << site_name << "' "
+         << "site_name='" << site_name.narrow() << "' "
          << "ORDER BY train_time ASC";
     pqxx::result res = trans.exec(sstr.str());
     if(!res.size())
         throw std::runtime_error("no population found");
 
-    Wt::WStandardItemModel *model = new Wt::WStandardItemModel(res.size(), 3);
-    model->setHeaderData(0, Wt::Horizontal, any(string("train_sol_id")));
-    model->setHeaderData(1, Wt::Horizontal, any(string("train_time")));
-    model->setHeaderData(2, Wt::Horizontal, any(string("score")));
+    boost::regex regx("\\w+\\(\\w+");
+    set<string> confclasses;
+    typedef map<size_t, vector<pair<string, double> > > SolutionsT;
+    SolutionsT  solutions;
 
     for(size_t i=0; i<res.size(); ++i)
     {
         size_t train_sol_id;
         res[i]["train_sol_id"].to(train_sol_id);
-        model->setData(i, 0, any(train_sol_id));
-        double train_time;
-        res[i]["train_time"].to(train_time);
-        model->setData(i, 1, any(train_time));
-        double score;
-        res[i]["score"].to(score);
-        model->setData(i, 2, any(score));
+        string config;
+        res[i]["configuration"].to(config);
+        boost::smatch regxmatch;
+        if(boost::regex_search(config, regxmatch, regx))
+        {
+            const string confclass = regxmatch[0];
+            double train_time;
+            res[i]["train_time"].to(train_time);
+            double score;
+            res[i]["score"].to(score);
+
+            confclasses.insert(confclass);
+            solutions[train_time * 100].push_back(make_pair(confclass, score));
+        }
     }
+
+    Wt::WStandardItemModel *model = new Wt::WStandardItemModel(res.size(), 1 + confclasses.size());
+    model->setHeaderData(0, Wt::Horizontal, any(string("train_time")));
+    for(set<string>::iterator it = confclasses.begin(); it != confclasses.end(); ++it)
+        model->setHeaderData(1 + std::distance(confclasses.begin(), it), Wt::Horizontal, any(*it));
+
+    for(SolutionsT::iterator it = solutions.begin(); it != solutions.end(); ++it)
+    {
+        const size_t modrow = std::distance(solutions.begin(), it);
+        model->setData(modrow, 0, any(it->first / 100.0));
+        for(vector<pair<string, double> >::iterator itv = it->second.begin(); itv != it->second.end(); ++itv)
+        {
+            const size_t modcol = 1 + std::distance(confclasses.begin(), confclasses.find(itv->first));
+            model->setData(modrow, modcol, any(itv->second));
+            std::cout << itv->first << std::endl;
+        }
+    }
+
 
     chart_ = new Wt::Chart::WCartesianChart(impl_);
     chart_->resize(800, 500);
     chart_->setTitle("Population performance");
     chart_->setPlotAreaPadding(200, Wt::Right);
     chart_->setModel(model);
-    chart_->setXSeriesColumn(1);
-    Wt::Chart::WDataSeries data1(Wt::Chart::WDataSeries(2, Wt::Chart::PointSeries, Wt::Chart::Y1Axis));
-    data1.setLegendEnabled(true);
-    chart_->addSeries(data1);
+    chart_->setXSeriesColumn(0);
     chart_->setLegendEnabled(true);
+    chart_->axis(Wt::Chart::XAxis)->setFormat("%.2f");
+    chart_->axis(Wt::Chart::XAxis)->setTitle("training_time");
+    chart_->axis(Wt::Chart::YAxis)->setTitle("score");
+    for(set<string>::iterator it = confclasses.begin(); it != confclasses.end(); ++it)
+    {
+        Wt::Chart::WDataSeries data1(Wt::Chart::WDataSeries(1 + std::distance(confclasses.begin(), it), Wt::Chart::PointSeries, Wt::Chart::Y1Axis));
+        data1.setLegendEnabled(true);
+        chart_->addSeries(data1);
+    }
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

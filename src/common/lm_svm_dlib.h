@@ -23,13 +23,35 @@ template<class kernel_type>
 class lm_dlib_base : public learning_machine
 {
 protected:
-    lm_dlib_base(const std::string &pred_name, const double gamma)
-      : learning_machine(pred_name), gamma_(gamma) { }
+    lm_dlib_base(const std::string &pred_name)
+      : learning_machine(pred_name) { }
 
 public:
     typedef typename kernel_type::sample_type sample_type;
 
     virtual ~lm_dlib_base() { };
+
+    virtual void train(const learning_machine::SampleType &samplesin, const std::vector<double> &lables)
+    {
+        assert(samplesin.size() == lables.size());
+
+        // format transformation
+        std::vector<sample_type> samples;
+        for(learning_machine::SampleType::const_iterator it = samplesin.begin(); it != samplesin.end(); ++it)
+        {
+            sample_type samp;
+            samp.set_size(it->size());
+            for(size_t i=0; i<it->size(); ++i)
+                samp(i) = (*it)[i];
+            samples.push_back(samp);
+        }
+
+        std::cout << "normalize the samples" << std::endl;
+        this->normalizer_.train(samples);
+        std::transform(samples.begin(), samples.end(), samples.begin(), this->normalizer_);
+
+        train_algorithm(samples, lables);
+    }
 
     virtual double eval(const std::vector<double> &sample) const
     {
@@ -97,7 +119,8 @@ public:
     }
 
 protected:
-    const double gamma_;
+    virtual void train_algorithm(const std::vector<sample_type> &samples, const std::vector<double> &lables) = 0;
+
     dlib::vector_normalizer<sample_type> normalizer_;
     dlib::decision_function<kernel_type> learnedfunc_;
 };
@@ -107,35 +130,21 @@ class lm_dlib_rvm : public lm_dlib_base<kernel_type>
 {
     typedef typename kernel_type::sample_type sample_type;
 public:
-    lm_dlib_rvm(const std::string &pred_name, const double gamma)
-     : lm_dlib_base<kernel_type>(pred_name, gamma) { };
+    lm_dlib_rvm(const std::string &pred_name, kernel_type &kern)
+     : lm_dlib_base<kernel_type>(pred_name), kern_(kern) { };
     virtual ~lm_dlib_rvm() { };
 
-    virtual void train(const learning_machine::SampleType &samplesin, const std::vector<double> &lables)
+protected:
+    virtual void train_algorithm(const std::vector<sample_type> &samples, const std::vector<double> &lables)
     {
-        assert(samplesin.size() == lables.size());
-
-        // format transformation
-        std::vector<sample_type> samples;
-        for(learning_machine::SampleType::const_iterator it = samplesin.begin(); it != samplesin.end(); ++it)
-        {
-            sample_type samp;
-            samp.set_size(it->size());
-            for(size_t i=0; i<it->size(); ++i)
-                samp(i) = (*it)[i];
-            samples.push_back(samp);
-        }
-
-        std::cout << "normalize the samples" << std::endl;
-        this->normalizer_.train(samples);
-        std::transform(samples.begin(), samples.end(), samples.begin(), this->normalizer_);
-
         std::cout << "train the relevance vector machine" << std::endl;
         dlib::rvm_regression_trainer<kernel_type> trainer;
-        trainer.set_kernel(kernel_type(this->gamma_));
+        trainer.set_kernel(kern_);
         this->learnedfunc_ = trainer.train(samples, lables);
         std::cout << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
     }
+private:
+    kernel_type kern_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 template<class kernel_type>
@@ -143,32 +152,15 @@ class lm_dlib_krls : public lm_dlib_base<kernel_type>
 {
     typedef typename kernel_type::sample_type sample_type;
 public:
-    lm_dlib_krls(const std::string &pred_name, const double gamma, const double fact)
-     : lm_dlib_base<kernel_type>(pred_name, gamma), fact_(fact) { };
+    lm_dlib_krls(const std::string &pred_name, kernel_type &kern, const double fact)
+     : lm_dlib_base<kernel_type>(pred_name), kern_(kern), fact_(fact) { };
     virtual ~lm_dlib_krls() { };
 
-    virtual void train(const learning_machine::SampleType &samplesin, const std::vector<double> &lables)
+protected:
+    virtual void train_algorithm(const std::vector<sample_type> &samples, const std::vector<double> &lables)
     {
-        assert(samplesin.size() == lables.size());
-
-        // format transformation
-        std::vector<sample_type> samples;
-        for(learning_machine::SampleType::const_iterator it = samplesin.begin(); it != samplesin.end(); ++it)
-        {
-            sample_type samp;
-            samp.set_size(it->size());
-            for(size_t i=0; i<it->size(); ++i)
-                samp(i) = (*it)[i];
-            samples.push_back(samp);
-        }
-        assert(samples.size() == lables.size());
-
-        std::cout << "normalize the samples" << std::endl;
-        this->normalizer_.train(samples);
-        std::transform(samples.begin(), samples.end(), samples.begin(), this->normalizer_);
-
         std::cout << "train the kernel recursive least squares algorithm" << std::endl;
-        dlib::krls<kernel_type> trainer(kernel_type(this->gamma_), fact_);
+        dlib::krls<kernel_type> trainer(kern_, fact_);
 
         for(size_t i=0; i<lables.size(); ++i)
             trainer.train(samples[i], lables[i]);
@@ -178,6 +170,7 @@ public:
         std::cout << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
     }
 private:
+    kernel_type kern_;
     double fact_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

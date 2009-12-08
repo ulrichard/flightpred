@@ -74,13 +74,10 @@ vector<shared_ptr<solution_config> > solution_config::get_initial_generation(con
 
     // get the id and geographic position of the prediction site
     std::stringstream sstr;
-    sstr << "SELECT pred_site_id, AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name << "'";
+    sstr << "SELECT AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name << "'";
     pqxx::result res = trans.exec(sstr.str());
     if(!res.size())
         throw std::invalid_argument("site not found : " + site_name);
-    size_t tmp_pred_site_id;
-    res[0]["pred_site_id"].to(tmp_pred_site_id);
-    const size_t pred_site_id = tmp_pred_site_id;
     string tmpstr;
     res[0]["loc"].to(tmpstr);
     geometry::point_ll_deg pred_location;
@@ -95,11 +92,18 @@ vector<shared_ptr<solution_config> > solution_config::get_initial_generation(con
     const string weather_feat_desc(sstr.str());
 
     vector<string> algo_desc;
+    algo_desc.push_back("DLIB_RVM(RBF(0.1))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.05))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.02))");
     algo_desc.push_back("DLIB_RVM(RBF(0.01))");
     algo_desc.push_back("DLIB_RVM(RBF(0.007))");
     algo_desc.push_back("DLIB_RVM(RBF(0.005))");
     algo_desc.push_back("DLIB_RVM(RBF(0.001))");
     algo_desc.push_back("DLIB_RVM(RBF(0.0001))");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.5)    0.5)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.1)    0.5)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.5)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.1)");
     algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.01)");
     algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.001)");
     algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.0001)");
@@ -108,6 +112,42 @@ vector<shared_ptr<solution_config> > solution_config::get_initial_generation(con
     algo_desc.push_back("DLIB_KRLS(RBF(0.005)  0.001)");
     algo_desc.push_back("DLIB_KRLS(RBF(0.001)  0.001)");
     algo_desc.push_back("DLIB_KRLS(RBF(0.0001) 0.001)");
+    algo_desc.push_back("DLIB_RVM(SIG(0.1   0.1))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.1   0.01))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.1   0.001))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.01  0.1))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.01  0.01))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.01  0.001))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.001 0.1))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.001 0.01))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.001 0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.1   0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.1   0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.1   0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.01  0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.01  0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.01  0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.001 0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.001 0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.001 0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.1   0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.1   0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.1   0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.01  0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.01  0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.01  0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.001 0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.001 0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.001 0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.01  0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.01  0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001  0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.001))");
 
 
     vector<shared_ptr<solution_config> > solutions;
@@ -138,16 +178,60 @@ struct assign_dlib_rvm_rbf
     template<class iterT>
     void operator()(iterT begin, iterT end) const
     {
-        typedef lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > krlsT;
+        typedef dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > kernT;
+        typedef lm_dlib_rvm<kernT> rvmT;
 
+        kernT kern(gamma_);
         for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, gamma_));
+            learning_machines_[*it] = shared_ptr<learning_machine>(new rvmT(*it, kern));
     }
 private:
     map<string, shared_ptr<learning_machine> > &learning_machines_;
     double &gamma_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+struct assign_dlib_rvm_sig
+{
+    assign_dlib_rvm_sig(map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma, double &coef)
+        : learning_machines_(learning_machines), gamma_(gamma), coef_(coef) { }
+
+    template<class iterT>
+    void operator()(iterT begin, iterT end) const
+    {
+        typedef dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > kernT;
+        typedef lm_dlib_rvm<kernT> rvmT;
+
+        kernT kern(gamma_, coef_);
+        for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
+            learning_machines_[*it] = shared_ptr<learning_machine>(new rvmT(*it, kern));
+    }
+private:
+    map<string, shared_ptr<learning_machine> > &learning_machines_;
+    double &gamma_;
+    double &coef_;
+};
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+struct assign_dlib_rvm_poly
+{
+    assign_dlib_rvm_poly(map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma, double &coef, double &degree)
+        : learning_machines_(learning_machines), gamma_(gamma), coef_(coef), deg_(degree) { }
+
+    template<class iterT>
+    void operator()(iterT begin, iterT end) const
+    {
+        typedef dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > kernT;
+        typedef lm_dlib_rvm<kernT> rvmT;
+
+        kernT kern(gamma_, coef_, deg_);
+        for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
+            learning_machines_[*it] = shared_ptr<learning_machine>(new rvmT(*it, kern));
+    }
+private:
+    map<string, shared_ptr<learning_machine> > &learning_machines_;
+    double &gamma_;
+    double &coef_;
+    double &deg_;
+};/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct assign_dlib_krls_rbf
 {
     assign_dlib_krls_rbf(map<string, shared_ptr<learning_machine> > &learning_machines, double &gamma, double &fact)
@@ -156,11 +240,13 @@ struct assign_dlib_krls_rbf
     template<class iterT>
     void operator()(iterT begin, iterT end) const
     {
-        typedef lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > krlsT;
+        typedef dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > kernT;
+        typedef lm_dlib_krls<kernT> krlsT;
 
         assert(5 == flightpred_globals::pred_values.size());
+        kernT kern(gamma_);
         for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, gamma_, fact_));
+            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, kern, fact_));
     }
 private:
     map<string, shared_ptr<learning_machine> > &learning_machines_;
@@ -178,18 +264,25 @@ void solution_config::decode()
 
     features_weather::feat_desc currfeat;
     vector<features_weather::feat_desc> features;
-    double currgamma, currfact;
+    double currgamma, currcoef, currdegree, currfact;
 
     void (point_ll_deg::*setlon)(const double &v) = &point_ll_deg::lon;
     void (point_ll_deg::*setlat)(const double &v) = &point_ll_deg::lat;
 	typedef rule<> rule_t;
 
-	rule_t kernel_dlib_rbf = "RBF(" >> ureal_p[assign_a(currgamma)] >> ")";
-	rule_t algo_dlib_rvm  = ("DLIB_RVM(" >> kernel_dlib_rbf >> ")")
+	rule_t kernel_dlib_rbf  = "RBF(" >> ureal_p[assign_a(currgamma)] >> ")";
+	rule_t kernel_dlib_sig  = "SIG(" >> ureal_p[assign_a(currgamma)] >> *blank_p >> ureal_p[assign_a(currcoef)] >> ")";
+	rule_t kernel_dlib_poly = "POLY(" >> ureal_p[assign_a(currgamma)] >> *blank_p >> ureal_p[assign_a(currcoef)] >> *blank_p >> ureal_p[assign_a(currdegree)] >> ")";
+
+	rule_t algo_dlib_rvm_rbf  = ("DLIB_RVM(" >> kernel_dlib_rbf >> ")")
             [assign_dlib_rvm_rbf(learning_machines_, currgamma)];
+	rule_t algo_dlib_rvm_sig  = ("DLIB_RVM(" >> kernel_dlib_sig >> ")")
+            [assign_dlib_rvm_sig(learning_machines_, currgamma, currcoef)];
+	rule_t algo_dlib_rvm_poly  = ("DLIB_RVM(" >> kernel_dlib_poly >> ")")
+            [assign_dlib_rvm_poly(learning_machines_, currgamma, currcoef, currdegree)];
 	rule_t algo_dlib_krls = ("DLIB_KRLS(" >> kernel_dlib_rbf >> *blank_p >> ureal_p[assign_a(currfact)] >> ")")
             [assign_dlib_krls_rbf(learning_machines_, currgamma, currfact)];
-	rule_t algo = algo_dlib_rvm | algo_dlib_krls;
+	rule_t algo = algo_dlib_rvm_rbf | algo_dlib_rvm_sig | algo_dlib_rvm_poly | algo_dlib_krls;
 
 	rule_t model_gfs = str_p("GFS")[assign_a(currfeat.model)];
 	rule_t model = model_gfs;

@@ -22,7 +22,7 @@ public:
     virtual ~Populations() { }
 
 private:
-    void ShowPopulation();
+    void ShowPopulation(const Wt::WString &site_name);
 
     Wt::WContainerWidget *impl_;
     const std::string db_conn_str_;
