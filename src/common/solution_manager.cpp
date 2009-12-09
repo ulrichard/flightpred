@@ -2,6 +2,7 @@
 #include "common/solution_manager.h"
 #include "common/features_weather.h"
 #include "common/flightpred_globals.h"
+#include "common/ga_evocosm.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
@@ -114,7 +115,7 @@ void solution_manager::initialize_population(const std::string &site_name)
     static const string eval_name("max_dist");
     BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
     {
-        std::cout << "train the support vector machine" <<  std::endl;
+        std::cout << "train the learning machine : " << solution->get_short_description() <<  std::endl;
         learning_machine::SampleType samples;
         for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
             if(used_for_training(*dit))
@@ -132,8 +133,9 @@ void solution_manager::initialize_population(const std::string &site_name)
             {
                 const vector<double> &samples = weatherdata[solution->get_weather_feature_desc()][*dit];
                 const double predval   = solution->get_decision_function(eval_name)->eval(samples);
+                const double predval_p = predval > 0.0 ? predval : 0.0; // to catch nan
                 const double & realval = max_distances[*dit];
-                const double err = fabs(realval - predval);
+                const double err = fabs(realval - predval_p);
                 sum_real += realval;
                 sum_err  += err;
                 std::cout << bgreg::to_iso_extended_string(*dit) << " " << realval << " " << predval << " " << err << std::endl;
