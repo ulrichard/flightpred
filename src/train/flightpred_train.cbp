@@ -27,9 +27,12 @@
 					<Add library="boost_filesystem-mt" />
 					<Add library="boost_date_time-mt" />
 					<Add library="boost_system-mt" />
+					<Add library="boost_regex-mt" />
 					<Add library="json_spirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
+					<Add library="evocosm" />
+					<Add library="coyotl" />
 					<Add directory="../../3rd-party/json_spirit/build/json_spirit" />
 				</Linker>
 			</Target>
@@ -53,9 +56,12 @@
 					<Add library="boost_filesystem-mt" />
 					<Add library="boost_date_time-mt" />
 					<Add library="boost_system-mt" />
+					<Add library="boost_regex-mt" />
 					<Add library="json_spirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
+					<Add library="evocosm" />
+					<Add library="coyotl" />
 					<Add directory="../../3rd-party/json_spirit/build/json_spirit" />
 				</Linker>
 			</Target>
@@ -72,6 +78,8 @@
 		<Unit filename="../common/flightpred_globals.h" />
 		<Unit filename="../common/forecast.cpp" />
 		<Unit filename="../common/forecast.h" />
+		<Unit filename="../common/ga_evocosm.cpp" />
+		<Unit filename="../common/ga_evocosm.h" />
 		<Unit filename="../common/geo_parser.cpp" />
 		<Unit filename="../common/geo_parser.h" />
 		<Unit filename="../common/grab_flights.cpp" />
