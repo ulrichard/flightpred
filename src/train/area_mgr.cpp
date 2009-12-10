@@ -9,7 +9,8 @@
 #include <geometry/geometries/latlong.hpp>
 #include <geometry/algorithms/distance.hpp>
 #include <geometry/strategies/geographic/geo_distance.hpp>
-#include <geometry/io/wkt/streamwkt.hpp>
+//#include <geometry/io/wkt/streamwkt.hpp>
+#include <geometry/io/wkt/aswkt.hpp>
 // boost
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -71,14 +72,14 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
         {
             sstr.str("");
             sstr << "INSERT INTO pred_sites (site_name, location) VALUES ('" << name << "', "
-                 << "GeomFromText('POINT(" << pos.lon() << " " << pos.lat() << ")', " << PG_SIR_WGS84 << "))";
+                 << "GeomFromText('" << geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << "))";
             trans.exec(sstr.str());
         }
         else if(pos.lat() || pos.lon())
         {
             sstr.str("");
             sstr << "UPDATE pred_sites SET location="
-                 << "GeomFromText('POINT(" << pos.lon() << " " << pos.lat() << ")', " << PG_SIR_WGS84 << ")) WHERE"
+                 << "GeomFromText('" << geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << ")) WHERE"
                  << "site_name='" << name << "'";
             trans.exec(sstr.str());
         }

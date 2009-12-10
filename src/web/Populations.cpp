@@ -92,7 +92,7 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
         boost::smatch regxmatch;
         if(boost::regex_search(config, regxmatch, regx))
         {
-            const string confclass = regxmatch[0];
+            const string confclass = regxmatch[0] + ")";
             double train_time;
             res[i]["train_time"].to(train_time);
             double score;
@@ -116,7 +116,6 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
         {
             const size_t modcol = 1 + std::distance(confclasses.begin(), confclasses.find(itv->first));
             model->setData(modrow, modcol, any(itv->second));
-            std::cout << itv->first << std::endl;
         }
     }
 

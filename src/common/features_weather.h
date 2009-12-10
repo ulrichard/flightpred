@@ -39,8 +39,6 @@ public:
         std::string                      param;
     };
 
- //   static std::set<feat_desc> decode_feature_desc(const std::string &desc);
-
     std::set<feat_desc> get_standard_features(const geometry::point_ll_deg &site_location) const;
 
     std::vector<double> get_features(const std::set<feat_desc> &descriptions, const boost::gregorian::date &day, const bool future) const;

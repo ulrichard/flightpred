@@ -151,6 +151,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
     for(size_t i=0; i<model->rowCount(); ++i)
     {
         const string site_name = boost::any_cast<string>(model->data(i, 0));
+        const double max_dist  = boost::any_cast<double>(model->data(i, 2));
 
         std::stringstream sstr;
         sstr << "SELECT AsText(location) as loc from pred_sites WHERE site_name='" << site_name << "'";
@@ -165,8 +166,8 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 
         const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
         gmap->addMarker(gmCoord, "/sigma.gif");
-        const double radiusKm = 20.0;
-//        gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 2, 0.7, true, Wt::WColor("#FF0000"), 0.3, "");
+        const double radiusKm = max_dist / 10.0;
+        gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9, true, Wt::WColor("#FF0000"), 0.3, "");
 
         bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
         bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));

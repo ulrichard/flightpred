@@ -52,8 +52,8 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     try
     {
         // get flight forecasts from the db
-        const string db_conn_str = "host=localhost dbname=flightpred user=postgres password=postgres";
-//        const string db_conn_str = "host=192.168.2.160 port=5432 dbname=flightpred user=postgres password=postgres";
+//        const string db_conn_str = "host=localhost dbname=flightpred user=postgres password=postgres";
+        const string db_conn_str = "host=192.168.2.160 port=5432 dbname=flightpred user=postgres password=postgres";
 
 
         Wt::WTabWidget *tabw = new Wt::WTabWidget(root());
@@ -75,7 +75,6 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
         Wt::WText *txIFrame = new Wt::WText(sstr.str(), Wt::XHTMLUnsafeText);
         docupanel->addWidget(txIFrame);
         docupanel->resize(Wt::WLength(100.0, Wt::WLength::Percentage), Wt::WLength(100.0, Wt::WLength::Percentage));
-
 
     }
     catch(std::exception &ex)

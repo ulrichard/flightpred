@@ -31,39 +31,6 @@ using std::string;
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-// the following function is only here as long as it's not part of the ggl
-namespace geometry
-{
-// Formula to calculate the point at a distance/angle from another point
-// This might be a GGL-function in the future.
-template <typename P1, typename P2>
-inline void point_at_distance(P1 const& p1, double distance, double tc, double radius, P2& p2)
-{
-    double earth_perimeter = radius * geometry::math::two_pi;
-    double d = (distance / earth_perimeter) * geometry::math::two_pi;
-    double const& lat1 = geometry::get_as_radian<1>(p1);
-    double const& lon1 = geometry::get_as_radian<0>(p1);
-
-    // http://williams.best.vwh.net/avform.htm#LL
-    double lat = asin(sin(lat1)*cos(d)+cos(lat1)*sin(d)*cos(tc));
-    double dlon = atan2(sin(tc)*sin(d)*cos(lat1),cos(d)-sin(lat1)*sin(lat));
-    double lon = lon1 - dlon;
-
-    geometry::set_from_radian<1>(p2, lat);
-    geometry::set_from_radian<0>(p2, lon);
-}
-} // namespace geometry
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-/*
-set<features_weather::feat_desc> features_weather::decode_feature_desc(const std::string &desc)
-{
-    // todo : implement
-    set<feat_desc> features;
-    return features;
-}
-*/
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void features_weather::generate_features(features_weather::feat_desc feat, const vector<point_ll_deg> &locations,
     const bpt::time_duration &from, const bpt::time_duration &to, set<feat_desc> &features) const
 {
