@@ -57,8 +57,8 @@ int main(int argc, char* argv[])
     try
     {
         string name, position, start_date, end_date, pred_model;
-        double area_radius = 5000.0;
-        size_t download_pack = 100;
+        double area_radius = 5000.0, mutation_rate;
+        size_t download_pack = 100, iterations;
         string db_host, db_name, db_user, db_password;
         size_t db_port;
 
@@ -75,23 +75,24 @@ int main(int argc, char* argv[])
             ("register-area",      "register a flight area for prediction (name, position, area_radius[km])")
             ("get-weather",        "get past weather prediction grib data for central europe (start_date, end_date, download_pack)")
             ("init-population",    "create an initial generation 0 of solutions (name)")
-//            ("evolution-single",   "evolve a single generation (name)")
-//            ("evolution-converge", "run the evolution until the progress falls below a threshold (name)")
+            ("evolve-population",   "evolve a population of solutions (name, iterations, mutation_rate)")
             ("train",		       "train the system with the best performing solution found so far (name, start_date, end_date)")
             ("get-future-weather", "get future weather prediction grib data for central europe (download_pack)")
             ("forecast",           "predict possible flights for the next few days")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
             ("position",      po::value<string>(&position)->default_value("N 0 E 0"), "geographic position")
-            ("area_radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training [m]")
-            ("pred_model",    po::value<string>(&pred_model)->default_value("GFS"), "name of the numeric weather prediction model")
-            ("start_date",    po::value<string>(&start_date)->default_value(start_date), "start date (yyyy/mm/dd)")
-            ("end_date",      po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
-            ("download_pack", po::value<size_t>(&download_pack)->default_value(download_pack), "how many grib messages to download at once")
-            ("db_host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
-            ("db_port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
-            ("db_name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
-            ("db_user",       po::value<string>(&db_user)->default_value("postgres"),     "name of the database user")
-            ("db_password",   po::value<string>(&db_password)->default_value("postgres"), "password of the database user")
+            ("area-radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training [m]")
+            ("pred-model",    po::value<string>(&pred_model)->default_value("GFS"), "name of the numeric weather prediction model")
+            ("start-date",    po::value<string>(&start_date)->default_value(start_date), "start date (yyyy/mm/dd)")
+            ("end-date",      po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
+            ("download-pack", po::value<size_t>(&download_pack)->default_value(download_pack), "how many grib messages to download at once")
+            ("iterations",    po::value<size_t>(&iterations)->default_value(50),          "how many generations to run an evolution")
+            ("mutation-rate", po::value<double>(&mutation_rate)->default_value(0.1),      "the probability of mutations in the breeding of the evolution")
+            ("db-host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
+            ("db-port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
+            ("db-name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
+            ("db-user",       po::value<string>(&db_user)->default_value("postgres"),     "name of the database user")
+            ("db-password",   po::value<string>(&db_password)->default_value("postgres"), "password of the database user")
             ;
         po::variables_map vm;
         po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -146,19 +147,20 @@ int main(int argc, char* argv[])
 
             show_help_msg = false;
         }
-/*
-        if(vm.count("evolution-single"))
+
+        if(vm.count("evolve-population"))
         {
+            solution_manager mgr;
+
+            if(name.length())
+                mgr.evolve_population(name, iterations, mutation_rate);
+            else
+                std::for_each(site_names.begin(), site_names.end(),
+                    boost::bind(&solution_manager::evolve_population, boost::ref(mgr), _1, iterations, mutation_rate));
 
             show_help_msg = false;
         }
 
-        if(vm.count("evolution-converge"))
-        {
-
-            show_help_msg = false;
-        }
-*/
         if(vm.count("train"))
         {
             train_svm trainer;

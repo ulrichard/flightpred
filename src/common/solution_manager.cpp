@@ -32,7 +32,7 @@ using std::set;
 void solution_manager::initialize_population(const std::string &site_name)
 {
     features_weather         weather;
-    vector<shared_ptr<solution_config> > solutions = solution_config::get_initial_generation(site_name);
+    vector<shared_ptr<solution_config> > solutions = get_initial_generation(site_name);
     const bgreg::date_period dates = weather.get_feature_date_period(false);
     pqxx::transaction<> trans1(flightpred_db::get_conn(), "initialize populations");
 
@@ -153,7 +153,121 @@ void solution_manager::initialize_population(const std::string &site_name)
     }
 
     trans2.commit();
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+vector<shared_ptr<solution_config> > solution_manager::get_initial_generation(const std::string &site_name)
+{
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "initial generation");
 
+    // get the id and geographic position of the prediction site
+    std::stringstream sstr;
+    sstr << "SELECT AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name << "'";
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::invalid_argument("site not found : " + site_name);
+    string tmpstr;
+    res[0]["loc"].to(tmpstr);
+    geometry::point_ll_deg pred_location;
+    if(!geometry::from_wkt(tmpstr, pred_location))
+        throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
+
+    // get the default feature descriptions of the weather data
+    features_weather weather;
+    const set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
+    sstr.str("");
+    std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
+    const string weather_feat_desc(sstr.str());
+
+    vector<string> algo_desc;
+    algo_desc.push_back("DLIB_RVM(RBF(0.1))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.05))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.02))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.01))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.007))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.005))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.001))");
+    algo_desc.push_back("DLIB_RVM(RBF(0.0001))");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.5)    0.5)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.1)    0.5)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.5)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.1)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.01)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.0001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.01)   0.00001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.007)  0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.005)  0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.001)  0.001)");
+    algo_desc.push_back("DLIB_KRLS(RBF(0.0001) 0.001)");
+    algo_desc.push_back("DLIB_RVM(SIG(0.1   0.1))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.1   0.01))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.1   0.001))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.01  0.1))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.01  0.01))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.01  0.001))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.001 0.1))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.001 0.01))");
+    algo_desc.push_back("DLIB_RVM(SIG(0.001 0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.1   0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.1   0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.1   0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.01  0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.01  0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.01  0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.001 0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.001 0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.1   0.001 0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.1   0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.1   0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.1   0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.01  0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.01  0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.01  0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.001 0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.001 0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.01  0.001 0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.01  0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.01  0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001  0.001))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.1))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.01))");
+    algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.001))");
+
+
+    vector<shared_ptr<solution_config> > solutions;
+    BOOST_FOREACH(const string &desc, algo_desc)
+        solutions.push_back(shared_ptr<solution_config>(new solution_config(site_name, desc + " " + weather_feat_desc)));
+
+
+    return solutions;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+// todo : this will have to get a real implementation. What is here at the moment is only to get it to compile with libevocosm.
+evolution::organism create_ramdom_solution(const string &site_name)
+{
+    size_t db_id = 0;
+    return evolution::organism(solution_config(db_id));
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void solution_manager::evolve_population(const string &site_name, const size_t iterations, const double mutation_rate)
+{
+    const size_t population_size = get_initial_generation(site_name).size();
+    flightpred::evolution::optimizer opt(boost::bind(&solution_manager::test_fitness, this, ::_1),
+                                         boost::bind(&create_ramdom_solution, site_name),
+                                         boost::bind(&solution_manager::get_initial_generation, this, site_name),
+                                         population_size,
+                                         mutation_rate,
+                                         iterations);
+    opt.run();
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+const double solution_manager::test_fitness(const solution_config &sol)
+{
+    // todo : implement
+    return 1.0;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const bool solution_manager::used_for_training(const bgreg::date &day) const

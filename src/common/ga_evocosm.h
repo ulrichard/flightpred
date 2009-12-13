@@ -114,7 +114,7 @@ public:
         return orgn.fitness();
     }
     /** performs fitness testing */
-    virtual double test(std::vector<organism> &population) const { }
+    virtual double test(std::vector<organism> &population) const;
 
 private:
     boost::function<double(const solution_config&)> eval_fitness_;
@@ -143,9 +143,6 @@ protected:
 class optimizer : protected libevocosm::organism_factory<organism>, protected libevocosm::landscape_factory<landscape>
 {
 private:
-    // a function type
-    typedef organism t_init();
-
     // objects that define the characteristics of the genetic algorithm
     mutator                                mutator_;
     reproducer                             reproducer_;
@@ -158,10 +155,13 @@ private:
     libevocosm::evocosm<organism, landscape> * evocosm_;
 
     // number of iterations to run
-    const size_t                        iterations_;
+    const size_t iterations_;
 
     // a function that provides initialized, random solutions
-    t_init *                            init_;
+    boost::function<organism(void)> init_;
+
+    // a function that generates the initial population
+    boost::function<std::vector<boost::shared_ptr<solution_config> >(void)> init_population_;
 
     // the function to be optimized
     boost::function<double(const solution_config&)> eval_fitness_;
@@ -172,12 +172,15 @@ private:
 public:
     /** @brief Constructor
         Creates a new function_optimizer with the given set of parameters.
-        @param a_function - Address of the function to be optimized.
-        @param a_init - Address of a function that initializes solutions.
+        @param eval_fitness - the function to be optimized.
+        @param a_init - a function that initializes solutions.
+        @param init_population - a function that generates the initial population.
         @param a_population - The size of the solution population.
         @param a_mutation_rate - Mutation rate in the range [0,1].
         @param a_iterations - Number of iterations to perform when doing a run. */
-    optimizer(boost::function<double(const solution_config&)> eval_fitness, t_init * a_init, size_t a_population, double a_mutation_rate, size_t a_iterations);
+    optimizer(boost::function<double(const solution_config&)> eval_fitness, boost::function<organism(void)> a_init,
+              boost::function<std::vector<boost::shared_ptr<solution_config> >(void)> init_population,
+              size_t a_population, double a_mutation_rate, size_t a_iterations);
     virtual ~optimizer() { delete evocosm_; }
 
     /** @brief Performs optimization

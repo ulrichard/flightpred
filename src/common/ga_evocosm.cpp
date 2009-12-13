@@ -2,19 +2,22 @@
 #include "common/ga_evocosm.h"
 // evocosm
 #include <libevocosm/roulette.h>
+// boost
+#include <boost/foreach.hpp>
 // std lib
 #include <iostream>
 #include <stdexcept>
 
 using namespace flightpred;
 using namespace flightpred::evolution;
+using boost::shared_ptr;
 using std::vector;
 using std::cout;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // mutate a set of organisms
 void mutator::mutate(vector<organism> &population)
 {
-    for(vector<organism>::iterator solution = population.begin(); solution != population.end(); ++solution)
+    for(vector<organism>::iterator it = population.begin(); it != population.end(); ++it)
     {
 /*
         for (vector<double>::iterator arg = solution->genes().begin(); arg != solution->genes().end(); ++arg)
@@ -77,6 +80,13 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+double landscape::test(std::vector<organism> &population) const
+{
+   // todo : mplement
+   return 0.0;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // say something about a population
 bool reporter::report(const vector<vector<organism> > &populations, size_t iteration, double & fitness, bool finished)
 {
@@ -108,10 +118,11 @@ bool reporter::report(const vector<vector<organism> > &populations, size_t itera
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // constructor
 optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitness,
-                                       t_init * a_init,
-                                       size_t population,
-                                       double mutation_rate,
-                                       size_t iterations)
+                     boost::function<organism(void)> a_init,
+                     boost::function<std::vector<shared_ptr<solution_config> >(void)> init_population,
+                     size_t population,
+                     double mutation_rate,
+                     size_t iterations)
   : mutator_(mutation_rate),
     reproducer_(),
     scaler_(),
@@ -122,24 +133,22 @@ optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitnes
     iterations_(iterations),
     init_(a_init),
     eval_fitness_(eval_fitness),
+    init_population_(init_population),
     listener_()
 {
-    if (a_init == NULL)
-        throw std::runtime_error("NULL organism initializer in optimizer construction");
-
     evocosm_ = new libevocosm::evocosm<organism, landscape>(listener_,
-                                                 population,
-                                                 1,
-                                                 0,
-                                                 1,
+                                                 population,    // population size
+                                                 1,             // number of populations
+                                                 0,             // number_of_unique_landscapes
+                                                 1,             // number_of_common_landscapes
                                                  mutator_,
                                                  reproducer_,
                                                  scaler_,
                                                  migrator_,
                                                  selector_,
                                                  reporter_,
-                                                 *this,
-                                                 *this);
+                                                 *this,         // organism factory
+                                                 *this);        // landscape factory
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void optimizer::run()
@@ -152,21 +161,26 @@ void optimizer::run()
 
         // run a generation
         double dummy;
-        evocosm_->run_generation(true,dummy);
+        evocosm_->run_generation(true, dummy);
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // Organism factory
 organism optimizer::create()
 {
+    assert(!"check to see if we get here without being called from append()");
     return init_();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void optimizer::append(vector<organism> &population, size_t a_size)
 {
-    // fill remaining population with random values
-    for(size_t i = 0; i < a_size; ++i)
-        population.push_back(init_());
+    typedef shared_ptr<solution_config> shared_solution_config;
+    vector<shared_solution_config> sol_configs = init_population_();
+
+    BOOST_FOREACH(shared_solution_config sol, sol_configs)
+        population.push_back(organism(*sol));
+
+    assert(population.size() == a_size);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // Landscape factory
