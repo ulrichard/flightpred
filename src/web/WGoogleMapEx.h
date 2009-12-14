@@ -21,8 +21,7 @@ public:
     /*! \brief Add a radius overlay to the map. Sorry for the monster interface...
     */
     void addCircle(const Coordinate &pos, const double radiusKm,
-        const WColor &strokeColor, const size_t strokeWeightPx, const float strokeOpacity, const bool doFill,
-        const WColor &fillColor,   const float fillOpacity, const std::string &tooltip);
+        const WColor &strokeColor, const size_t strokeWeightPx, const float strokeOpacity);
 
     /*! \brief Add an arrow overlay to the map.
     */

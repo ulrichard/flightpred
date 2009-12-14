@@ -95,11 +95,11 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
             const string confclass = regxmatch[0] + ")";
             double train_time;
             res[i]["train_time"].to(train_time);
-            double score;
-            res[i]["score"].to(score);
+            double validation_error;
+            res[i]["validation_error"].to(validation_error);
 
             confclasses.insert(confclass);
-            solutions[train_time * 100].push_back(make_pair(confclass, score));
+            solutions[train_time * 100].push_back(make_pair(confclass, validation_error));
         }
     }
 
@@ -130,7 +130,7 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
     chart_->setLegendEnabled(true);
     chart_->axis(Wt::Chart::XAxis).setLabelFormat("%.2f");
     chart_->axis(Wt::Chart::XAxis).setTitle("training_time");
-    chart_->axis(Wt::Chart::YAxis).setTitle("accuracy");
+    chart_->axis(Wt::Chart::YAxis).setTitle("error");
     for(set<string>::iterator it = confclasses.begin(); it != confclasses.end(); ++it)
     {
         Wt::Chart::WDataSeries data1(Wt::Chart::WDataSeries(1 + std::distance(confclasses.begin(), it), Wt::Chart::PointSeries, Wt::Chart::Y1Axis));

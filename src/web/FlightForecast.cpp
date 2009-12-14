@@ -165,9 +165,9 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
         geometry::from_wkt(dbloc, dbpos);
 
         const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
-        gmap->addMarker(gmCoord, "/sigma.gif");
+//        gmap->addMarker(gmCoord, "/sigma.gif");
         const double radiusKm = max_dist / 10.0;
-        gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9, true, Wt::WColor("#FF0000"), 0.3, "");
+        gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9);
 
         bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
         bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));

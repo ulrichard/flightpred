@@ -14,7 +14,7 @@
 #include <boost/array.hpp>
 #include <boost/regex.hpp>
 #include <boost/version.hpp>
-#if BOOST_VERSION >= 104000
+#if BOOST_VERSION >= 104100
   #include <boost/spirit/include/qi_core.hpp>
   #error will have to implement the parser with the new spirit
 #else
@@ -181,7 +181,7 @@ void solution_config::decode()
 {
     features_desc_.clear();
 
-#if BOOST_VERSION >= 104000
+#if BOOST_VERSION >= 104100
   #error will have to implement the parser with the new spirit
 #else
 

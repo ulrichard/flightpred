@@ -58,7 +58,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
 
         Wt::WTabWidget *tabw = new Wt::WTabWidget(root());
 
-        const size_t forecast_days = 3;
+        const size_t forecast_days = 1;
         FlightForecast *forecastpanel = new FlightForecast(db_conn_str, forecast_days);
         tabw->addTab(forecastpanel, _("Flight Forecasts\n"));
 

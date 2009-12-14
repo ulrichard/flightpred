@@ -11,6 +11,7 @@
 #include <boost/foreach.hpp>
 // std lib
 #include <iostream>
+#include <fstream>
 
 using namespace Wt;
 using std::string;
@@ -99,8 +100,7 @@ void WGoogleMapEx::addMarker(const Coordinate &pos, const string &imgUrl)
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
-        const WColor &strokeColor, const size_t strokeWeightPx, const float strokeOpacity, const bool doFill,
-        const WColor &fillColor,   const float fillOpacity, const std::string &tooltip)
+        const WColor &strokeColor, const size_t strokeWeightPx, const float strokeOpacity)
 {
 /*
     std::ostringstream strm;
@@ -112,7 +112,8 @@ void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
 
     doGmJavaScript(strm.str(), true);
 */
-    // workaround as long as we have the problem with the loading order of the javascript
+/*
+    // workaround as long as we have the problem with the loading order of the javascript -> works only for one map per page
     static const double average_earth_radius = 6372795.0;
     geometry::point_ll_deg posi(geometry::longitude<>(pos.longitude()), geometry::latitude<>(pos.latitude()));
     std::cout << "Circle around " << geometry::make_wkt(posi) << std::endl;
@@ -127,6 +128,49 @@ void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
     circlepnts.push_back(circlepnts.front());
     assert(circlepnts.size() == steps + 1);
     addPolyline(circlepnts, strokeColor, strokeWeightPx, strokeOpacity);
+*/
+    // second workaround: draw direcly here without using js lib
+    std::ostringstream strm;
+    strm << "var svgNS = \"http://www.w3.org/2000/svg\"; "
+         << "var circle = document.createElementNS(svgNS, \"svg\"); "
+         << "var center = " << jsRef() << ".map.fromLatLngToDivPixel(new google.maps.LatLng(" << pos.latitude() << ", " << pos.longitude() << ")); "
+         << "var sz     = " << jsRef() << ".map.getSize(); "
+         << "var bnds   = " << jsRef() << ".map.getBounds(); "
+         << "var pxDiag = Math.sqrt((sz.width * sz.width) + (sz.height * sz.height)); "
+         << "var mDiagKm = bnds.getNorthEast().distanceFrom(bnds.getSouthWest()) / 1000.0; "
+         << "var pxPerKm = pxDiag/mDiagKm; "
+         << "var w2  = " << strokeWeightPx << "/2.0; "
+         << "var rPx = Math.round((" << radiusKm << " * pxPerKm) - w2); "
+//         << "var rdrh = circle.suspendRedraw(10000); "
+//         << "circle.setAttribute(\"visibility\",\"hidden\"); "
+         << "if(rPx > 0 && rPx < 3000) "
+         << "{"
+         << "    var ne = " << jsRef() << ".map.fromLatLngToDivPixel(bnds.getNorthEast()); "
+         << "    var sw = " << jsRef() << ".map.fromLatLngToDivPixel(bnds.getSouthWest()); "
+         << "    var wd = ne.x - sw.x; "
+         << "    var ht = sw.y - ne.y; "
+         << "    var l = sw.x; "
+         << "    var t = ne.y; "
+         << "    circle.setAttribute(\"width\", wd); "
+         << "    circle.setAttribute(\"height\", ht); "
+         << "    circle.setAttribute(\"style\", \"position:absolute; top:\"+ t + \"px; left:\" + l + \"px\"); "
+         << "    var cx = center.x-l; "
+         << "    var cy = center.y-t; "
+         << "    circle.setAttribute(\"overflow\", \"hidden\"); "
+         << "    circle.setAttribute(\"r\",rPx); "
+         << "    circle.setAttribute(\"cx\",cx); "
+         << "    circle.setAttribute(\"cy\",cy); "
+         << "    circle.setAttribute(\"visibility\",\"visible\"); "
+         << "}"
+         << jsRef() << ".map.getPane(G_MAP_MAP_PANE).appendChild(circle); ";
+//         << "circle.unsuspendRedraw(rdrh); "
+//         << "circle.forceRedraw(); ";
+
+    doGmJavaScript(strm.str(), true);
+
+    std::ofstream ofs("/tmp/gmcircle.js");
+    ofs << strm.str();
+
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void WGoogleMapEx::addArrow(const Coordinate &pos, const double rotationDeg,
