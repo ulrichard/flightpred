@@ -28,45 +28,11 @@ using std::map;
 using std::set;
 
 
+
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void solution_manager::initialize_population()
+void solution_manager::fill_label_cache()
 {
-    vector<shared_ptr<solution_config> > solutions = get_initial_generation();
-    pqxx::transaction<> trans1(flightpred_db::get_conn(), "initialize populations");
-
-    // get the id and geographic position of the prediction site
-    std::stringstream sstr;
-    sstr << "SELECT pred_site_id, AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name_ << "'";
-    pqxx::result res = trans1.exec(sstr.str());
-    if(!res.size())
-        throw std::invalid_argument("site not found : " + site_name_);
-    string tmpstr;
-    res[0]["loc"].to(tmpstr);
-    geometry::point_ll_deg pred_location;
-    if(!geometry::from_wkt(tmpstr, pred_location))
-        throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
-
-    sstr.str("");
-    sstr << "DELETE FROM trained_solutions WHERE generation=0 AND pred_site_id=" << pred_site_id_;
-    trans1.exec(sstr.str());
-    trans1.commit();
-
-    std::cout << "collecting labels" <<  std::endl;
-    fill_max_distance_cache();
-
-    training_labels_.clear();
-    for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
-        if(used_for_training(*dit))
-            training_labels_.push_back(max_distances_[*dit]);
-
-    // train
-    BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
-        test_fitness(*solution);
-
-}
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void solution_manager::fill_max_distance_cache()
-{
+    std::cout << "collecting lables" << std::endl;
     pqxx::transaction<> trans(flightpred_db::get_conn(), "fill_max_distance_cache");
     std::stringstream sstr;
     sstr << "SELECT flight_date, MAX(distance) FROM flights INNER JOIN sites "
@@ -86,6 +52,12 @@ void solution_manager::fill_max_distance_cache()
             max_dist = 0.0;
         max_distances_[day] = max_dist;
     }
+
+    training_labels_.clear();
+    for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
+        if(used_for_training(*dit))
+            training_labels_.push_back(max_distances_[*dit]);
+
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const vector<double> & solution_manager::get_sample(const set<features_weather::feat_desc> &fdesc, const bgreg::date &day)
@@ -119,7 +91,7 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
 {
     pqxx::transaction<> trans(flightpred_db::get_conn(), "initial generation");
 
-    // get the id and geographic position of the prediction site
+    // get the geographic position of the prediction site
     std::stringstream sstr;
     sstr << "SELECT AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name_ << "'";
     pqxx::result res = trans.exec(sstr.str());
@@ -200,7 +172,6 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
     BOOST_FOREACH(const string &desc, algo_desc)
         solutions.push_back(shared_ptr<solution_config>(new solution_config(site_name_, desc + " " + weather_feat_desc)));
 
-
     return solutions;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -214,6 +185,8 @@ evolution::organism create_ramdom_solution(const string &site_name)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::evolve_population(const size_t iterations, const double mutation_rate)
 {
+    fill_label_cache();
+
     const size_t population_size = get_initial_generation().size();
     flightpred::evolution::optimizer opt(boost::bind(&solution_manager::test_fitness, this, ::_1),
                                          boost::bind(&create_ramdom_solution, site_name_),
@@ -228,18 +201,21 @@ void solution_manager::evolve_population(const size_t iterations, const double m
     @return the total error in km */
 const double solution_manager::test_fitness(const solution_config &sol)
 {
-    std::cout << "train the learning machine : " << sol.get_short_description() <<  std::endl;
+    std::cout << "collect features for : " << sol.get_short_description() <<  std::endl;
     learning_machine::SampleType samples;
+
     for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
         if(used_for_training(*dit))
             samples.push_back(get_sample(sol.get_weather_feature_desc(), *dit));
     boost::timer btim;
     static const string eval_name("max_dist");
+    std::cout << "train the learning machine : " << sol.get_short_description() <<  std::endl;
     sol.get_decision_function(eval_name)->train(samples, training_labels_);
     const double traintime = btim.elapsed();
     std::cout << "training took " << btim.elapsed() << " sec" << std::endl;
 
     // validate
+    std::cout << "validate the learning machine : " << sol.get_short_description() <<  std::endl;
     double sum_err = 0;
     for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
     {
@@ -254,6 +230,7 @@ const double solution_manager::test_fitness(const solution_config &sol)
 //            std::cout << bgreg::to_iso_extended_string(*dit) << " " << realval << " " << predval << " " << err << std::endl;
         }
     }
+    std::cout << "validation result for : " << sol.get_short_description() << " total error in km is " << sum_err <<  std::endl;
 
     // todo : handle different generations
     pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::test_fitness");

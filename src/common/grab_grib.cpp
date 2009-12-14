@@ -453,7 +453,7 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
 {
     const set<string>       sel_levels    = get_std_levels();
     const set<string>       sel_param     = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(2.5, 20);
+    const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(2.5, 16);
 
     // download the grib files
     for(bgreg::date mon(from.year(), from.month(), 1); mon <= to; mon += bgreg::months(1))

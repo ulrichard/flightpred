@@ -80,10 +80,21 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/** @brief Fitness testing
+    Tests each chromosome by calling the fitness function provided in the constructor.
+    \param population - Population undergoing fitness testing
+    \return Average fitness of population  */
 double landscape::test(std::vector<organism> &population) const
 {
-   // todo : mplement
-   return 0.0;
+   double result = 0.0;
+
+    for(vector<organism>::iterator solution = population.begin(); solution != population.end(); ++solution)
+    {
+        solution->fitness() = eval_fitness_(solution->genes());
+        result += solution->fitness();
+    }
+
+    return result / population.size();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

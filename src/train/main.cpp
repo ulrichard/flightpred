@@ -74,9 +74,8 @@ int main(int argc, char* argv[])
             ("help",		       "produce help message")
             ("get-flights",	       "get flights from online competition (name) [import from local files at the moment]")
             ("register-area",      "register a flight area for prediction (name, position, area_radius[km])")
-            ("get-weather",        "get past weather prediction grib data for central europe (start_date, end_date, download_pack)")
-            ("init-population",    "create an initial generation 0 of solutions (name)")
-            ("evolve-population",   "evolve a population of solutions (name, iterations, mutation_rate)")
+            ("get-weather",        "get past weather prediction grib data around the registered sites (start_date, end_date, download_pack)")
+            ("evolve-population",   "evolve a population of solutions (name, generations, mutation_rate)")
             ("train",		       "train the system with the best performing solution found so far (name, start_date, end_date)")
             ("get-future-weather", "get future weather prediction grib data for central europe (download_pack)")
             ("forecast",           "predict possible flights for the next few days")
@@ -87,8 +86,8 @@ int main(int argc, char* argv[])
             ("start-date",    po::value<string>(&start_date)->default_value(start_date), "start date (yyyy/mm/dd)")
             ("end-date",      po::value<string>(&end_date)->default_value(end_date),     "end date (yyyy/mm/dd)")
             ("download-pack", po::value<size_t>(&download_pack)->default_value(download_pack), "how many grib messages to download at once")
-            ("iterations",    po::value<size_t>(&iterations)->default_value(50),          "how many generations to run an evolution")
-            ("mutation-rate", po::value<double>(&mutation_rate)->default_value(0.1),      "the probability of mutations in the breeding of the evolution")
+            ("generations",   po::value<size_t>(&iterations)->default_value(50),          "how many generations to run an evolution")
+            ("mutation-rate", po::value<double>(&mutation_rate)->default_value(0.125),    "the probability of mutations in the breeding of the evolution")
             ("db-host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
             ("db-port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
             ("db-name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
@@ -133,23 +132,6 @@ int main(int argc, char* argv[])
             }
             else
                 throw std::invalid_argument("unknown model: " + pred_model);
-            show_help_msg = false;
-        }
-
-        if(vm.count("init-population"))
-        {
-            if(name.length())
-            {
-                solution_manager mgr(name);
-                mgr.initialize_population();
-            }
-            else
-                BOOST_FOREACH(const string &site_name, site_names)
-                {
-                    solution_manager mgr(site_name);
-                    mgr.initialize_population();
-                }
-
             show_help_msg = false;
         }
 
