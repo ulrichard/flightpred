@@ -68,7 +68,17 @@ thermals than the bare temperature [to be prooved])<br>
   <ul>
     <li>average temperature gradient for the height range used during
 flight (e.g. 1500 - 3500m)</li>
-    <li>best and worst temperature gradient for 100 meter steps<br>
+    <li>best and worst temperature gradient for 100 meter steps</li>
+  </ul>
+  <li>Preprocessed features could be of value:</li>
+  <ul>
+    <li>average temperature gradient for the height range that is
+usually relevant.<br>
+    </li>
+  </ul>
+  <ul>
+    <li>worst temperature gradient between pressure levels.</li>
+    <li>isobars are convex or concave.<br>
     </li>
   </ul>
 </ul>
@@ -98,10 +108,11 @@ but may later also experiment with <a
  href="http://en.wikipedia.org/wiki/Neural_network">neural networks</a>
 or with voting of both systems. The engine shall be pluggable to easily
 experiment with different systems.<br>
-It might be interesting to use <a
+To evaluate good features sets (grid point
+location, altitude, parameters, svm config) and optimize the parametes
+of the algorithm and its kernel, we will use a <a
  href="http://en.wikipedia.org/wiki/Genetic_algorithms">genetic/evolutionary
-algorithms</a> to explore possible sets of features (grid point
-location, altitude, parameters, svm config).&nbsp; <br>
+algorithms</a>.&nbsp; <br>
 Depending if the machine can handle multiple outputs, we willl generate
 one training sample per day or as many as we have figures to predict.
 Each training sample consists of all the extracted features from the
@@ -298,13 +309,10 @@ db took way too long.</li>
   <li>Downloaded current weather predictions and calculated the first
 flight
 predictions.</li>
+  <li>Parse the textual representatoin of the feature sets.</li>
 </ul>
 <h3>Next steps:</h3>
 <ul>
-  <li>Partitioned training with the dlib SVM as training over the whole
-set is unfeasibly slow.<br>
-  </li>
-  <li>Parse the textual representatoin of the feature sets.</li>
   <li>Download strategy for grib forecast data: Try most recent run, if
 not awailable try older one, until successfull.<br>
   </li>
@@ -344,8 +352,21 @@ to train on the full three years, which is clearly what I want.</li>
 the future and runt the forecast in real time. But as especially
 downloading and feature extraction are too slow, the forecast is now
 mainly done in advance. Thus the web client soley reads the forecasts
-of interest from the database.<br>
+of interest from the database.</li>
+  <li>Drawing circles on the google map is somewhat complicated: <br>
   </li>
+  <ul>
+    <li>The first attempt was to use a javascript library that works
+well on static pages. But I faced the problem that the javascript
+library was loaded before the googlemaps javascript. I couldn't find a
+way to load them in the correct order. <br>
+    </li>
+    <li>The Second attempt was to use a regular polyline overlay as
+used in the Wt::WGoogleMap widget. Using 50 steps is looked like a nice
+circle. This solution worked well if there was only on map on the page,
+but as soon as there were multiple, te overlay disapeared.<br>
+    </li>
+  </ul>
 </ul>
 <h3>3rd party libraries and products used:</h3>
 <ul>
@@ -372,7 +393,10 @@ support vector machine.</li>
   <li><a href="http://geometrylibrary.geodan.nl/">generic geometry
 library</a> for locations and geoid distance calculations.</li>
   <li>various other <a href="http://www.boost.org">boost</a> libraries.</li>
-  <li><a href="http://www.webtoolkit.eu">witty</a> for the web frontend.<br>
+  <li><a href="http://www.webtoolkit.eu">witty</a> for the web frontend.</li>
+  <li><a
+ href="http://www.coyotegulch.com/products/libevocosm/index.html">evocosm</a>
+for genetic/evolutionary algorithms.<br>
   </li>
 </ul>
 <h3>3rd party libraries and products considered:</h3>
@@ -390,23 +414,19 @@ support vector machine and other machine learning algorithms. I liked
 what I saw, but dlib was first evaluated. Might re-evaluate if I should
 run into a problem with dlib.</li>
   <li><a href="http://lancet.mit.edu/ga/">galib</a> for
-genetic/evolutionary algorithms. Have yet to decide which lib to use,
-and it's one of the candidates.</li>
-  <li><a
- href="http://www.coyotegulch.com/products/libevocosm/index.html">evocosm</a>
-for genetic/evolutionary algorithms. Have yet to decide which lib to
-use, and it's one of the candidates.</li>
+genetic/evolutionary algorithms. Was one of the candidates, but evocosm
+is in the debian repository.</li>
   <li><a href="http://coolsoft-sd.com/Products.aspx?pid=1">coolsoft gal</a>
-for genetic/evolutionary algorithms. Have yet to decide which lib to
-use, and it's one of the candidates.</li>
+for genetic/evolutionary algorithms. Was one of the candidates, but
+evocosm is in the debian repository.</li>
 </ul>
 <h2>Usage of the flightpred system</h2>
 <h3>Installation</h3>
 At this time there is no installation procedure. It is planned to
-create debian packages in the future.<br>
+create debian packages in the future. <br>
 You can download the code from subversion at sourceforge.net. <br>
-To compile, you need CodeBlocks. It is planned to later use CMake for
-the release builds.<br>
+To compile a release build, you need CMake. Development is done wih
+CodeBlocks.<br>
 You will also need some additional libraries. The files in the script
 directory will be of help in getting these libraries and
 compile/debianize/install them. <br>
@@ -424,11 +444,11 @@ competition server. But for now I was provided with some files. I shall
 not distribute them. So if you want them, we can ask the people from
 xcontest.org.</li>
   <li><span style="font-weight: bold;">flightpred_train --register-area
---name Fiesch --position "N47.5 E8.75" --area_radius 5000&nbsp;&nbsp; </span>-&gt;&nbsp;
+--name Fiesch --position "N47.5 E8.75" --area-radius 5000&nbsp;&nbsp; </span>-&gt;&nbsp;
 Registers the flight area Fiesch at the given position, and assigns all
 flights that started within the selected radius to it.</li>
   <li><span style="font-weight: bold;">flightpred_train --get-weather
---start_date "2009-01-01" --end_date "2009-09-30"&nbsp;&nbsp; </span>-&gt;
+--start-date "2009-01-01" --end-date "2009-09-30"&nbsp;&nbsp; </span>-&gt;
 Downloads selected grib data from the GFS model for central europe in
 the given date period. At the moment we only download the data from the
 following pressure levels : surface / 850hP / 700hP / 500hP. In the

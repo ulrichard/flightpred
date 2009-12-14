@@ -13,15 +13,15 @@
 #include <set>
 #include <ostream>
 
-
-
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 namespace flightpred
 {
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/** @brief Collects the weather features from the database */
 class features_weather : public boost::noncopyable
 {
 public:
-    features_weather()  {}
+    features_weather(bool cached) : cached_(cached) {}
     virtual ~features_weather() {}
 
     struct feat_desc
@@ -49,6 +49,9 @@ private:
     void generate_features(feat_desc feat, const std::vector<geometry::point_ll_deg> &locations,
         const boost::posix_time::time_duration &from, const boost::posix_time::time_duration &to, std::set<feat_desc> &features) const;
 
+    const bool cached_;
+    typedef std::map<boost::gregorian::date, std::map<features_weather::feat_desc, double> > WeatherFeatureCacheT;
+    mutable WeatherFeatureCacheT  weathercache_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 std::ostream & operator<<(std::ostream &ostr, const features_weather::feat_desc &feat);

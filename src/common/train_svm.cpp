@@ -34,7 +34,7 @@ using std::endl;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to)
 {
-    features_weather         weather;
+    features_weather weather(false);
 
     // get the id and geographic position of the prediction site
     std::stringstream sstr;
@@ -81,8 +81,8 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     std::cout << labelsbydate.size() << " dates with flights" << std::endl;
 
     //load the configuration with the best score
-    solution_manager solmgr;
-    std::auto_ptr<solution_config> sol = solmgr.load_best_solution(site_name, false);
+    solution_manager solmgr(site_name);
+    std::auto_ptr<solution_config> sol = solmgr.load_best_solution(false);
 
     // get the feature descriptions of the weather data
     const set<features_weather::feat_desc> &features = sol->get_weather_feature_desc();

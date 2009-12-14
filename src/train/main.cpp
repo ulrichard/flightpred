@@ -16,6 +16,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
+#include <boost/foreach.hpp>
 // standard library
 #include <iostream>
 #include <string>
@@ -137,26 +138,34 @@ int main(int argc, char* argv[])
 
         if(vm.count("init-population"))
         {
-            solution_manager mgr;
-
             if(name.length())
-                mgr.initialize_population(name);
+            {
+                solution_manager mgr(name);
+                mgr.initialize_population();
+            }
             else
-                std::for_each(site_names.begin(), site_names.end(),
-                    boost::bind(&solution_manager::initialize_population, boost::ref(mgr), _1));
+                BOOST_FOREACH(const string &site_name, site_names)
+                {
+                    solution_manager mgr(site_name);
+                    mgr.initialize_population();
+                }
 
             show_help_msg = false;
         }
 
         if(vm.count("evolve-population"))
         {
-            solution_manager mgr;
-
             if(name.length())
-                mgr.evolve_population(name, iterations, mutation_rate);
+            {
+                solution_manager mgr(name);
+                mgr.evolve_population(iterations, mutation_rate);
+            }
             else
-                std::for_each(site_names.begin(), site_names.end(),
-                    boost::bind(&solution_manager::evolve_population, boost::ref(mgr), _1, iterations, mutation_rate));
+                BOOST_FOREACH(const string &site_name, site_names)
+                {
+                    solution_manager mgr(site_name);
+                    mgr.evolve_population(iterations, mutation_rate);
+                }
 
             show_help_msg = false;
         }

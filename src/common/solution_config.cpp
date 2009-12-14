@@ -226,9 +226,9 @@ void solution_config::decode()
 #endif
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-shared_ptr<learning_machine> solution_config::get_decision_function(const std::string &eval_name)
+shared_ptr<learning_machine> solution_config::get_decision_function(const std::string &eval_name) const
 {
-    std::map<std::string, boost::shared_ptr<learning_machine> >::iterator fit = learning_machines_.find(eval_name);
+    std::map<std::string, boost::shared_ptr<learning_machine> >::const_iterator fit = learning_machines_.find(eval_name);
     if(fit == learning_machines_.end())
         throw std::invalid_argument("no decision function for " + eval_name);
     return fit->second;

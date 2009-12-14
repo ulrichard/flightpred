@@ -46,7 +46,7 @@ public:
     const std::string   get_short_description() const;
     const std::set<features_weather::feat_desc> & get_weather_feature_desc() const { return features_desc_; }
 
-    boost::shared_ptr<learning_machine> get_decision_function(const std::string &eval_name);
+    boost::shared_ptr<learning_machine> get_decision_function(const std::string &eval_name) const;
 
 protected:
     void decode();

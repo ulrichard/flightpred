@@ -66,7 +66,7 @@ CREATE TABLE trained_solutions
 	avg_dist     	 oid,
 	max_dur      	 oid,
 	avg_dur      	 oid,
-	score            real,
+	validation_error real,
 	train_time       real,
 	train_time_prod  real,
 	generation       int,

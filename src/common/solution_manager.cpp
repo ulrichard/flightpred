@@ -29,22 +29,17 @@ using std::set;
 
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void solution_manager::initialize_population(const std::string &site_name)
+void solution_manager::initialize_population()
 {
-    features_weather         weather;
-    vector<shared_ptr<solution_config> > solutions = get_initial_generation(site_name);
-    const bgreg::date_period dates = weather.get_feature_date_period(false);
+    vector<shared_ptr<solution_config> > solutions = get_initial_generation();
     pqxx::transaction<> trans1(flightpred_db::get_conn(), "initialize populations");
 
     // get the id and geographic position of the prediction site
     std::stringstream sstr;
-    sstr << "SELECT pred_site_id, AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name << "'";
+    sstr << "SELECT pred_site_id, AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name_ << "'";
     pqxx::result res = trans1.exec(sstr.str());
     if(!res.size())
-        throw std::invalid_argument("site not found : " + site_name);
-    size_t tmp_pred_site_id;
-    res[0]["pred_site_id"].to(tmp_pred_site_id);
-    const size_t pred_site_id = tmp_pred_site_id;
+        throw std::invalid_argument("site not found : " + site_name_);
     string tmpstr;
     res[0]["loc"].to(tmpstr);
     geometry::point_ll_deg pred_location;
@@ -52,19 +47,34 @@ void solution_manager::initialize_population(const std::string &site_name)
         throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
 
     sstr.str("");
-    sstr << "DELETE FROM trained_solutions WHERE generation=0 AND pred_site_id=" << pred_site_id;
+    sstr << "DELETE FROM trained_solutions WHERE generation=0 AND pred_site_id=" << pred_site_id_;
     trans1.exec(sstr.str());
+    trans1.commit();
 
     std::cout << "collecting labels" <<  std::endl;
+    fill_max_distance_cache();
 
-    sstr.str("");
+    training_labels_.clear();
+    for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
+        if(used_for_training(*dit))
+            training_labels_.push_back(max_distances_[*dit]);
+
+    // train
+    BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
+        test_fitness(*solution);
+
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void solution_manager::fill_max_distance_cache()
+{
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "fill_max_distance_cache");
+    std::stringstream sstr;
     sstr << "SELECT flight_date, MAX(distance) FROM flights INNER JOIN sites "
          << "ON flights.site_id = sites.site_id "
-         << "WHERE pred_site_id = " << pred_site_id << " "
+         << "WHERE pred_site_id = " << pred_site_id_ << " "
          << "GROUP BY flight_date "
          << "ORDER BY flight_date ASC";
-    res = trans1.exec(sstr.str());
-    map<bgreg::date, double> max_distances;
+    pqxx::result res = trans.exec(sstr.str());
     for(size_t i=0; i<res.size(); ++i)
     {
         string datestr;
@@ -74,97 +84,47 @@ void solution_manager::initialize_population(const std::string &site_name)
         res[i][1].to(max_dist);
         if(max_dist < 1.0)
             max_dist = 0.0;
-        max_distances[day] = max_dist;
+        max_distances_[day] = max_dist;
     }
-    trans1.commit();
-
-    vector<double> training_labels;
-    for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
-        if(used_for_training(*dit))
-            training_labels.push_back(max_distances[*dit]);
-
-    set<set<features_weather::feat_desc> > featureconfigurations;
-    BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
-        featureconfigurations.insert(solution->get_weather_feature_desc());
-
-    typedef map<set<features_weather::feat_desc>, map<bgreg::date, vector<double> > > WeatherFeatureCacheType;
-    WeatherFeatureCacheType  weatherdata;
-    for(set<set<features_weather::feat_desc> >::iterator fit = featureconfigurations.begin(); fit != featureconfigurations.end(); ++fit)
-    {
-        for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
-        {
-            if(used_for_training(*dit) || used_for_validation(*dit))
-            {
-                std::cout << "collecting features for " << bgreg::to_iso_extended_string(*dit) << std::endl;
-
-                const vector<double> valweather = weather.get_features(*fit, *dit, false);
-                assert(valweather.size() == fit->size());
-
-                vector<double> &samples = weatherdata[*fit][*dit];
-                // put together the values to feed to the svm
-                samples.push_back(dit->year());
-                samples.push_back(dit->day_of_year());
-                samples.push_back(dit->day_of_week());
-                std::copy(valweather.begin(), valweather.end(), std::back_inserter(samples));
-            }
-        }
-    }
-
-    // train
-    pqxx::transaction<> trans2(flightpred_db::get_conn(), "initialize populations -> train");
-    static const string eval_name("max_dist");
-    BOOST_FOREACH(shared_ptr<solution_config> solution, solutions)
-    {
-        std::cout << "train the learning machine : " << solution->get_short_description() <<  std::endl;
-        learning_machine::SampleType samples;
-        for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
-            if(used_for_training(*dit))
-                samples.push_back(weatherdata[solution->get_weather_feature_desc()][*dit]);
-        boost::timer btim;
-        solution->get_decision_function(eval_name)->train(samples, training_labels);
-        const double traintime = btim.elapsed();
-        std::cout << "training took " << btim.elapsed() << " sec" << std::endl;
-
-        // validate
-        double sum_real = 0, sum_err = 0;
-        for(bgreg::day_iterator dit(dates.begin()); *dit <= dates.end(); ++dit)
-        {
-            if(used_for_validation(*dit))
-            {
-                const vector<double> &samples = weatherdata[solution->get_weather_feature_desc()][*dit];
-                const double predval   = solution->get_decision_function(eval_name)->eval(samples);
-                const double predval_p = predval > 0.0 ? predval : 0.0; // to catch nan
-                const double & realval = max_distances[*dit];
-                const double err = fabs(realval - predval_p);
-                sum_real += realval;
-                sum_err  += err;
-                std::cout << bgreg::to_iso_extended_string(*dit) << " " << realval << " " << predval << " " << err << std::endl;
-            }
-        }
-        const double perf = sum_real / sum_err;
-
-        std::cout << "result of validation : total km = " << sum_real << " total error = " << sum_err << " perf = " << perf << std::endl;
-
-        sstr.str("");
-        sstr << "INSERT INTO trained_solutions (generation, pred_site_id, configuration, score, train_time, num_features) VALUES "
-             << "(0, " << pred_site_id << ", '" << solution->get_description() << "', " << perf << ", "
-             << traintime << ", " << solution->get_weather_feature_desc().size() << ")";
-        trans2.exec(sstr.str());
-    }
-
-    trans2.commit();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-vector<shared_ptr<solution_config> > solution_manager::get_initial_generation(const std::string &site_name)
+const vector<double> & solution_manager::get_sample(const set<features_weather::feat_desc> &fdesc, const bgreg::date &day)
+{
+    WeatherFeatureCacheType::const_iterator fitFdesc = weathercache_.find(fdesc);
+    if(fitFdesc != weathercache_.end())
+    {
+        map<bgreg::date, vector<double> >::const_iterator fitDt = fitFdesc->second.find(day);
+        if(fitDt != fitFdesc->second.end())
+            return fitDt->second;
+    }
+
+    map<bgreg::date, vector<double> > &featsol = weathercache_[fdesc];
+
+    std::cout << "collecting features for " << bgreg::to_iso_extended_string(day) << std::endl;
+
+    const vector<double> valweather = weather_.get_features(fdesc, day, false);
+    assert(valweather.size() == fdesc.size());
+
+    vector<double> &samples = featsol[day];
+    // put together the values to feed to the svm
+    samples.push_back(day.year());
+    samples.push_back(day.day_of_year());
+    samples.push_back(day.day_of_week());
+    std::copy(valweather.begin(), valweather.end(), std::back_inserter(samples));
+
+    return samples;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
 {
     pqxx::transaction<> trans(flightpred_db::get_conn(), "initial generation");
 
     // get the id and geographic position of the prediction site
     std::stringstream sstr;
-    sstr << "SELECT AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name << "'";
+    sstr << "SELECT AsText(location) as loc FROM pred_sites WHERE site_name='" << site_name_ << "'";
     pqxx::result res = trans.exec(sstr.str());
     if(!res.size())
-        throw std::invalid_argument("site not found : " + site_name);
+        throw std::invalid_argument("site not found : " + site_name_);
     string tmpstr;
     res[0]["loc"].to(tmpstr);
     geometry::point_ll_deg pred_location;
@@ -172,8 +132,7 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation(co
         throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
 
     // get the default feature descriptions of the weather data
-    features_weather weather;
-    const set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
+    const set<features_weather::feat_desc> features = weather_.get_standard_features(pred_location);
     sstr.str("");
     std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
     const string weather_feat_desc(sstr.str());
@@ -239,7 +198,7 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation(co
 
     vector<shared_ptr<solution_config> > solutions;
     BOOST_FOREACH(const string &desc, algo_desc)
-        solutions.push_back(shared_ptr<solution_config>(new solution_config(site_name, desc + " " + weather_feat_desc)));
+        solutions.push_back(shared_ptr<solution_config>(new solution_config(site_name_, desc + " " + weather_feat_desc)));
 
 
     return solutions;
@@ -248,26 +207,64 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation(co
 // todo : this will have to get a real implementation. What is here at the moment is only to get it to compile with libevocosm.
 evolution::organism create_ramdom_solution(const string &site_name)
 {
+    assert(!"should not get here as we use a non-random initial generatino");
     size_t db_id = 0;
     return evolution::organism(solution_config(db_id));
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void solution_manager::evolve_population(const string &site_name, const size_t iterations, const double mutation_rate)
+void solution_manager::evolve_population(const size_t iterations, const double mutation_rate)
 {
-    const size_t population_size = get_initial_generation(site_name).size();
+    const size_t population_size = get_initial_generation().size();
     flightpred::evolution::optimizer opt(boost::bind(&solution_manager::test_fitness, this, ::_1),
-                                         boost::bind(&create_ramdom_solution, site_name),
-                                         boost::bind(&solution_manager::get_initial_generation, this, site_name),
+                                         boost::bind(&create_ramdom_solution, site_name_),
+                                         boost::bind(&solution_manager::get_initial_generation, this),
                                          population_size,
                                          mutation_rate,
                                          iterations);
     opt.run();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/** @brief test how well a solution can predict the flights.
+    @return the total error in km */
 const double solution_manager::test_fitness(const solution_config &sol)
 {
-    // todo : implement
-    return 1.0;
+    std::cout << "train the learning machine : " << sol.get_short_description() <<  std::endl;
+    learning_machine::SampleType samples;
+    for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
+        if(used_for_training(*dit))
+            samples.push_back(get_sample(sol.get_weather_feature_desc(), *dit));
+    boost::timer btim;
+    static const string eval_name("max_dist");
+    sol.get_decision_function(eval_name)->train(samples, training_labels_);
+    const double traintime = btim.elapsed();
+    std::cout << "training took " << btim.elapsed() << " sec" << std::endl;
+
+    // validate
+    double sum_err = 0;
+    for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
+    {
+        if(used_for_validation(*dit))
+        {
+            const vector<double> &samples = get_sample(sol.get_weather_feature_desc(), *dit);
+            const double predval   = sol.get_decision_function(eval_name)->eval(samples);
+            const double predval_p = predval > 0.0 ? predval : 0.0; // to catch nan
+            const double & realval = max_distances_[*dit];
+            const double err = fabs(realval - predval_p);
+            sum_err  += err;
+//            std::cout << bgreg::to_iso_extended_string(*dit) << " " << realval << " " << predval << " " << err << std::endl;
+        }
+    }
+
+    // todo : handle different generations
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::test_fitness");
+    std::stringstream sstr;
+    sstr << "INSERT INTO trained_solutions (generation, pred_site_id, configuration, validation_error, train_time, num_features) VALUES "
+         << "(0, " << pred_site_id_ << ", '" << sol.get_description() << "', " << sum_err << ", "
+         << traintime << ", " << sol.get_weather_feature_desc().size() << ")";
+    trans.exec(sstr.str());
+    trans.commit();
+
+    return sum_err;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const bool solution_manager::used_for_training(const bgreg::date &day) const
@@ -280,9 +277,9 @@ const bool solution_manager::used_for_validation(const bgreg::date &day) const
     return day.day_of_week() == 6; // saturday
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-std::auto_ptr<solution_config> solution_manager::load_best_solution(const std::string &site_name, const bool onlyFullyTrained, const double maxTrainSec)
+size_t solution_manager::get_pred_site_id(const std::string &site_name)
 {
-    pqxx::transaction<> trans(flightpred_db::get_conn(), "load_best_solution");
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::get_pred_site_id");
 
     std::stringstream sstr;
     sstr << "SELECT pred_site_id FROM pred_sites where site_name='" << site_name << "'";
@@ -292,17 +289,23 @@ std::auto_ptr<solution_config> solution_manager::load_best_solution(const std::s
 
     size_t pred_site_id;
     res[0]["pred_site_id"].to(pred_site_id);
+    return pred_site_id;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+std::auto_ptr<solution_config> solution_manager::load_best_solution(const bool onlyFullyTrained, const double maxTrainSec)
+{
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "load_best_solution");
 
-    sstr.str("");
+    std::stringstream sstr;
     sstr << "SELECT train_sol_id, configuration, score, train_time, generation FROM trained_solutions WHERE ";
     if(onlyFullyTrained)
         sstr << "num_samples_prod > 300 AND ";
     if(maxTrainSec > 0.0)
         sstr << "train_time <= " << maxTrainSec << " AND ";
-    sstr << "pred_site_id=" << pred_site_id << " ORDER BY score DESC, generation DESC";
-    res = trans.exec(sstr.str());
+    sstr << "pred_site_id=" << pred_site_id_ << " ORDER BY score DESC, generation DESC";
+    pqxx::result res = trans.exec(sstr.str());
     if(!res.size())
-        throw std::runtime_error("no configuration found for : " + site_name);
+        throw std::runtime_error("no configuration found for : " + site_name_);
 
     size_t solution_id;
     res[0]["train_sol_id"].to(solution_id);

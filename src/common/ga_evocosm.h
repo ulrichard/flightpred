@@ -35,10 +35,10 @@ public:
         return *this;
     }
 
-    /** organisms with higher finess come before ones with lower fitness. */
+    /** organisms less error come before ones with bigger error. */
     virtual bool operator<(const libevocosm::organism<solution_config> &rhs) const
     {
-        return (m_fitness > rhs.fitness());
+        return (m_fitness < rhs.fitness());
     }
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

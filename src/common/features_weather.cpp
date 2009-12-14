@@ -14,6 +14,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/bind.hpp>
 #include <boost/array.hpp>
+#include <boost/foreach.hpp>
 // standard library
 #include <vector>
 #include <map>
@@ -111,70 +112,92 @@ struct point_ll_deg_sorter
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 vector<double> features_weather::get_features(const set<features_weather::feat_desc> &descriptions, const bgreg::date &day, const bool future) const
 {
-    static const size_t PG_SIR_WGS84 = 4326;
-    pqxx::transaction<> trans(flightpred_db::get_conn(), "collect weather features");
-
-    vector<point_ll_deg> locations;
-    std::transform(descriptions.begin(), descriptions.end(), std::inserter(locations, locations.end()),
-        bind(&features_weather::feat_desc::location, _1));
-    std::sort(locations.begin(), locations.end(), point_ll_deg_sorter());
-    locations.erase(std::unique(locations.begin(), locations.end()), locations.end());
-
-    const string table_name(future ? "weather_pred_future" : "weather_pred");
-    std::stringstream sstr;
-    sstr << "SELECT pred_time, AsText(location) as loc, level, parameter, value FROM " << table_name << " "
-         << "WHERE pred_time >= '" << bgreg::to_iso_extended_string(day - bgreg::days(1)) << " 00:00:00' "
-         << "AND   pred_time <  '" << bgreg::to_iso_extended_string(day + bgreg::days(2)) << " 00:00:00' "
-         << "AND   location IN(";
-    for(vector<point_ll_deg>::const_iterator it = locations.begin(); it != locations.end(); ++it)
-    {
-        if(it != locations.begin())
-            sstr << ", ";
-        sstr << "ST_GeomFromText('" << geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
-    }
-    sstr << ")";
-    pqxx::result res = trans.exec(sstr.str());
-    if(!res.size())
-        throw std::runtime_error("no weather features found.");
-
     map<feat_desc, double> feat_map;
 
-    for(size_t i=0; i<res.size(); ++i)
+    if(cached_)
     {
-        feat_desc currdesc;
-        currdesc.model = "GFS";
-        string tmpstr;
-        res[i]["pred_time"].to(tmpstr);
-        const bpt::ptime pred_time = bpt::time_from_string(tmpstr);
-        currdesc.reltime = pred_time - bpt::ptime(day, bpt::time_duration(0, 0, 0));
-        res[i]["loc"].to(tmpstr);
-        if(!geometry::from_wkt(tmpstr, currdesc.location))
-            throw std::runtime_error("failed to parse the weather location as retured from the database : " + tmpstr);
-        res[i]["level"].to(currdesc.level);
-        res[i]["parameter"].to(currdesc.param);
-
-        if(descriptions.find(currdesc) != descriptions.end())
-        {
-            double val;
-            res[i]["value"].to(val);
-            feat_map[currdesc] = val;
-        }
+        WeatherFeatureCacheT::const_iterator fitDay = weathercache_.find(day);
+        if(fitDay != weathercache_.end())
+            BOOST_FOREACH(const feat_desc &fdesc, descriptions)
+            {
+                map<feat_desc, double>::const_iterator fitFdesc = fitDay->second.find(fdesc);
+                if(fitFdesc != fitDay->second.end())
+                    feat_map[fdesc] = fitFdesc->second;
+            }
     }
 
     if(descriptions.size() != feat_map.size())
     {
-        std::cout << feat_map.size() << " features found " << descriptions.size() << " expected" << std::endl;
-        std::cout << "The following features could not be found in the database for "
-                  << bgreg::to_simple_string(day) << " : " << std::endl;
-        for(set<feat_desc>::const_iterator it = descriptions.begin(); it != descriptions.end(); ++it)
-            if(feat_map.find(*it) == feat_map.end())
-                std::cout << (*it) << std::endl;
-        throw std::runtime_error("Not all required features found in the database!");
+
+        static const size_t PG_SIR_WGS84 = 4326;
+        pqxx::transaction<> trans(flightpred_db::get_conn(), "collect weather features");
+
+        vector<point_ll_deg> locations;
+        std::transform(descriptions.begin(), descriptions.end(), std::inserter(locations, locations.end()),
+            bind(&features_weather::feat_desc::location, _1));
+        std::sort(locations.begin(), locations.end(), point_ll_deg_sorter());
+        locations.erase(std::unique(locations.begin(), locations.end()), locations.end());
+
+        const string table_name(future ? "weather_pred_future" : "weather_pred");
+        std::stringstream sstr;
+        sstr << "SELECT pred_time, AsText(location) as loc, level, parameter, value FROM " << table_name << " "
+             << "WHERE pred_time >= '" << bgreg::to_iso_extended_string(day - bgreg::days(1)) << " 00:00:00' "
+             << "AND   pred_time <  '" << bgreg::to_iso_extended_string(day + bgreg::days(2)) << " 00:00:00' "
+             << "AND   location IN(";
+        for(vector<point_ll_deg>::const_iterator it = locations.begin(); it != locations.end(); ++it)
+        {
+            if(it != locations.begin())
+                sstr << ", ";
+            sstr << "ST_GeomFromText('" << geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
+        }
+        sstr << ")";
+        pqxx::result res = trans.exec(sstr.str());
+        if(!res.size())
+            throw std::runtime_error("no weather features found.");
+
+        for(size_t i=0; i<res.size(); ++i)
+        {
+            feat_desc currdesc;
+            currdesc.model = "GFS";
+            string tmpstr;
+            res[i]["pred_time"].to(tmpstr);
+            const bpt::ptime pred_time = bpt::time_from_string(tmpstr);
+            currdesc.reltime = pred_time - bpt::ptime(day, bpt::time_duration(0, 0, 0));
+            res[i]["loc"].to(tmpstr);
+            if(!geometry::from_wkt(tmpstr, currdesc.location))
+                throw std::runtime_error("failed to parse the weather location as retured from the database : " + tmpstr);
+            res[i]["level"].to(currdesc.level);
+            res[i]["parameter"].to(currdesc.param);
+
+            if(descriptions.find(currdesc) != descriptions.end())
+            {
+                double val;
+                res[i]["value"].to(val);
+                feat_map[currdesc] = val;
+            }
+        }
+
+        if(descriptions.size() != feat_map.size())
+        {
+            std::cout << feat_map.size() << " features found " << descriptions.size() << " expected" << std::endl;
+            std::cout << "The following features could not be found in the database for "
+                      << bgreg::to_simple_string(day) << " : " << std::endl;
+            for(set<feat_desc>::const_iterator it = descriptions.begin(); it != descriptions.end(); ++it)
+                if(feat_map.find(*it) == feat_map.end())
+                    std::cout << (*it) << std::endl;
+            throw std::runtime_error("Not all required features found in the database!");
+        }
+
+        if(cached_)
+        {
+            map<feat_desc, double> &daymap = weathercache_[day];
+            std::copy(feat_map.begin(), feat_map.end(), std::inserter(daymap, daymap.end()));
+        }
     }
 
     vector<double> values;
 //    std::transform(feat_map.begin(), feat_map.end(), std::back_inserter(values),
-//                   boost::bind(&std::pair<feat_desc, double>::second, _1));
+//                   boost::bind(&std::pair<feat_desc, double>::second, ::_1));
     for(map<feat_desc, double>::const_iterator it = feat_map.begin(); it != feat_map.end(); ++it)
         values.push_back(it->second);
 

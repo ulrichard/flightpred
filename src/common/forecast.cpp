@@ -46,10 +46,10 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
         res[0]["pred_site_id"].to(pred_site_id);
         trans1.commit();
 
-        features_weather weather;
+        features_weather weather(false);
         //load the configuration with the best score
-        solution_manager solmgr;
-        std::auto_ptr<solution_config> sol = solmgr.load_best_solution(site_name, true);
+        solution_manager solmgr(site_name);
+        std::auto_ptr<solution_config> sol = solmgr.load_best_solution(true);
 
         // get the feature descriptions of the weather data
         const set<features_weather::feat_desc> &features = sol->get_weather_feature_desc();
