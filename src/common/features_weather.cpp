@@ -61,7 +61,7 @@ set<features_weather::feat_desc> features_weather::get_standard_features(const p
 
     // parameters and levels
     const array<string, 2> featgnd = {"PRES", "TMP"};
-    const array<string, 8> featair = {"HGT", "TMP", "UGRD", "VGRD", "ABSV", "RH", "VVEL", "CLWMR"};
+    const array<string, 7> featair = {"HGT", "TMP", "UGRD", "VGRD", "ABSV", "RH", "VVEL"}; //, "CLWMR"};
     const array<size_t, 4> levels  = {0, 850, 700, 500};
 
     feat_desc fdesc;
@@ -78,7 +78,7 @@ set<features_weather::feat_desc> features_weather::get_standard_features(const p
         fdesc.level = levels[i];
         for(size_t j=0; j<featair.size(); ++j)
         {
-            fdesc.param[j];
+            fdesc.param = featair[j];
             generate_features(fdesc, nearbyloc, bpt::hours(-12), bpt::hours(18), features);
         }
     }
@@ -225,7 +225,8 @@ bgreg::date_period features_weather::get_feature_date_period(const bool future_t
     res[0][0].to(strto);
     const bpt::ptime ptto = bpt::time_from_string(strto);
 
-    return bgreg::date_period(ptfrom.date() + bgreg::days(1), ptto.date() - bgreg::days(1));
+//    return bgreg::date_period(ptfrom.date() + bgreg::days(1), ptto.date() - bgreg::days(1));
+    return bgreg::date_period(ptto.date() - bgreg::days(50), ptto.date() - bgreg::days(1));
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

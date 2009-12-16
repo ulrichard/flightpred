@@ -134,6 +134,9 @@ public:
      : lm_dlib_base<kernel_type>(pred_name), kern_(kern) { };
     virtual ~lm_dlib_rvm() { };
 
+    virtual void mutate(boost::function<double(double)> &real_mutator) { }
+    virtual void copy_params(const learning_machine &rhs) { }
+
 protected:
     virtual void train_algorithm(const std::vector<sample_type> &samples, const std::vector<double> &lables)
     {

@@ -10,6 +10,7 @@
 #include <libevocosm/reporter.h>
 #include <libevocosm/reproducer.h>
 #include <libevocosm/evocosm.h>
+#include <libevocosm/evoreal.h>
 // boost
 #include <boost/function.hpp>
 // std lib
@@ -35,7 +36,7 @@ public:
         return *this;
     }
 
-    /** organisms less error come before ones with bigger error. */
+    /** organisms with less error come before ones with bigger error. */
     virtual bool operator<(const libevocosm::organism<solution_config> &rhs) const
     {
         return (m_fitness < rhs.fitness());
@@ -64,29 +65,42 @@ public:
     virtual void mutate(std::vector<organism> &population);
 
 private:
+    double mutate_value(double oldval);
+
     double mutation_rate_;
+    static libevocosm::evoreal evoreal_; //! Provides mutation and crossover services for doubles
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 class reproducer : public libevocosm::reproducer<organism>
 {
 public:
-    reproducer() {  }
-    reproducer(const reproducer &src) { }
+    reproducer(const size_t pred_site_id, const double mutation_rate);
+    reproducer(const reproducer &src)
+        : pred_site_id_(src.pred_site_id_), mutation_rate_(src.mutation_rate_), solution_descriptions_(src.solution_descriptions_) { }
     virtual ~reproducer()  { }
     reproducer & operator=(const reproducer &source)
-    {   return *this;   }
+    {
+        pred_site_id_ = source.pred_site_id_;
+        mutation_rate_ = source.mutation_rate_;
+        solution_descriptions_ = source.solution_descriptions_;
+        return *this;
+    }
 
-    //! Reproduction for solutions
-    /*!
+    /** @brief Reproduction for solutions
         Breeds new solutions, by cloning or the combination of elements from parent organisms.
         In the flightprediction system we don't use sexual reproduction, meaning crossover, but only cloning with mutations.
         \param a_population - A population of solutions
         \param p_limit - Maximum number of children
-        \return A vector containing new "child" chromosomes
-    */
+        \return A vector containing new "child" chromosomes */
     virtual std::vector<organism> breed(const std::vector<organism> &old_population, size_t p_limit);
 
 private:
+    solution_config make_mutated_clone(const solution_config &src);
+
+    size_t pred_site_id_;
+    double mutation_rate_;
+    std::set<std::string> solution_descriptions_;
+    static libevocosm::evoreal evoreal_; //! Provides mutation and crossover services for doubles
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /** @brief Defines the test for a population of solutions
@@ -177,10 +191,11 @@ public:
         @param init_population - a function that generates the initial population.
         @param a_population - The size of the solution population.
         @param a_mutation_rate - Mutation rate in the range [0,1].
-        @param a_iterations - Number of iterations to perform when doing a run. */
+        @param a_iterations - Number of iterations to perform when doing a run.
+        @param pred_site_id - the database id of the flying site we optimize the predictions. */
     optimizer(boost::function<double(const solution_config&)> eval_fitness, boost::function<organism(void)> a_init,
               boost::function<std::vector<boost::shared_ptr<solution_config> >(void)> init_population,
-              size_t a_population, double a_mutation_rate, size_t a_iterations);
+              size_t population, double mutation_rate, size_t iterations, size_t pred_site_id);
     virtual ~optimizer() { delete evocosm_; }
 
     /** @brief Performs optimization

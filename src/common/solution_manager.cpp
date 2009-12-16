@@ -110,6 +110,7 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
     const string weather_feat_desc(sstr.str());
 
     vector<string> algo_desc;
+/*
     algo_desc.push_back("DLIB_RVM(RBF(0.1))");
     algo_desc.push_back("DLIB_RVM(RBF(0.05))");
     algo_desc.push_back("DLIB_RVM(RBF(0.02))");
@@ -163,6 +164,7 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.01  0.1))");
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.01  0.01))");
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001  0.001))");
+*/
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.1))");
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.01))");
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001 0.001))");
@@ -193,7 +195,8 @@ void solution_manager::evolve_population(const size_t iterations, const double m
                                          boost::bind(&solution_manager::get_initial_generation, this),
                                          population_size,
                                          mutation_rate,
-                                         iterations);
+                                         iterations,
+                                         pred_site_id_);
     opt.run();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -227,16 +230,16 @@ const double solution_manager::test_fitness(const solution_config &sol)
             const double & realval = max_distances_[*dit];
             const double err = fabs(realval - predval_p);
             sum_err  += err;
-//            std::cout << bgreg::to_iso_extended_string(*dit) << " " << realval << " " << predval << " " << err << std::endl;
         }
     }
     std::cout << "validation result for : " << sol.get_short_description() << " total error in km is " << sum_err <<  std::endl;
 
     // todo : handle different generations
+    const size_t generation_nr = 0;
     pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::test_fitness");
     std::stringstream sstr;
     sstr << "INSERT INTO trained_solutions (generation, pred_site_id, configuration, validation_error, train_time, num_features) VALUES "
-         << "(0, " << pred_site_id_ << ", '" << sol.get_description() << "', " << sum_err << ", "
+         << "(" << generation_nr << ", " << pred_site_id_ << ", '" << sol.get_description() << "', " << sum_err << ", "
          << traintime << ", " << sol.get_weather_feature_desc().size() << ")";
     trans.exec(sstr.str());
     trans.commit();

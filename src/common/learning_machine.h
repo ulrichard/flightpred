@@ -4,6 +4,7 @@
 //boost
 #include <boost/noncopyable.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/function.hpp>
 // standard library
 #include <string>
 #include <vector>

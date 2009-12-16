@@ -177,6 +177,17 @@ const std::string solution_config::get_short_description() const
     return sstr.str();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+const std::string solution_config::get_algorithm_name(const bool with_params) const
+{
+    boost::regex regx(with_params ? "\\w+\\(\\w+\\((\\d+\\.\\d+\\s*){1,3}\\)(\\s*\\d+\\.\\d+)?\\s*\\)"
+                                  : "\\w+\\(\\w+");
+    boost::smatch regxmatch;
+    if(!boost::regex_search(solution_description_, regxmatch, regx))
+        throw std::invalid_argument("failed to extract short description from : " + solution_description_);
+
+    return regxmatch[0] + (with_params ? "" : ")");
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_config::decode()
 {
     features_desc_.clear();
@@ -193,17 +204,17 @@ void solution_config::decode()
     void (point_ll_deg::*setlat)(const double &v) = &point_ll_deg::lat;
 	typedef rule<> rule_t;
 
-	rule_t kernel_dlib_rbf  = "RBF(" >> ureal_p[assign_a(currgamma)] >> ")";
-	rule_t kernel_dlib_sig  = "SIG(" >> ureal_p[assign_a(currgamma)] >> *blank_p >> ureal_p[assign_a(currcoef)] >> ")";
-	rule_t kernel_dlib_poly = "POLY(" >> ureal_p[assign_a(currgamma)] >> *blank_p >> ureal_p[assign_a(currcoef)] >> *blank_p >> ureal_p[assign_a(currdegree)] >> ")";
+	rule_t kernel_dlib_rbf  = "RBF(" >> ureal_p[assign_a(currgamma)] >> *blank_p >> ")";
+	rule_t kernel_dlib_sig  = "SIG(" >> ureal_p[assign_a(currgamma)] >> *blank_p >> ureal_p[assign_a(currcoef)] >> *blank_p >> ")";
+	rule_t kernel_dlib_poly = "POLY(" >> ureal_p[assign_a(currgamma)] >> *blank_p >> ureal_p[assign_a(currcoef)] >> *blank_p >> ureal_p[assign_a(currdegree)] >> *blank_p >> ")";
 
-	rule_t algo_dlib_rvm_rbf  = ("DLIB_RVM(" >> kernel_dlib_rbf >> ")")
+	rule_t algo_dlib_rvm_rbf  = ("DLIB_RVM(" >> kernel_dlib_rbf >> *blank_p >> ")")
             [assign_dlib_rvm_rbf(learning_machines_, currgamma)];
-	rule_t algo_dlib_rvm_sig  = ("DLIB_RVM(" >> kernel_dlib_sig >> ")")
+	rule_t algo_dlib_rvm_sig  = ("DLIB_RVM(" >> kernel_dlib_sig >> *blank_p >> ")")
             [assign_dlib_rvm_sig(learning_machines_, currgamma, currcoef)];
-	rule_t algo_dlib_rvm_poly  = ("DLIB_RVM(" >> kernel_dlib_poly >> ")")
+	rule_t algo_dlib_rvm_poly  = ("DLIB_RVM(" >> kernel_dlib_poly >> *blank_p >> ")")
             [assign_dlib_rvm_poly(learning_machines_, currgamma, currcoef, currdegree)];
-	rule_t algo_dlib_krls = ("DLIB_KRLS(" >> kernel_dlib_rbf >> *blank_p >> ureal_p[assign_a(currfact)] >> ")")
+	rule_t algo_dlib_krls = ("DLIB_KRLS(" >> kernel_dlib_rbf >> *blank_p >> ureal_p[assign_a(currfact)] >> *blank_p >> ")")
             [assign_dlib_krls_rbf(learning_machines_, currgamma, currfact)];
 	rule_t algo = algo_dlib_rvm_rbf | algo_dlib_rvm_sig | algo_dlib_rvm_poly | algo_dlib_krls;
 
@@ -216,7 +227,7 @@ void solution_config::decode()
 	rule_t param = (+upper_p)[assign_a(currfeat.param)];
 	rule_t weather_feature = ("FEATURE(" >> model >> blank_p >> reltime >> blank_p >> location >> blank_p >> level >> blank_p >> param >> ")")[push_back_a(features, currfeat)];
 
-	rule_t solution_description = algo >> blank_p >> weather_feature % blank_p;
+	rule_t solution_description = algo >> *blank_p >> weather_feature % blank_p;
 
     parse_info<> info = parse(solution_description_.c_str(), solution_description, space_p);
     if(!info.hit || info.length < solution_description_.length() - 1)
@@ -234,3 +245,5 @@ shared_ptr<learning_machine> solution_config::get_decision_function(const std::s
     return fit->second;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+
+
