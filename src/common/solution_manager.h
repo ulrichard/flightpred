@@ -27,7 +27,7 @@ public:
 
 private:
     static size_t get_pred_site_id(const std::string &site_name);
-    /** @brief get an initial generation of solutions. They vary in algorithms and their parameters, but not yet by feature sets */
+    std::vector<boost::shared_ptr<solution_config> > initialize_population();
     std::vector<boost::shared_ptr<solution_config> > get_initial_generation();
     void  fill_label_cache();
     const std::vector<double> & get_sample(const std::set<features_weather::feat_desc> &fdesc, const boost::gregorian::date &day);

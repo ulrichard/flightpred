@@ -39,16 +39,17 @@ using std::vector;
 using std::map;
 using std::set;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-
+const std::string solution_config::rgxreal_ = "\\d+(\\.\\d+(e[+-]\\d{1,3})?)?";
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/** @brief load a solution configuration from the database. */
 solution_config::solution_config(const size_t db_id)
 {
     train_sol_id_ = db_id;
     pqxx::transaction<> trans(flightpred_db::get_conn(), "load solution config");
 
     std::stringstream sstr;
-    sstr << "SELECT configuration, site_name FROM trained_solutions INNER JOIN pred_sites "
+    sstr << "SELECT configuration, site_name, generation FROM trained_solutions INNER JOIN pred_sites "
          << "ON trained_solutions.pred_site_id = pred_sites.pred_site_id "
          << "WHERE train_sol_id=" << train_sol_id_;
     pqxx::result res = trans.exec(sstr.str());
@@ -57,6 +58,7 @@ solution_config::solution_config(const size_t db_id)
 
     res[0]["configuration"].to(solution_description_);
     res[0]["site_name"].to(site_name_);
+    res[0]["generation"].to(generation_);
     trans.commit();
 
     decode();
@@ -167,7 +169,7 @@ private:
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const std::string solution_config::get_short_description() const
 {
-    boost::regex regx("\\w+\\(\\w+\\((\\d+\\.\\d+\\s*){1,3}\\)(\\s*\\d+\\.\\d+)?\\s*\\)");
+    boost::regex regx("\\w+\\(\\w+\\((" + rgxreal_ + "\\s*){1,3}\\)(\\s*\\d+\\.\\d+)?\\s*\\)");
     boost::smatch regxmatch;
     if(!boost::regex_search(solution_description_, regxmatch, regx))
         throw std::invalid_argument("failed to extract short description from : " + solution_description_);
@@ -179,7 +181,7 @@ const std::string solution_config::get_short_description() const
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const std::string solution_config::get_algorithm_name(const bool with_params) const
 {
-    boost::regex regx(with_params ? "\\w+\\(\\w+\\((\\d+\\.\\d+\\s*){1,3}\\)(\\s*\\d+\\.\\d+)?\\s*\\)"
+    boost::regex regx(with_params ? "\\w+\\(\\w+\\((" + rgxreal_ + "\\s*){1,3}\\)(\\s*" + rgxreal_ + ")?\\s*\\)"
                                   : "\\w+\\(\\w+");
     boost::smatch regxmatch;
     if(!boost::regex_search(solution_description_, regxmatch, regx))

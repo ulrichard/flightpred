@@ -62,11 +62,9 @@ public:
 
     double mutation_rate() const { return mutation_rate_; }
 
-    virtual void mutate(std::vector<organism> &population);
+    virtual void mutate(std::vector<organism> &population) { };
 
 private:
-    double mutate_value(double oldval);
-
     double mutation_rate_;
     static libevocosm::evoreal evoreal_; //! Provides mutation and crossover services for doubles
 };
@@ -74,9 +72,9 @@ private:
 class reproducer : public libevocosm::reproducer<organism>
 {
 public:
-    reproducer(const size_t pred_site_id, const double mutation_rate);
+    reproducer(const size_t pred_site_id, const double mutation_rate, size_t &current_generation);
     reproducer(const reproducer &src)
-        : pred_site_id_(src.pred_site_id_), mutation_rate_(src.mutation_rate_), solution_descriptions_(src.solution_descriptions_) { }
+        : pred_site_id_(src.pred_site_id_), mutation_rate_(src.mutation_rate_), current_generation_(src.current_generation_), solution_descriptions_(src.solution_descriptions_) { }
     virtual ~reproducer()  { }
     reproducer & operator=(const reproducer &source)
     {
@@ -99,7 +97,8 @@ private:
 
     size_t pred_site_id_;
     double mutation_rate_;
-    std::set<std::string> solution_descriptions_;
+    size_t &current_generation_;
+    std::set<std::string> solution_descriptions_; //! all the descriptions in the system so far.
     static libevocosm::evoreal evoreal_; //! Provides mutation and crossover services for doubles
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -156,33 +155,6 @@ protected:
     -- a solution initializer and a fitness test -- that define the target problem.*/
 class optimizer : protected libevocosm::organism_factory<organism>, protected libevocosm::landscape_factory<landscape>
 {
-private:
-    // objects that define the characteristics of the genetic algorithm
-    mutator                                mutator_;
-    reproducer                             reproducer_;
-    libevocosm::null_scaler<organism>      scaler_;
-    libevocosm::null_migrator<organism>    migrator_;
-    libevocosm::elitism_selector<organism> selector_;
-    reporter                               reporter_;
-
-    // the evocosm binds it all together; kinda like the "one ring" Bilbo found!
-    libevocosm::evocosm<organism, landscape> * evocosm_;
-
-    // number of iterations to run
-    const size_t iterations_;
-
-    // a function that provides initialized, random solutions
-    boost::function<organism(void)> init_;
-
-    // a function that generates the initial population
-    boost::function<std::vector<boost::shared_ptr<solution_config> >(void)> init_population_;
-
-    // the function to be optimized
-    boost::function<double(const solution_config&)> eval_fitness_;
-
-    // null listener
-    libevocosm::null_listener                       listener_;
-
 public:
     /** @brief Constructor
         Creates a new function_optimizer with the given set of parameters.
@@ -216,6 +188,24 @@ public:
         Generates landscapes for an evocosm. I called this funtion "generate"
         to avoid collisions with the "create" method in organism_factory. */
     virtual landscape generate();
+
+private:
+    size_t current_generation_;
+
+    // objects that define the characteristics of the genetic algorithm
+    mutator                                mutator_;
+    reproducer                             reproducer_;
+    libevocosm::null_scaler<organism>      scaler_;
+    libevocosm::null_migrator<organism>    migrator_;
+    libevocosm::elitism_selector<organism> selector_;
+    reporter                               reporter_;
+
+    libevocosm::evocosm<organism, landscape> * evocosm_; // the evocosm binds it all together; kinda like the "one ring" Bilbo found!
+    const size_t iterations_; // number of iterations to run
+    boost::function<organism(void)> init_;  // a function that provides initialized, random solutions
+    boost::function<std::vector<boost::shared_ptr<solution_config> >(void)> init_population_;  // a function that generates the initial population
+    boost::function<double(const solution_config&)> eval_fitness_;  // the function to be optimized
+    libevocosm::null_listener listener_;     // null listener -> does nothing at the event points
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace evolution

@@ -30,43 +30,13 @@ using std::cout;
 
 // static members;
 libevocosm::evoreal mutator::evoreal_;
-libevocosm::evoreal reproducer::evoreal_;
+libevocosm::evoreal reproducer::evoreal_(0.0, 3.0, 97.0);
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-// mutate a set of organisms
-void mutator::mutate(vector<organism> &population)
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+reproducer::reproducer(const size_t pred_site_id, const double mutation_rate, size_t &current_generation)
+    : pred_site_id_(pred_site_id), mutation_rate_(mutation_rate), current_generation_(current_generation)
 {
-    // in our flightprediction, the mutation happens during the breeding
-/*
-    std::cout << "mutator::mutate" << std::endl;
-
-    for(vector<organism>::iterator it = population.begin(); it != population.end(); ++it)
-    {
-        solution_config &solconf = it->genes();
-        boost::function<double(double)> func = boost::bind(&mutator::mutate_value, this, ::_1);
-        solconf.mutate(mutation_rate_, func);
-
-
-        for (vector<double>::iterator arg = solution->genes().begin(); arg != solution->genes().end(); ++arg)
-        {
-            if (g_random.get_real() <= m_mutation_rate)
-                *arg = g_evoreal.mutate(*arg);
-        }
-    }
-*/
-}
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-double mutator::mutate_value(double oldval)
-{
-    const double rval = (g_random.get_rand() % 1000) / 1000.0;
-    if(rval <= mutation_rate_)
-        return evoreal_.mutate(oldval);
-    return oldval;
-}
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-reproducer::reproducer(const size_t pred_site_id, const double mutation_rate)
-    : pred_site_id_(pred_site_id), mutation_rate_(mutation_rate)
-{
+    // load all known configurations into the set
     pqxx::transaction<> trans(flightpred_db::get_conn(), "reproducer::reproducer");
     std::stringstream sstr;
     sstr << "SELECT configuration FROM trained_solutions "
@@ -143,8 +113,6 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     boost::trim(algo_desc);
     std::stringstream sstr;
 
-//    boost::regex regx("\\w+\\(\\w+\\((\\d+\\.\\d+\\s*){1,3}\\)(\\s*\\d+\\.\\d+)?\\s*\\)");
-
     // first the algorithm and kernel names
     boost::smatch regxmatch;
     if(!boost::regex_search(algo_desc, regxmatch, boost::regex("\\w+\\(\\w+\\(\\s*")))
@@ -153,7 +121,7 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     algo_desc = algo_desc.substr(regxmatch[0].length());
 
     // second the kernel parameters
-    boost::regex rgxdbl("\\d+(\\.\\d+)?\\s*");
+    boost::regex rgxdbl("\\d+(\\.\\d+(e[+-]\\d{1,3})?)?\\s*");
     while(boost::regex_search(algo_desc, regxmatch, rgxdbl))
     {
         string nbr = regxmatch[0];
@@ -163,9 +131,10 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
         const double rval = (g_random.get_rand() % 1000) / 1000.0;
         if(rval <= mutation_rate_)
             val = evoreal_.mutate(val);
-        sstr << val << " ";
+        val = std::min<double>(val, 1.0);
+        val = std::max<double>(val, 0.0);
 
-        std::cout << algo_desc << std::endl;
+        sstr << val << " ";
     }
     sstr << ")";
 
@@ -186,21 +155,14 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     }
     sstr << ")  ";
 
-//    std::cout << src.get_algorithm_name(true) << "  ->  " << sstr.str() << std::endl;
-
     // then mutate the features
     std::set<features_weather::feat_desc> features =  src.get_weather_feature_desc();
 
-    // mutations will include : drop, modify, add
+    // todo : mutations will include : drop, modify, add
 
     std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
 
-//    return solution_config(src.get_site_name(), sstr.str());
-    std::cout << sstr.str().substr(0, 50) << std::endl << std::endl;
-
-    solution_config soco(src.get_site_name(), sstr.str());
-    std::cout << sstr.str().substr(0, 50) << std::endl << std::endl;
-    return soco;
+    return solution_config(src.get_site_name(), sstr.str(), current_generation_ + 1);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -238,7 +200,7 @@ bool reporter::report(const vector<vector<organism> > &populations, size_t itera
     fitness = best.fitness();
 
     // display best solution
-    size_t n = 0;
+//    size_t n = 0;
 
     cout.precision(15);
 
@@ -259,8 +221,9 @@ optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitnes
                      double mutation_rate,
                      size_t iterations,
                      size_t pred_site_id)
-  : mutator_(mutation_rate),
-    reproducer_(pred_site_id, mutation_rate),
+  : current_generation_(0),
+    mutator_(mutation_rate),
+    reproducer_(pred_site_id, mutation_rate, current_generation_),
     scaler_(),
     migrator_(),
     selector_(population / 10),
@@ -268,8 +231,8 @@ optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitnes
     evocosm_(NULL),
     iterations_(iterations),
     init_(a_init),
-    eval_fitness_(eval_fitness),
     init_population_(init_population),
+    eval_fitness_(eval_fitness),
     listener_()
 {
     evocosm_ = new libevocosm::evocosm<organism, landscape>(listener_,
@@ -290,10 +253,11 @@ optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitnes
 void optimizer::run()
 {
     // continue for specified number of iterations
-    for (size_t count = 1; count <= iterations_; ++count)
+    const size_t last_generation = current_generation_ + iterations_;
+    for( ; current_generation_ <= last_generation; ++current_generation_)
     {
         // display generation number
-        cout << "\ngen " << count << std::endl;
+        cout << "\ngeneration " << current_generation_ << std::endl;
 
         // run a generation
         double dummy;
@@ -312,6 +276,7 @@ void optimizer::append(vector<organism> &population, size_t a_size)
 {
     typedef shared_ptr<solution_config> shared_solution_config;
     vector<shared_solution_config> sol_configs = init_population_();
+    current_generation_ = sol_configs.back()->get_generation();
 
     BOOST_FOREACH(shared_solution_config sol, sol_configs)
         population.push_back(organism(*sol));
