@@ -1,7 +1,8 @@
 // flightpred
-#include "features_weather.h"
-#include "grib_pred_model.h"
-#include "flightpred_globals.h"
+#include "common/features_weather.h"
+#include "common/grib_pred_model.h"
+#include "common/flightpred_globals.h"
+#include "common/reporter.h"
 //#include "area_mgr.h"
 // postgre
 #include <pqxx/pqxx>
@@ -15,15 +16,18 @@
 #include <boost/bind.hpp>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 // standard library
 #include <vector>
 #include <map>
 #include <sstream>
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 using geometry::point_ll_deg;
 namespace bgreg = boost::gregorian;
 namespace bpt   = boost::posix_time;
+using boost::lexical_cast;
 using boost::array;
 using std::vector;
 using std::set;
@@ -83,7 +87,7 @@ set<features_weather::feat_desc> features_weather::get_standard_features(const p
         }
     }
 
-    std::cout << features.size() << " standard features" << std::endl;
+    report(VERBOSE).msg(lexical_cast<string>(features.size()) + " standard features");
 
     return features;
 }
@@ -179,12 +183,12 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
 
         if(descriptions.size() != feat_map.size())
         {
-            std::cout << feat_map.size() << " features found " << descriptions.size() << " expected" << std::endl;
-            std::cout << "The following features could not be found in the database for "
-                      << bgreg::to_simple_string(day) << " : " << std::endl;
+            report(ERROR).msg(lexical_cast<string>(feat_map.size()) + " features found " + lexical_cast<string>(descriptions.size()) + " expected");
+            report(WARN)  << "The following features could not be found in the database for "
+                          << bgreg::to_simple_string(day) << " : " << std::endl;
             for(set<feat_desc>::const_iterator it = descriptions.begin(); it != descriptions.end(); ++it)
                 if(feat_map.find(*it) == feat_map.end())
-                    std::cout << (*it) << std::endl;
+                    report(WARN) << (*it) << std::endl;
             throw std::runtime_error("Not all required features found in the database!");
         }
 
@@ -225,8 +229,8 @@ bgreg::date_period features_weather::get_feature_date_period(const bool future_t
     res[0][0].to(strto);
     const bpt::ptime ptto = bpt::time_from_string(strto);
 
-//    return bgreg::date_period(ptfrom.date() + bgreg::days(1), ptto.date() - bgreg::days(1));
-    return bgreg::date_period(ptto.date() - bgreg::days(150), ptto.date() - bgreg::days(1));
+    return bgreg::date_period(ptfrom.date() + bgreg::days(1), ptto.date() - bgreg::days(1));
+//    return bgreg::date_period(ptto.date() - bgreg::days(150), ptto.date() - bgreg::days(1));
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

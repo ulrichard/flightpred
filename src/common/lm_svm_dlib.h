@@ -4,6 +4,7 @@
 // flightpred
 #include "common/learning_machine.h"
 #include "common/flightpred_globals.h"
+#include "common/reporter.h"
 // dlib
 #include <dlib/svm.h>
 // postgre
@@ -46,7 +47,7 @@ public:
             samples.push_back(samp);
         }
 
-        std::cout << "normalize the samples" << std::endl;
+        reporting::report(reporting::VERBOSE) << "normalize the samples";
         this->normalizer_.train(samples);
         std::transform(samples.begin(), samples.end(), samples.begin(), this->normalizer_);
 
@@ -76,7 +77,7 @@ public:
         {
             pqxx::largeobject dblobj(trans);
             pqxx::olostream dbstrm(trans, dblobj);
-            std::cout << "streaming normalizer and SVM to the db blob" << std::endl;
+            reporting::report(reporting::VERBOSE) << "streaming normalizer and SVM to the db blob";
             serialize(normalizer_, dbstrm);
             dlib::serialize(learnedfunc_, dbstrm);
             oid_blob = dblobj.id();
@@ -115,7 +116,7 @@ public:
         deserialize(normalizer_,  dbstrm);
         dlib::deserialize(learnedfunc_, dbstrm);
 
-        std::cout << pred_name_ << " has " << learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
+        reporting::report(reporting::VERBOSE) << pred_name_ << " has " << learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
 
 protected:
@@ -140,11 +141,11 @@ public:
 protected:
     virtual void train_algorithm(const std::vector<sample_type> &samples, const std::vector<double> &lables)
     {
-        std::cout << "train the relevance vector machine" << std::endl;
+        reporting::report(reporting::VERBOSE) << "train the relevance vector machine";
         dlib::rvm_regression_trainer<kernel_type> trainer;
         trainer.set_kernel(kern_);
         this->learnedfunc_ = trainer.train(samples, lables);
-        std::cout << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
+        reporting::report(reporting::VERBOSE) << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
 private:
     kernel_type kern_;
@@ -162,7 +163,7 @@ public:
 protected:
     virtual void train_algorithm(const std::vector<sample_type> &samples, const std::vector<double> &lables)
     {
-        std::cout << "train the kernel recursive least squares algorithm" << std::endl;
+        reporting::report(reporting::VERBOSE) << "train the kernel recursive least squares algorithm";
         dlib::krls<kernel_type> trainer(kern_, fact_);
 
         for(size_t i=0; i<lables.size(); ++i)
@@ -170,7 +171,7 @@ protected:
 
         this->learnedfunc_ = trainer.get_decision_function();
 
-        std::cout << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors." << std::endl;
+        reporting::report(reporting::VERBOSE) << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
 private:
     kernel_type kern_;

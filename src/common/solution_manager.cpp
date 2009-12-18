@@ -3,6 +3,7 @@
 #include "common/features_weather.h"
 #include "common/flightpred_globals.h"
 #include "common/ga_evocosm.h"
+#include "common/reporter.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
@@ -18,6 +19,7 @@
 #include <iostream>
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 using geometry::point_ll_deg;
 using boost::lexical_cast;
 using boost::shared_ptr;
@@ -32,7 +34,7 @@ using std::set;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::fill_label_cache()
 {
-    std::cout << "collecting lables" << std::endl;
+    report(VERBOSE) << "collecting lables";
     pqxx::transaction<> trans(flightpred_db::get_conn(), "fill_max_distance_cache");
     std::stringstream sstr;
     sstr << "SELECT flight_date, MAX(distance) FROM flights INNER JOIN sites "
@@ -72,7 +74,7 @@ const vector<double> & solution_manager::get_sample(const set<features_weather::
 
     map<bgreg::date, vector<double> > &featsol = weathercache_[fdesc];
 
-    std::cout << "collecting features for " << bgreg::to_iso_extended_string(day) << std::endl;
+    report(VERBOSE) << "collecting features for " << bgreg::to_iso_extended_string(day);
 
     const vector<double> valweather = weather_.get_features(fdesc, day, false);
     assert(valweather.size() == fdesc.size());
@@ -111,7 +113,6 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
     const string weather_feat_desc(sstr.str());
 
     vector<string> algo_desc;
-/*
     algo_desc.push_back("DLIB_RVM(RBF(0.1))");
     algo_desc.push_back("DLIB_RVM(RBF(0.05))");
     algo_desc.push_back("DLIB_RVM(RBF(0.02))");
@@ -162,7 +163,6 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.1))");
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.01))");
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.1   0.001))");
-*/
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.01  0.1))");
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.01  0.01))");
     algo_desc.push_back("DLIB_RVM(POLY(0.001 0.001  0.001))");
@@ -244,7 +244,7 @@ vector<shared_ptr<solution_config> > solution_manager::initialize_population()
     @return the total error in km */
 const double solution_manager::test_fitness(const solution_config &sol)
 {
-    std::cout << "collect features for : " << sol.get_short_description() <<  std::endl;
+    report(VERBOSE) << "collect features for : " << sol.get_short_description() <<  std::endl;
     learning_machine::SampleType samples;
 
     for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
@@ -252,13 +252,13 @@ const double solution_manager::test_fitness(const solution_config &sol)
             samples.push_back(get_sample(sol.get_weather_feature_desc(), *dit));
     boost::timer btim;
     static const string eval_name("max_dist");
-    std::cout << "train the learning machine : " << sol.get_short_description() <<  std::endl;
+    report(VERBOSE) << "train the learning machine : " << sol.get_short_description() <<  std::endl;
     sol.get_decision_function(eval_name)->train(samples, training_labels_);
     const double traintime = btim.elapsed();
-    std::cout << "training took " << btim.elapsed() << " sec" << std::endl;
+    report(VERBOSE) << "training took " << btim.elapsed() << " sec" << std::endl;
 
     // validate
-    std::cout << "validate the learning machine : " << sol.get_short_description() <<  std::endl;
+    report(VERBOSE) << "validate the learning machine : " << sol.get_short_description() <<  std::endl;
     double sum_err = 0;
     for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
     {
@@ -272,7 +272,9 @@ const double solution_manager::test_fitness(const solution_config &sol)
             sum_err  += err;
         }
     }
-    std::cout << "validation result for : " << sol.get_short_description() << " total error in km is " << sum_err <<  std::endl;
+    report(INFO) << "validation result for : " << sol.get_short_description()
+                 << " gen " << sol.get_generation()
+                 << " total error in km is " << sum_err <<  std::endl;
 
     // todo : handle different generations
     pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::test_fitness");

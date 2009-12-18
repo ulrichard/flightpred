@@ -11,6 +11,7 @@ grib_pred_model.cpp
 solution_config.cpp
 solution_manager.cpp
 train_svm.cpp
+reporter.cpp
 )
 
 ADD_LIBRARY(flightpred_common ${libsources})

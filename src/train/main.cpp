@@ -8,6 +8,7 @@
 #include "common/geo_parser.h"
 #include "common/solution_manager.h"
 #include "common/flightpred_globals.h"
+#include "common/reporter.h"
 // ggl (boost sandbox)
 #include <geometry/geometries/latlong.hpp>
 // boost
@@ -67,6 +68,8 @@ int main(int argc, char* argv[])
         bgreg::date dtstart(dtend - bgreg::months(5));
         start_date = bgreg::to_iso_extended_string(dtstart);
         end_date   = bgreg::to_iso_extended_string(dtend);
+
+        reporting::ReportDispatcher::inst().add(new reporting::ListenerCout(), reporting::INFO);
 
         // Declare the supported options.
         po::options_description desc("Allowed options");

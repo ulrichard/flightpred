@@ -1,6 +1,7 @@
 // flightpred
 #include "common/ga_evocosm.h"
 #include "common/flightpred_globals.h"
+#include "common/reporter.h"
 // evocosm
 #include <libevocosm/roulette.h>
 // postgre
@@ -20,6 +21,7 @@
 
 using namespace flightpred;
 using namespace flightpred::evolution;
+using namespace flightpred::reporting;
 //using namespace boost::lambda;
 //namespace bll = boost::lambda;
 using boost::shared_ptr;
@@ -53,7 +55,7 @@ reproducer::reproducer(const size_t pred_site_id, const double mutation_rate, si
 // create children
 vector<organism> reproducer::breed(const vector<organism> &old_population, size_t p_limit)
 {
-    std::cout << "reproducer::breed" << std::endl;
+    report(INFO) << "reproducer::breed generation " << current_generation_ << "+1  count : " << p_limit;
     // result
     vector<organism> children;
 
@@ -73,6 +75,7 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
         res[i][0].to(train_sol_id);
 
         solution_config sol(train_sol_id);
+        solution_descriptions_.insert(sol.get_description());
         while(solution_descriptions_.find(sol.get_description()) != solution_descriptions_.end())
             sol = make_mutated_clone(sol);
 
@@ -95,6 +98,7 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
         organism child = old_population[genes_index];
 
         solution_config sol(child.genes());
+        solution_descriptions_.insert(sol.get_description());
         while(solution_descriptions_.find(sol.get_description()) != solution_descriptions_.end())
             sol = make_mutated_clone(sol);
 
@@ -162,6 +166,7 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
 
     std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
 
+
     return solution_config(src.get_site_name(), sstr.str(), current_generation_ + 1);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -207,7 +212,7 @@ bool reporter::report(const vector<vector<organism> > &populations, size_t itera
 //    for(vector<double>::iterator arg = best.genes().begin(); arg != best.genes().end(); ++arg, ++n)
 //        cout << "[" << n << "] " << *arg << "\n";
 
-    cout << std::setfill(' ') << "fitness = " << std::setw(2) << best.fitness() << std::endl;
+//    report(VERBOSE) << std::setfill(' ') << "fitness = " << std::setw(2) << best.fitness();
 
     return true;
 }
@@ -257,7 +262,7 @@ void optimizer::run()
     for( ; current_generation_ <= last_generation; ++current_generation_)
     {
         // display generation number
-        cout << "\ngeneration " << current_generation_ << std::endl;
+        report(INFO) << "\ngeneration " << current_generation_ << std::endl;
 
         // run a generation
         double dummy;
