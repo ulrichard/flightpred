@@ -185,10 +185,10 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
         {
             report(ERROR).msg(lexical_cast<string>(feat_map.size()) + " features found " + lexical_cast<string>(descriptions.size()) + " expected");
             report(WARN)  << "The following features could not be found in the database for "
-                          << bgreg::to_simple_string(day) << " : " << std::endl;
+                          << bgreg::to_simple_string(day) << " : ";
             for(set<feat_desc>::const_iterator it = descriptions.begin(); it != descriptions.end(); ++it)
                 if(feat_map.find(*it) == feat_map.end())
-                    report(WARN) << (*it) << std::endl;
+                    report(WARN) << (*it);
             throw std::runtime_error("Not all required features found in the database!");
         }
 

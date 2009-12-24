@@ -80,6 +80,7 @@ public:
     {
         pred_site_id_ = source.pred_site_id_;
         mutation_rate_ = source.mutation_rate_;
+        current_generation_ = source.current_generation_;
         solution_descriptions_ = source.solution_descriptions_;
         return *this;
     }

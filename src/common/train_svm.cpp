@@ -3,6 +3,7 @@
 #include "common/features_weather.h"
 #include "common/solution_manager.h"
 #include "common/flightpred_globals.h"
+#include "common/reporter.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
@@ -20,6 +21,7 @@
 #include <algorithm>
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 namespace bgreg = boost::gregorian;
 using boost::array;
 using std::vector;
@@ -27,13 +29,12 @@ using std::set;
 using std::map;
 using std::pair;
 using std::string;
-using std::cout;
-using std::endl;
-
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to)
 {
+    report(INFO) << "train_svm::train(" << site_name << ", " << bgreg::to_iso_extended_string(from)
+                 << ", " << bgreg::to_iso_extended_string(to) <<  ")";
     features_weather weather(false);
 
     // get the id and geographic position of the prediction site
@@ -53,7 +54,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
 
     // collect the labels
-    std::cout << "collecting labels" <<  std::endl;
+    report(INFO) << "collecting labels";
     sstr.str("");
     sstr << "SELECT flight_date, COUNT(*) AS num_flights, MAX(distance) AS max_dist, AVG(distance) AS avg_dist, "
          << "MAX(duration) AS max_dur, AVG(duration) AS avg_dur FROM flights INNER JOIN sites "
@@ -78,7 +79,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         }
     }
     trans1.commit();
-    std::cout << labelsbydate.size() << " dates with flights" << std::endl;
+    report(INFO) << "found " << labelsbydate.size() << " dates with flights";
 
     //load the configuration with the best score
     solution_manager solmgr(site_name);
@@ -88,7 +89,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     const set<features_weather::feat_desc> &features = sol->get_weather_feature_desc();
 //    const set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
 
-    cout << "collecting features for " << site_name << endl;
+    report(INFO) << "collecting features for " << site_name;
     learning_machine::SampleType      training_samples;
     assert(flightpred_globals::pred_values.size() == 5);
     array<vector<double>, 5> labels;
@@ -103,10 +104,10 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
             for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
                 labels[i].push_back(0.0);
 
-        std::cout << "collecting features for " << bgreg::to_iso_extended_string(day)
-                  << " "     << labels[0].back() << " flights "
-                  << " max " << labels[1].back() << " km "
-                  << " avg " << labels[2].back() << " km" << std::endl;
+        report(INFO) << "collecting features for " << bgreg::to_iso_extended_string(day)
+                     << " "     << labels[0].back() << " flights "
+                     << " max " << labels[1].back() << " km "
+                     << " avg " << labels[2].back() << " km" << std::endl;
         const vector<double> valweather = weather.get_features(features, day, false);
         assert(valweather.size() == features.size());
 
@@ -121,7 +122,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     double traintime = 0.0;
     for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
     {
-        std::cout << "train the support vector machine for " << flightpred_globals::pred_values[i] << " at site: " << site_name <<  std::endl;
+        report(INFO) << "train the support vector machine for " << flightpred_globals::pred_values[i] << " at site: " << site_name <<  std::endl;
         boost::timer btim;
         sol->get_decision_function(flightpred_globals::pred_values[i])->train(training_samples, labels[i]);
         traintime += btim.elapsed();

@@ -38,6 +38,7 @@ libevocosm::evoreal reproducer::evoreal_(0.0, 3.0, 97.0);
 reproducer::reproducer(const size_t pred_site_id, const double mutation_rate, size_t &current_generation)
     : pred_site_id_(pred_site_id), mutation_rate_(mutation_rate), current_generation_(current_generation)
 {
+    report(DEBUGING) << "reproducer::reproducer(" << pred_site_id << ", " << mutation_rate << ", " << current_generation << ") -> " << current_generation_;
     // load all known configurations into the set
     pqxx::transaction<> trans(flightpred_db::get_conn(), "reproducer::reproducer");
     std::stringstream sstr;
@@ -60,6 +61,7 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
     vector<organism> children;
 
     // take some of the best organisms so far in the system
+    report(DEBUGING) << "loading the " << (p_limit / 10) << " best organisms from the db";
     pqxx::transaction<> trans(flightpred_db::get_conn(), "reproducer::breed");
     std::stringstream sstr;
     sstr << "SELECT train_sol_id FROM trained_solutions "
@@ -69,11 +71,17 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
          << "ORDER BY validation_error ASC "
          << "LIMIT " << p_limit / 10;
     pqxx::result res = trans.exec(sstr.str());
+    vector<size_t> ids;
     for(size_t i=0; i<res.size(); ++i, --p_limit)
     {
         size_t train_sol_id;
         res[i][0].to(train_sol_id);
-
+        ids.push_back(train_sol_id);
+    }
+    trans.commit();
+    report(DEBUGING) << "mutate them";
+    BOOST_FOREACH(size_t train_sol_id, ids)
+    {
         solution_config sol(train_sol_id);
         solution_descriptions_.insert(sol.get_description());
         while(solution_descriptions_.find(sol.get_description()) != solution_descriptions_.end())
@@ -84,20 +92,25 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
         solution_descriptions_.insert(sol.get_description());
     }
 
+    report(DEBUGING) << "get the remaining organisms from the previous generation and mutate them";
     // construct a fitness wheel
     vector<double> wheel_weights;
-    for(vector<organism>::const_iterator solution = old_population.begin(); solution != old_population.end(); ++solution)
-        wheel_weights.push_back(1.0 / solution->fitness());
+    for(vector<organism>::const_iterator it = old_population.begin(); it != old_population.end(); ++it)
+        wheel_weights.push_back(1.0 / it->fitness());
     libevocosm::roulette_wheel fitness_wheel(wheel_weights);
 
     // create children
     for(; p_limit > 0; --p_limit)
     {
+        report(DEBUGING) << "left to go : " << p_limit;
         // clone an existing organism as a child
         size_t genes_index = fitness_wheel.get_index();
-        organism child = old_population[genes_index];
+        report(DEBUGING) << "roulette wheel selected index " << genes_index << " out of " <<  old_population.size();
+        genes_index = std::min(genes_index, old_population.size() - 1);
+        const organism &child = old_population[genes_index];
 
         solution_config sol(child.genes());
+        report(DEBUGING) << sol.get_short_description();
         solution_descriptions_.insert(sol.get_description());
         while(solution_descriptions_.find(sol.get_description()) != solution_descriptions_.end())
             sol = make_mutated_clone(sol);
@@ -107,7 +120,7 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
         solution_descriptions_.insert(sol.get_description());
     }
 
-    assert(children.size() == old_population.size()); // for our case where we have no pre-selected survivors
+//    assert(children.size() == old_population.size()); // for our case where we have no pre-selected survivors
     return children;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -118,6 +131,7 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     std::stringstream sstr;
 
     // first the algorithm and kernel names
+    report(DEBUGING) << "reproducer::make_mutated_clone : " << algo_desc;
     boost::smatch regxmatch;
     if(!boost::regex_search(algo_desc, regxmatch, boost::regex("\\w+\\(\\w+\\(\\s*")))
         throw std::invalid_argument("failed to mutate the solution description : " + algo_desc);
@@ -130,17 +144,28 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     {
         string nbr = regxmatch[0];
         algo_desc = algo_desc.substr(nbr.length());
+//        report(DEBUGING) << "old : " << algo_desc;
         boost::trim(nbr);
         double val = lexical_cast<double>(nbr);
         const double rval = (g_random.get_rand() % 1000) / 1000.0;
         if(rval <= mutation_rate_)
-            val = evoreal_.mutate(val);
-        val = std::min<double>(val, 1.0);
-        val = std::max<double>(val, 0.0);
+        {
+            double newval = 0.0;
+            while(newval <= 0.0 || newval >= 0.99)
+                newval = evoreal_.mutate(val);
+            val = newval;
+        }
+
+        val = std::min<double>(val, 1.0 - std::numeric_limits<float>::min());
+        val = std::max<double>(val, 0.0 + std::numeric_limits<float>::min());
 
         sstr << val << " ";
+ //       report(DEBUGING) << "new : " << sstr.str();
+        if(algo_desc[0] == ')')
+            break;
     }
     sstr << ")";
+//    report(DEBUGING) << "new : " << sstr.str();
 
     // third an optional algorithm parameter
     assert(algo_desc[0] == ')');
@@ -158,6 +183,7 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
         algo_desc = algo_desc.substr(nbr.length());
     }
     sstr << ")  ";
+//    report(DEBUGING) << "new : " << sstr.str();
 
     // then mutate the features
     std::set<features_weather::feat_desc> features =  src.get_weather_feature_desc();
@@ -240,6 +266,8 @@ optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitnes
     eval_fitness_(eval_fitness),
     listener_()
 {
+    report(DEBUGING) << "optimizer::optimizer() gen " << current_generation_;
+
     evocosm_ = new libevocosm::evocosm<organism, landscape>(listener_,
                                                  population,    // population size
                                                  1,             // number of populations

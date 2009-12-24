@@ -34,7 +34,7 @@ using std::set;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::fill_label_cache()
 {
-    report(VERBOSE) << "collecting lables";
+    report(DEBUGING) << "solution_manager::fill_label_cache()";
     pqxx::transaction<> trans(flightpred_db::get_conn(), "fill_max_distance_cache");
     std::stringstream sstr;
     sstr << "SELECT flight_date, MAX(distance) FROM flights INNER JOIN sites "
@@ -92,6 +92,7 @@ const vector<double> & solution_manager::get_sample(const set<features_weather::
 /** @brief get an initial generation of solutions. They vary in algorithms and their parameters, but not yet by feature sets */
 vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
 {
+    report(DEBUGING) << "solution_manager::get_initial_generation()";
     pqxx::transaction<> trans(flightpred_db::get_conn(), "initial generation");
 
     // get the geographic position of the prediction site
@@ -113,8 +114,8 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
     const string weather_feat_desc(sstr.str());
 
     vector<string> algo_desc;
-    algo_desc.push_back("DLIB_RVM(RBF(0.1))");
-    algo_desc.push_back("DLIB_RVM(RBF(0.05))");
+//    algo_desc.push_back("DLIB_RVM(RBF(0.1))");
+//    algo_desc.push_back("DLIB_RVM(RBF(0.05))");
     algo_desc.push_back("DLIB_RVM(RBF(0.02))");
     algo_desc.push_back("DLIB_RVM(RBF(0.01))");
     algo_desc.push_back("DLIB_RVM(RBF(0.007))");
@@ -188,6 +189,7 @@ evolution::organism create_ramdom_solution(const string &site_name)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::evolve_population(const size_t iterations, const double mutation_rate)
 {
+    report(DEBUGING) << "solution_manager::evolve_population(" << iterations << ", " << mutation_rate << ")";
     fill_label_cache();
 
     const size_t population_size = get_initial_generation().size();
@@ -204,6 +206,7 @@ void solution_manager::evolve_population(const size_t iterations, const double m
 /** @brief initialize a population to start the evolution. If we have sufficient organisms in the db, use them. Otherwise generate an initial generation */
 vector<shared_ptr<solution_config> > solution_manager::initialize_population()
 {
+    report(DEBUGING) << "solution_manager::initialize_population()";
     vector<shared_ptr<solution_config> > population = get_initial_generation();
 
     // look in the database
@@ -216,7 +219,7 @@ vector<shared_ptr<solution_config> > solution_manager::initialize_population()
     res[0][0].to(numrecords);
     if(numrecords > population.size())
     {
-        // we have enough solutions in the database from previous runs, that we can continue there
+        report(DEBUGING) << "we have enough solutions in the database from previous runs, that we can continue from there";
         sstr.str("");
         sstr << "SELECT train_sol_id FROM trained_solutions "
              << "WHERE pred_site_id=" << pred_site_id_ << " "
@@ -232,10 +235,24 @@ vector<shared_ptr<solution_config> > solution_manager::initialize_population()
         }
         trans.commit();
 
-        population.clear();
+
+        vector<evolution::organism> organisms;
         BOOST_FOREACH(size_t id, ids)
-            population.push_back(shared_ptr<solution_config>(new solution_config(id)));
+            organisms.push_back(evolution::organism(solution_config(id)));
+
+        // mutate the solutions. We don't want to run the old ones again
+        const double mutation_rate = 0.2;
+        size_t generation;
+        evolution::reproducer repro(pred_site_id_, mutation_rate, generation);
+
+        organisms = repro.breed(organisms, population.size());
+
+        population.clear();
+        BOOST_FOREACH(evolution::organism &orga, organisms)
+            population.push_back(shared_ptr<solution_config>(new solution_config(orga.genes())));
     }
+    else
+        report(DEBUGING) << "we don't have enough solutions in the database from previous runs, starting from scratch";
 
     return population;
 }
@@ -244,7 +261,7 @@ vector<shared_ptr<solution_config> > solution_manager::initialize_population()
     @return the total error in km */
 const double solution_manager::test_fitness(const solution_config &sol)
 {
-    report(VERBOSE) << "collect features for : " << sol.get_short_description() <<  std::endl;
+    report(VERBOSE) << "solution_manager::test_fitness(" << sol.get_short_description() <<  ")";
     learning_machine::SampleType samples;
 
     for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
@@ -315,10 +332,11 @@ size_t solution_manager::get_pred_site_id(const std::string &site_name)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 std::auto_ptr<solution_config> solution_manager::load_best_solution(const bool onlyFullyTrained, const double maxTrainSec)
 {
+    report(VERBOSE) << "solution_manager::load_best_solution(" << std::ios::boolalpha << onlyFullyTrained << ", " << maxTrainSec <<  ")";
     pqxx::transaction<> trans(flightpred_db::get_conn(), "load_best_solution");
 
     std::stringstream sstr;
-    sstr << "SELECT train_sol_id, configuration, score, train_time, generation FROM trained_solutions WHERE ";
+    sstr << "SELECT train_sol_id, configuration, validation_error, train_time, generation FROM trained_solutions WHERE ";
     if(onlyFullyTrained)
         sstr << "num_samples_prod > 300 AND ";
     if(maxTrainSec > 0.0)

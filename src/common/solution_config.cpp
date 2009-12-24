@@ -1,6 +1,7 @@
 // flightpred
-#include "solution_config.h"
-#include "lm_svm_dlib.h"
+#include "common/solution_config.h"
+#include "common/lm_svm_dlib.h"
+#include "common/reporter.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
@@ -28,6 +29,7 @@
 #endif
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 using geometry::point_ll_deg;
 using boost::shared_ptr;
 using boost::bind;
@@ -45,6 +47,7 @@ const std::string solution_config::rgxreal_ = "\\d+(\\.\\d+(e[+-]\\d{1,3})?)?";
 /** @brief load a solution configuration from the database. */
 solution_config::solution_config(const size_t db_id)
 {
+    report(DEBUGING) << "solution_config::solution_config(" << db_id << ")";
     train_sol_id_ = db_id;
     pqxx::transaction<> trans(flightpred_db::get_conn(), "load solution config");
 
@@ -192,6 +195,7 @@ const std::string solution_config::get_algorithm_name(const bool with_params) co
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_config::decode()
 {
+    report(DEBUGING) << "solution_config::decode(" << solution_description_.substr(0, 50) << "...";
     features_desc_.clear();
 
 #if BOOST_VERSION >= 104100
@@ -233,7 +237,8 @@ void solution_config::decode()
 
     parse_info<> info = parse(solution_description_.c_str(), solution_description, space_p);
     if(!info.hit || info.length < solution_description_.length() - 1)
-        throw std::runtime_error("failed to parse solution description : " + string(info.stop) + " " + lexical_cast<string>(features.size()));
+        throw std::runtime_error("failed to parse solution description : " + solution_description_.substr(0, 50) +
+                            "\nat " + string(info.stop).substr(0, 50) + "\n" + lexical_cast<string>(features.size()));
 
     std::copy(features.begin(), features.end(), std::inserter(features_desc_, features_desc_.end()));
 #endif

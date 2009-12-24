@@ -14,6 +14,7 @@
 // boost
 #include <boost/program_options.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
@@ -23,8 +24,10 @@
 #include <string>
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 namespace po    = boost::program_options;
 namespace bgreg = boost::gregorian;
+namespace bfs   = boost::filesystem;
 using boost::lexical_cast;
 using boost::shared_ptr;
 using std::string;
@@ -69,7 +72,9 @@ int main(int argc, char* argv[])
         start_date = bgreg::to_iso_extended_string(dtstart);
         end_date   = bgreg::to_iso_extended_string(dtend);
 
-        reporting::ReportDispatcher::inst().add(new reporting::ListenerCout(), reporting::INFO);
+        ReportDispatcher::inst().add(new ListenerCout(), reporting::DEBUGING);
+        bfs::path error_file(bfs::initial_path() / "error.log");
+        ReportDispatcher::inst().add(new ListenerFile(error_file), reporting::ERROR);
 
         // Declare the supported options.
         po::options_description desc("Allowed options");
@@ -195,13 +200,13 @@ int main(int argc, char* argv[])
 
         if(vm.count("help") || show_help_msg)
         {
-            cout << desc << "\n";
+            report(WARN) << desc;
             return 1;
         }
     }
     catch(std::exception &ex)
     {
-        std::cout << "critical error : " << ex.what() << std::endl;
+        report(ERROR) << "critical error : " << ex.what();
         return 1;
     }
 
