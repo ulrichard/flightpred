@@ -172,7 +172,7 @@ private:
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const std::string solution_config::get_short_description() const
 {
-    boost::regex regx("\\w+\\(\\w+\\((" + rgxreal_ + "\\s*){1,3}\\)(\\s*\\d+\\.\\d+)?\\s*\\)");
+    boost::regex regx("\\w+\\(\\w+\\((" + rgxreal_ + "\\s*){1,3}\\)(\\s*" + rgxreal_ + ")?\\s*\\)");
     boost::smatch regxmatch;
     if(!boost::regex_search(solution_description_, regxmatch, regx))
         throw std::invalid_argument("failed to extract short description from : " + solution_description_);
