@@ -4,6 +4,7 @@
 #include <pqxx/pqxx>
 // witty
 #include <Wt/WComboBox>
+#include <Wt/WText>
 #include <Wt/Chart/WCartesianChart>
 #include <Wt/WStandardItemModel>
 // boost
@@ -28,7 +29,7 @@ using std::make_pair;
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 Populations::Populations(const string &db_conn_str, Wt::WContainerWidget *parent)
-    : Wt::WCompositeWidget(parent), impl_(new Wt::WContainerWidget()), db_conn_str_(db_conn_str), chart_(0)
+    : Wt::WCompositeWidget(parent), impl_(new Wt::WContainerWidget()), db_conn_str_(db_conn_str), chart_(0), footertext_(0)
 {
     setImplementation(impl_);
 
@@ -65,6 +66,11 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
         impl_->removeWidget(chart_);
         chart_ = 0;
     }
+    if(footertext_)
+    {
+        impl_->removeWidget(footertext_);
+        footertext_ = 0;
+    }
 
     pqxx::connection conn(db_conn_str_);
     pqxx::transaction<> trans(conn, "web population");
@@ -82,6 +88,8 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
     set<string> confclasses;
     typedef map<size_t, vector<pair<string, double> > > SolutionsT;
     SolutionsT  solutions;
+    double max_train_time = 0.0;
+    static const double train_time_treshold = 60.0;
 
     for(size_t i=0; i<res.size(); ++i)
     {
@@ -99,7 +107,9 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
             res[i]["validation_error"].to(validation_error);
 
             confclasses.insert(confclass);
-            solutions[train_time * 100].push_back(make_pair(confclass, validation_error));
+            if(train_time <= train_time_treshold)
+                solutions[train_time * 100].push_back(make_pair(confclass, validation_error));
+            max_train_time = std::max(max_train_time, train_time);
         }
     }
 
@@ -121,6 +131,7 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
 
 
     chart_ = new Wt::Chart::WCartesianChart(impl_);
+    chart_->setType(Wt::Chart::ScatterPlot);
     chart_->resize(800, 500);
     chart_->setTitle("Population performance");
     chart_->setPlotAreaPadding(200, Wt::Right);
@@ -128,6 +139,8 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
     chart_->setModel(model);
     chart_->setXSeriesColumn(0);
     chart_->setLegendEnabled(true);
+    chart_->axis(Wt::Chart::XAxis).setScale(Wt::Chart::LinearScale);
+//    chart_->axis(Wt::Chart::XAxis).setMaximum(60.0);
     chart_->axis(Wt::Chart::XAxis).setLabelFormat("%.2f");
     chart_->axis(Wt::Chart::XAxis).setTitle("training_time");
     chart_->axis(Wt::Chart::YAxis).setTitle("error");
@@ -137,6 +150,13 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
         data1.setLegendEnabled(true);
         chart_->addSeries(data1);
     }
+
+
+    sstr.str("");
+    sstr << "Longest training time : " << max_train_time;
+
+    footertext_ = new Wt::WText(impl_, sstr.str());
+    std::cout << sstr.str() << std::endl;
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

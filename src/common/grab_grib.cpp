@@ -2,6 +2,7 @@
 #include "common/grab_grib.h"
 #include "common/geo_parser.h"
 #include "common/flightpred_globals.h"
+#include "common/reporter.h"
 // grib api
 #include "grib_api.h"
 // postgre
@@ -36,6 +37,7 @@
 
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 using geometry::point_ll_deg;
 namespace bfs = boost::filesystem;
 namespace bgreg = boost::gregorian;
@@ -414,7 +416,7 @@ boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(cons
     for(size_t i=0; i<res.size(); ++i)
     {
         string locstr;
-        res[0]["loc"].to(locstr);
+        res[i]["loc"].to(locstr);
         point_ll_deg site_location;
         if(!geometry::from_wkt(locstr, site_location))
             throw std::runtime_error("invalid location read from pred_sites : " + locstr);
@@ -432,6 +434,8 @@ boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(cons
         std::advance(endsel, pnts_per_site);
         std::copy(tmploc.begin(), endsel, std::inserter(locations, locations.end()));
     }
+
+    report(DEBUGING) << "grib_grabber::get_locations_around_sites(" << gridres << ", " << pnts_per_site << ") returns " << locations.size() << " locations.";
 
     return locations;
 }
@@ -538,7 +542,7 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
     const bpt::ptime yesterday(now.date() - bgreg::days(1), bpt::hours(0));
 
     // download the grib files
-    for(bpt::ptime preddt = lastmidnight; preddt < bpt::second_clock::universal_time() + future_time; preddt += bpt::hours(6))
+    for(bpt::ptime preddt = lastmidnight - bpt::hours(12); preddt < bpt::second_clock::universal_time() + future_time; preddt += bpt::hours(6))
     {
         predrun_ = lastpredrun;
 

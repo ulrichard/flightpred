@@ -100,15 +100,19 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
         sstr << "train_sol_id FROM flight_pred WHERE pred_site_id='" << it->first << "' "
              << "AND pred_day='" << bgreg::to_iso_extended_string(day) << "' ORDER BY calculated DESC";
         pqxx::result res = trans.exec(sstr.str());
-        if(!res.size())
-            continue;
 
-        for(size_t i=0; i<pred_names.size(); ++i)
+        if(res.size())
         {
-            double val;
-            res[0][pred_names[i]].to(val);
-            model->setData(row, i + 1, any(val));
+            for(size_t i=0; i<pred_names.size(); ++i)
+            {
+                double val;
+                res[0][pred_names[i]].to(val);
+                model->setData(row, i + 1, any(val));
+            }
         }
+        else
+            for(size_t i=0; i<pred_names.size(); ++i)
+                model->setData(row, i + 1, any(0.0));
     }
     model->sort(1, Wt::DescendingOrder);
 
@@ -126,7 +130,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 
     parentForTable->setStyleClass("forecastTableCell");
     Wt::Ext::TableView *table = new Wt::Ext::TableView(parentForTable);
-    table->resize(346, 200);
+    table->resize(352, 200);
     table->setModel(model);
     table->setColumnSortable(0, true);
     table->setColumnWidth(0, 75);
@@ -141,7 +145,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 
     parentForMap->setStyleClass("forecastTableCell");
     Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parentForMap);
-    gmap->resize(346, 300);
+    gmap->resize(352, 300);
     gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
     gmap->enableScrollWheelZoom();
     gmap->enableDragging();
