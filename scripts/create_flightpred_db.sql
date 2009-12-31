@@ -55,9 +55,13 @@ INSERT INTO pred_sites (site_name, location, country) values ('Niesen',      Geo
 INSERT INTO pred_sites (site_name, location, country) values ('Rothenflue',  GeomFromText('POINT(  8.7019931164065607 47.018337296086003)', 4326), 'CH');
 INSERT INTO pred_sites (site_name, location, country) values ('Engelberg',   GeomFromText('POINT(  8.4053166664971304 46.840041666560701)', 4326), 'CH');
 INSERT INTO pred_sites (site_name, location, country) values ('Uetliberg',   GeomFromText('POINT(  8.5012333333333299 47.323266666666697)', 4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Fanas',       GeomFromText('POINT(  9.68967            47.0035)',            4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Scuol',       GeomFromText('POINT( 10.2742             46.8132)',            4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Gana',        GeomFromText('POINT(  8.90968            46.1955)',            4326), 'CH');
 INSERT INTO pred_sites (site_name, location, country) values ('Quixada',     GeomFromText('POINT(-39.0078             -5.03638)',           4326), 'BR');
 INSERT INTO pred_sites (site_name, location, country) values ('De Aar',      GeomFromText('POINT( 24.0271            -30.6979)',            4326), 'ZA');
 INSERT INTO pred_sites (site_name, location, country) values ('Billing Bir', GeomFromText('POINT( 76.7435             32.056)',             4326), 'IN');
+INSERT INTO pred_sites (site_name, location, country) values ('Bassano',     GeomFromText('POINT( 11.7705             45.8222)',            4326), 'IT');
 
 CREATE TABLE trained_solutions
 (

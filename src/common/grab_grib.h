@@ -48,11 +48,13 @@ protected:
     };
     grib_grabber(const std::string &modelname, size_t download_pack, const bool is_future);
     void download_data(const std::string &url, std::ostream &ostr, const std::list<request> &requests);
-    void dispatch_grib_data(std::istream &istr, std::list<request> &requests, const boost::unordered_set<geometry::point_ll_deg> &sel_locations);
+    void dispatch_grib_data(std::istream &istr, std::list<request> &requests,
+            const boost::unordered_set<geometry::point_ll_deg> &sel_locations_close,
+            const boost::unordered_set<geometry::point_ll_deg> &sel_locations_wide);
 
     static std::string get_base_url(const std::string &model, bool future);
     static size_t      get_model_id(const std::string &model);
-    static std::set<std::string>     get_std_levels();
+    static std::set<std::string>     get_std_levels(const bool full);
     static std::set<std::string>     get_std_params();
     boost::unordered_set<geometry::point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
 
@@ -66,7 +68,9 @@ protected:
     boost::posix_time::ptime predrun_;
 
 private:
-    void read_grib_data(std::istream &istr, const request &req, const boost::unordered_set<geometry::point_ll_deg> &sel_locations);
+    void read_grib_data(std::istream &istr, const request &req,
+            const boost::unordered_set<geometry::point_ll_deg> &sel_locations_close,
+            const boost::unordered_set<geometry::point_ll_deg> &sel_locations_wide);
     size_t read_until(std::istream &istr, const std::string &srchstr);
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

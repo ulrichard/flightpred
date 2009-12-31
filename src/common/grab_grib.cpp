@@ -47,6 +47,7 @@ using boost::posix_time::time_duration;
 using boost::lexical_cast;
 using boost::asio::ip::tcp;
 using namespace boost::lambda;
+namespace bll = boost::lambda;
 using boost::transform_iterator;
 using boost::minmax_element;
 using std::string;
@@ -220,11 +221,13 @@ size_t grib_grabber::read_until(std::istream &istr, const string &srchstr)
     return moved;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void grib_grabber::dispatch_grib_data(std::istream &istr, list<request> &requests, const boost::unordered_set<point_ll_deg> &sel_locations)
+void grib_grabber::dispatch_grib_data(std::istream &istr, list<request> &requests,
+        const boost::unordered_set<point_ll_deg> &sel_locations_close,
+        const boost::unordered_set<point_ll_deg> &sel_locations_wide)
 {
     if(requests.size() == 1)
     {
-        read_grib_data(istr, requests.front(), sel_locations);
+        read_grib_data(istr, requests.front(), sel_locations_close, sel_locations_wide);
         return;
     }
 
@@ -260,7 +263,7 @@ void grib_grabber::dispatch_grib_data(std::istream &istr, list<request> &request
             throw std::runtime_error("returned range was not requested.");
         }
 
-        read_grib_data(istr, *fit, sel_locations);
+        read_grib_data(istr, *fit, sel_locations_close, sel_locations_wide);
 
         requests.erase(fit);
     }
@@ -269,7 +272,9 @@ void grib_grabber::dispatch_grib_data(std::istream &istr, list<request> &request
         cout << requests.size() << " requests remaining!" << endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void grib_grabber::read_grib_data(std::istream &istr, const request &req, const boost::unordered_set<point_ll_deg> &sel_locations)
+void grib_grabber::read_grib_data(std::istream &istr, const request &req,
+            const boost::unordered_set<point_ll_deg> &sel_locations_close,
+            const boost::unordered_set<point_ll_deg> &sel_locations_wide)
 {
     const size_t len = (req.range_end > req.range_start ?
                         req.range_end - req.range_start :
@@ -296,6 +301,7 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
 
     pqxx::transaction<> trans(flightpred_db::get_conn(), "insert grib data");
 
+    static const set<string>  sel_levels = get_std_levels(false);
     int count = 0;
     double lat, lon, value;
     // Loop on all the lat/lon/values.
@@ -303,7 +309,11 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
         if(value != missingValue)
         {
             const point_ll_deg location = point_ll_deg(geometry::longitude<>(lon), geometry::latitude<>(lat));
-            if(sel_locations.find(location) == sel_locations.end())
+            if(sel_locations_wide.find(location) == sel_locations_wide.end())
+                continue;
+
+            if(sel_locations_close.find(location) == sel_locations_close.end() &&
+                std::find_if(sel_levels.begin(), sel_levels.end(), bll::bind(&atoi, bll::bind(&string::c_str, bll::_1)) == req.level) == sel_levels.end())
                 continue;
 
             std::stringstream sstr;
@@ -358,7 +368,7 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req, const 
     cout << "imported " << count << " records." << endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-set<string> grib_grabber::get_std_levels()
+set<string> grib_grabber::get_std_levels(const bool full)
 {
     set<string> sel_levels;
 
@@ -367,6 +377,13 @@ set<string> grib_grabber::get_std_levels()
     sel_levels.insert("850 mb");
     sel_levels.insert("700 mb");
     sel_levels.insert("500 mb");
+    if(full)
+    {
+        sel_levels.insert("1000 mb");
+        sel_levels.insert("925 mb");
+        sel_levels.insert("600 mb");
+        sel_levels.insert("400 mb");
+    }
 
     return sel_levels;
 }
@@ -424,10 +441,10 @@ boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(cons
         vector<point_ll_deg> tmploc;
         double lonl = static_cast<int>(site_location.lon() / gridres) * gridres;
         double latl = static_cast<int>(site_location.lat() / gridres) * gridres;
-        for(int i=pnts_per_site / -2; i < pnts_per_site / 2; ++i)
-            for(int j=pnts_per_site / -2; j < pnts_per_site / 2; ++j)
-                tmploc.push_back(point_ll_deg(geometry::longitude<>(lonl + i * gridres),
-                                              geometry::latitude<>( latl + j * gridres)));
+        for(size_t i=0; i < pnts_per_site; ++i)
+            for(size_t j=0; j < pnts_per_site; ++j)
+                tmploc.push_back(point_ll_deg(geometry::longitude<>(lonl + (i - pnts_per_site / 2) * gridres),
+                                              geometry::latitude<>( latl + (j - pnts_per_site / 2) * gridres)));
         assert(tmploc.size() > pnts_per_site);
         std::sort(tmploc.begin(), tmploc.end(), pnt_ll_deg_dist_sorter(site_location));
         vector<point_ll_deg>::iterator endsel = tmploc.begin();
@@ -455,9 +472,10 @@ bool geometry::operator==(const geometry::point_ll_deg &lhs, const geometry::poi
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date &to)
 {
-    const set<string>       sel_levels    = get_std_levels();
-    const set<string>       sel_param     = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(2.5, 16);
+    static const set<string>  sel_levels = get_std_levels(true);
+    static const set<string>  sel_param  = get_std_params();
+    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(2.5, 4);
+    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(2.5, 16);
 
     // download the grib files
     for(bgreg::date mon(from.year(), from.month(), 1); mon <= to; mon += bgreg::months(1))
@@ -504,7 +522,7 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
                             download_data(ssurl.str(), buf_grib, requests);
 
                             // decode the grib data and write into the database
-                            dispatch_grib_data(buf_grib, requests, sel_locations);
+                            dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
 
                             //requests.clear();
                         }
@@ -521,7 +539,7 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
             download_data(ssurl.str(), buf_grib, requests);
 
             // decode the grib data and write into the database
-            dispatch_grib_data(buf_grib, requests, sel_locations);
+            dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
         }
     } // for day
 }
@@ -530,9 +548,10 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
 {
-    const set<string>       sel_levels    = get_std_levels();
+    const set<string>       sel_levels    = get_std_levels(true);
     const set<string>       sel_param     = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(2.5, 20);
+    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(2.5, 4);
+    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(2.5, 16);
 
     const bpt::time_duration usual_pred_run_time = bpt::hours(12); // the usual max time for the prediction results to become online available
     const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;
@@ -607,7 +626,7 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
                         download_data(ssurl.str(), buf_grib, requests);
 
                         // decode the grib data and write into the database
-                        dispatch_grib_data(buf_grib, requests, sel_locations);
+                        dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
 
                         //requests.clear();
                     }
@@ -626,7 +645,7 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
             download_data(ssurl.str(), buf_grib, requests);
 
             // decode the grib data and write into the database
-            dispatch_grib_data(buf_grib, requests, sel_locations);
+            dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
         }
 
         if(requests.size())
@@ -654,9 +673,10 @@ struct get_pnt_latlon
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
 {
-    const set<string>       sel_levels    = get_std_levels();
+    const set<string>       sel_levels    = get_std_levels(true);
     const set<string>       sel_param     = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations = get_locations_around_sites(0.5, 20);
+    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(2.5, 4);
+    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(2.5, 16);
 
     const bpt::time_duration usual_pred_run_time = bpt::hours(3); // the usual max time for the prediction results to become online available
     const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;
@@ -670,11 +690,11 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
     typedef transform_iterator<get_pnt_latlon<false>, locIterT> lonIterT;
     typedef transform_iterator<get_pnt_latlon<true>,  locIterT> latIterT;
     const pair<lonIterT, lonIterT> minmax_lon = minmax_element(
-        make_transform_iterator(sel_locations.begin(), get_pnt_latlon<false>()),
-        make_transform_iterator(sel_locations.end(),   get_pnt_latlon<false>()));
+        make_transform_iterator(sel_locations_wide.begin(), get_pnt_latlon<false>()),
+        make_transform_iterator(sel_locations_wide.end(),   get_pnt_latlon<false>()));
     const pair<latIterT, latIterT> minmax_lat = minmax_element(
-        make_transform_iterator(sel_locations.begin(), get_pnt_latlon<true>()),
-        make_transform_iterator(sel_locations.end(),   get_pnt_latlon<true>()));
+        make_transform_iterator(sel_locations_wide.begin(), get_pnt_latlon<true>()),
+        make_transform_iterator(sel_locations_wide.end(),   get_pnt_latlon<true>()));
     const point_ll_deg bboxmin(geometry::longitude<>(*minmax_lon.first),  geometry::latitude<>(*minmax_lat.first));
     const point_ll_deg bboxmax(geometry::longitude<>(*minmax_lon.second), geometry::latitude<>(*minmax_lat.second));
 
