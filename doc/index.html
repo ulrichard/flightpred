@@ -68,16 +68,10 @@ thermals than the bare temperature [to be prooved])<br>
   <ul>
     <li>average temperature gradient for the height range used during
 flight (e.g. 1500 - 3500m)</li>
-    <li>best and worst temperature gradient for 100 meter steps</li>
+    <li>best and worst temperature gradient between pressure levels.</li>
   </ul>
   <li>Preprocessed features could be of value:</li>
   <ul>
-    <li>average temperature gradient for the height range that is
-usually relevant.<br>
-    </li>
-  </ul>
-  <ul>
-    <li>worst temperature gradient between pressure levels.</li>
     <li>isobars are convex or concave.<br>
     </li>
   </ul>
@@ -303,16 +297,26 @@ from dlib</a> in a modular fashion, so that plugging other ml
 algorithms should be relatively easy.</li>
   <li>Defined a representatoin for feature sets, and defined an initial
 default feature set per flying site.</li>
+  <li>Parse the textual representatoin of the feature sets.</li>
   <li>Trained some support vector machines with a limited set of
-samples, as training for the full three years of data available in the
-db took way too long.</li>
+samples.</li>
   <li>Downloaded current weather predictions and calculated the first
 flight
 predictions.</li>
-  <li>Parse the textual representatoin of the feature sets.</li>
+  <li>Integrated with libevocosm to explore feature and parameter
+spaces. Using only cloning with mutation for reproduction. Mutation
+only on the svm and kernel parameters so far.</li>
+  <li>When running evolution, in the first new generation, also look
+for the best solutions in other flying sites.</li>
 </ul>
 <h3>Next steps:</h3>
 <ul>
+  <li>Mutation on the features for the evolutionary algorithm.</li>
+  <li>Save and load trained solutions for use on other systems and
+backup.</li>
+  <li>Calculate pre-processed features, especially the temperature
+gradient values.<br>
+  </li>
   <li>Download strategy for grib forecast data: Try most recent run, if
 not awailable try older one, until successfull.<br>
   </li>

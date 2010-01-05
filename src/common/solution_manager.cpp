@@ -176,6 +176,7 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
     BOOST_FOREACH(const string &desc, algo_desc)
         solutions.push_back(shared_ptr<solution_config>(new solution_config(site_name_, desc + " " + weather_feat_desc, 0)));
 
+
     return solutions;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -252,7 +253,58 @@ vector<shared_ptr<solution_config> > solution_manager::initialize_population()
             population.push_back(shared_ptr<solution_config>(new solution_config(orga.genes())));
     }
     else
+    {
+        trans.commit();
         report(DEBUGING) << "we don't have enough solutions in the database from previous runs, starting from scratch";
+    }
+
+    // add in the best solutions from other flying sites
+    pqxx::transaction<> trans2(flightpred_db::get_conn(), "get site names");
+    sstr.str("");
+    sstr << "SELECT generation FROM trained_solutions WHERE pred_site_id=" << pred_site_id_ << " ORDER BY generation DESC LIMIT 1";
+    res = trans2.exec(sstr.str());
+    size_t generation = 0;
+    if(res.size())
+    {
+        res[0][0].to(generation);
+        ++generation;
+    }
+
+    sstr.str("");
+    sstr << "SELECT pred_site_id, site_name FROM pred_sites WHERE pred_site_id <> " << pred_site_id_;
+    res = trans2.exec(sstr.str());
+    if(!res.size())
+        throw std::invalid_argument("no sites found");
+    vector<size_t> sites;
+    for(size_t i=0; i<res.size(); ++i)
+    {
+        size_t sid;
+        res[i][0].to(sid);
+        sites.push_back(sid);
+    }
+
+    BOOST_FOREACH(size_t site_id, sites)
+    {
+        report(DEBUGING) << "Adding the best solutions from site " << site_id;
+
+        sstr.str("");
+        sstr << "SELECT train_sol_id, configuration, validation_error, train_time, generation FROM trained_solutions "
+             << "WHERE train_time <= 50 AND " << "pred_site_id=" << site_id << " "
+             << "ORDER BY validation_error ASC, generation DESC LIMIT 5";
+        res = trans2.exec(sstr.str());
+        if(!res.size())
+            continue;
+
+        for(size_t i=0; i<res.size() && i<5; ++i)
+        {
+            size_t solution_id;
+            res[i]["train_sol_id"].to(solution_id);
+            string config;
+            res[i]["configuration"].to(config);
+
+            population.push_back(shared_ptr<solution_config>(new solution_config(site_name_, config, generation)));
+        }
+    }
 
     return population;
 }

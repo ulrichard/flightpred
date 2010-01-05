@@ -62,6 +62,7 @@ INSERT INTO pred_sites (site_name, location, country) values ('Quixada',     Geo
 INSERT INTO pred_sites (site_name, location, country) values ('De Aar',      GeomFromText('POINT( 24.0271            -30.6979)',            4326), 'ZA');
 INSERT INTO pred_sites (site_name, location, country) values ('Billing Bir', GeomFromText('POINT( 76.7435             32.056)',             4326), 'IN');
 INSERT INTO pred_sites (site_name, location, country) values ('Bassano',     GeomFromText('POINT( 11.7705             45.8222)',            4326), 'IT');
+INSERT INTO pred_sites (site_name, location, country) values ('Valadares',   GeomFromText('POINT(-41.9151            -18.8865)',            4326), 'BR');
 
 CREATE TABLE trained_solutions
 (

@@ -314,7 +314,7 @@ void optimizer::append(vector<organism> &population, size_t a_size)
     BOOST_FOREACH(shared_solution_config sol, sol_configs)
         population.push_back(organism(*sol));
 
-    assert(population.size() == a_size);
+    assert(population.size() >= a_size);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // Landscape factory

@@ -37,7 +37,7 @@ using std::endl;
 
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-vector<string> get_sitem_names()
+vector<string> get_site_names()
 {
     vector<string> sites;
     pqxx::transaction<> trans(flightpred_db::get_conn(), "get site names");
@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
         flightpred_db::init(db_conn_str);
         const geometry::point_ll_deg pos = parse_position(position);
 
-        const vector<string> site_names = get_sitem_names();
+        const vector<string> site_names = get_site_names();
 
         bool show_help_msg = true;
 
