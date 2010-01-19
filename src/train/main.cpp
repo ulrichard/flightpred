@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 {
     try
     {
-        string name, position, start_date, end_date, pred_model;
+        string name, position, start_date, end_date, pred_model, backup_directory = getenv("HOME");
         double area_radius = 5000.0, mutation_rate;
         size_t download_pack = 100, iterations;
         string db_host, db_name, db_user, db_password;
@@ -81,11 +81,13 @@ int main(int argc, char* argv[])
         desc.add_options()
             ("help",		       "produce help message")
             ("get-flights",	       "get flights from online competition (name) [import from local files at the moment]")
-            ("register-area",      "register a flight area for prediction (name, position, area_radius[km])")
-            ("get-weather",        "get past weather prediction grib data around the registered sites (start_date, end_date, download_pack)")
-            ("evolve-population",   "evolve a population of solutions (name, generations, mutation_rate)")
-            ("train",		       "train the system with the best performing solution found so far (name, start_date, end_date)")
-            ("get-future-weather", "get future weather prediction grib data for central europe (download_pack)")
+            ("register-area",      "register a flight area for prediction (name, position, area-radius[km])")
+            ("get-weather",        "get past weather prediction grib data around the registered sites (start-date, end-date, download-pack)")
+            ("evolve-population",  "evolve a population of solutions (name, generations, mutation-rate)")
+            ("train",		       "train the system with the best performing solution found so far (name, start-date, end-date)")
+            ("export-solution",    "save the best solution for a flying site to a file for backup or transfer (name, backup-dir)")
+            ("import-solution",    "restore solutions that were trained before and saved to a file (name, backup-dir)")
+            ("get-future-weather", "get future weather prediction grib data for central europe (download-pack)")
             ("forecast",           "predict possible flights for the next few days")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
             ("position",      po::value<string>(&position)->default_value("N 0 E 0"), "geographic position")
@@ -96,6 +98,7 @@ int main(int argc, char* argv[])
             ("download-pack", po::value<size_t>(&download_pack)->default_value(download_pack), "how many grib messages to download at once")
             ("generations",   po::value<size_t>(&iterations)->default_value(50),          "how many generations to run an evolution")
             ("mutation-rate", po::value<double>(&mutation_rate)->default_value(0.125),    "the probability of mutations in the breeding of the evolution")
+            ("backup-dir",    po::value<string>(&backup_directory)->default_value(backup_directory), "the directory with the saved solutions")
             ("db-host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
             ("db-port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
             ("db-name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
@@ -169,6 +172,42 @@ int main(int argc, char* argv[])
                 std::for_each(site_names.begin(), site_names.end(),
                     boost::bind(&train_svm::train, boost::ref(trainer), _1, dtstart, dtend));
 
+            show_help_msg = false;
+        }
+
+        if(vm.count("export-solution"))
+        {
+            bfs::path backup_dir(backup_directory);
+
+            if(name.length())
+            {
+                solution_manager mgr(name);
+                mgr.export_solution(backup_dir);
+            }
+            else
+                BOOST_FOREACH(const string &site_name, site_names)
+                {
+                    solution_manager mgr(site_name);
+                    mgr.export_solution(backup_dir);
+                }
+            show_help_msg = false;
+        }
+
+        if(vm.count("import-solution"))
+        {
+            bfs::path backup_dir(backup_directory);
+
+            if(name.length())
+            {
+                solution_manager mgr(name);
+                mgr.import_solution(backup_dir);
+            }
+            else
+                BOOST_FOREACH(const string &site_name, site_names)
+                {
+                    solution_manager mgr(site_name);
+                    mgr.import_solution(backup_dir);
+                }
             show_help_msg = false;
         }
 

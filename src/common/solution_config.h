@@ -6,6 +6,11 @@
 #include <common/features_weather.h>
 //boost
 #include <boost/shared_ptr.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+//#include <boost/serialization/export.hpp>
 // std lib
 #include <string>
 #include <map>
@@ -16,11 +21,13 @@ namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 class solution_config
 {
+    friend class boost::serialization::access;
 public:
     solution_config(const std::string &site_name, const std::string &solution_description, size_t generation)
         : train_sol_id_(0), generation_(generation), site_name_(site_name), solution_description_(solution_description)
     {   decode();  }
     explicit solution_config(const size_t db_id);
+    explicit solution_config(std::istream &is) { read_from_stream(is); }
     solution_config(const solution_config &org)
         : train_sol_id_(org.train_sol_id_), generation_(org.generation_), site_name_(org.site_name_),
           solution_description_(org.solution_description_), features_desc_(org.features_desc_), learning_machines_(org.learning_machines_)
@@ -46,8 +53,30 @@ public:
     const std::string   get_short_description() const;                            /// algorithm name, parameters and number of features
     const std::string   get_algorithm_name(const bool with_params) const;         /// algorithm name, parameters optional
     const std::set<features_weather::feat_desc> & get_weather_feature_desc() const { return features_desc_; }
+    void  write_to_stream(std::ostream &os);
 
     boost::shared_ptr<learning_machine> get_decision_function(const std::string &eval_name) const;
+
+private:
+    void read_from_stream(std::istream &is);
+    solution_config() { }  // default constructable only for serialization
+    template<class Archive> void serialize(Archive &ar, const unsigned int version)
+	{
+		ar & train_sol_id_;
+		ar & generation_;
+		ar & site_name_;
+		ar & solution_description_;
+		ar & learning_machines_;
+
+        if(Archive::is_loading::value)
+		{
+		     decode();
+		     // make sure the id is unique
+
+		     // insert if not already present
+		}
+
+	}
 
 protected:
     void decode();
@@ -60,6 +89,14 @@ protected:
     std::map<std::string, boost::shared_ptr<learning_machine> > learning_machines_;
     static const std::string rgxreal_;
 };
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/*
+// for serialization, declare all solution configuration classes that are supported
+BOOST_CLASS_EXPORT((lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > >));
+BOOST_CLASS_EXPORT((lm_dlib_rvm<dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > >));
+BOOST_CLASS_EXPORT((lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > >));
+BOOST_CLASS_EXPORT((lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > >));
+*/
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

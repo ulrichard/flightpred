@@ -10,6 +10,9 @@
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
+// boost
+#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/split_member.hpp>
 // standard library
 #include <string>
 #include <vector>
@@ -23,6 +26,7 @@ namespace flightpred
 template<class kernel_type>
 class lm_dlib_base : public learning_machine
 {
+    friend class boost::serialization::access;
 protected:
     lm_dlib_base(const std::string &pred_name)
       : learning_machine(pred_name) { }
@@ -78,7 +82,7 @@ public:
             pqxx::largeobject dblobj(trans);
             pqxx::olostream dbstrm(trans, dblobj);
             reporting::report(reporting::VERBOSE) << "streaming normalizer and SVM to the db blob";
-            serialize(normalizer_, dbstrm);
+            dlib::serialize(normalizer_, dbstrm);
             dlib::serialize(learnedfunc_, dbstrm);
             oid_blob = dblobj.id();
         }
@@ -87,14 +91,6 @@ public:
         sstr << "UPDATE trained_solutions SET " << pred_name_ << "=" << oid_blob << " WHERE train_sol_id=" << conf_id;
         trans.exec(sstr.str());
         trans.commit();
-
-        /*
-        // at the moment additionally serialize to a file
-        cout << "streaming the svm to a temp file" << endl;
-        std::ofstream fout("/tmp/saved_function.dat", std::ios::binary);
-        serialize(learnedfunc,fout);
-        fout.close();
-        */
     }
 
     virtual void read_from_db(const size_t conf_id)
@@ -113,22 +109,81 @@ public:
 
         pqxx::ilostream dbstrm(trans, oid_blob);
         assert(dbstrm.good());
-        deserialize(normalizer_,  dbstrm);
+        deserialize(normalizer_, dbstrm);
         dlib::deserialize(learnedfunc_, dbstrm);
 
         reporting::report(reporting::VERBOSE) << pred_name_ << " has " << learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
 
+    virtual void write_to_stream(std::ostream &os)
+    {
+        dlib::serialize(normalizer_, os);
+        dlib::serialize(learnedfunc_, os);
+    }
+
+    virtual void read_from_stream(std::istream &is)
+    {
+        dlib::deserialize(normalizer_, is);
+        dlib::deserialize(learnedfunc_, is);
+    }
+
+private:
+/*
+    template<class Archive> void serialize(Archive &ar, const unsigned int version)
+	{
+	    ar & boost::serialization::base_object<learning_machine>(*this);
+
+	    if(Archive::is_saving)
+	    {
+            std::stringstream sstr;
+            dlib::serialize(normalizer_, sstr);
+
+	    }
+//        ar & normalizer_;
+//		ar & learnedfunc_;
+	}
+*/
+	template<class Archive>
+    void save(Archive & ar, const unsigned int version) const
+    {
+        ar & boost::serialization::base_object<learning_machine>(*this);
+
+        std::stringstream sstr;
+        dlib::serialize(normalizer_, sstr);
+
+//        ar & normalizer_;
+//		ar & learnedfunc_;
+    }
+    template<class Archive>
+    void load(Archive & ar, const unsigned int version)
+    {
+        ar & boost::serialization::base_object<learning_machine>(*this);
+
+	    if(Archive::is_saving)
+	    {
+            std::stringstream sstr;
+            dlib::serialize(normalizer_, sstr);
+
+	    }
+//        ar & normalizer_;
+//		ar & learnedfunc_;
+    }
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
+
+
 protected:
+    lm_dlib_base() { } // only for serialization of derived classes
     virtual void train_algorithm(const std::vector<sample_type> &samples, const std::vector<double> &lables) = 0;
 
     dlib::vector_normalizer<sample_type> normalizer_;
     dlib::decision_function<kernel_type> learnedfunc_;
 };
+
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 template<class kernel_type>
 class lm_dlib_rvm : public lm_dlib_base<kernel_type>
 {
+    friend class boost::serialization::access;
     typedef typename kernel_type::sample_type sample_type;
 public:
     lm_dlib_rvm(const std::string &pred_name, kernel_type &kern)
@@ -147,13 +202,22 @@ protected:
         this->learnedfunc_ = trainer.train(samples, lables);
         reporting::report(reporting::VERBOSE) << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
+
 private:
+    lm_dlib_rvm() { } // default constructor is private only for serialization
+    template<class Archive> void serialize(Archive &ar, const unsigned int version)
+	{
+	    ar & boost::serialization::base_object<lm_dlib_base<kernel_type> >(*this);
+//		ar & kern_;
+	}
+
     kernel_type kern_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 template<class kernel_type>
 class lm_dlib_krls : public lm_dlib_base<kernel_type>
 {
+    friend class boost::serialization::access;
     typedef typename kernel_type::sample_type sample_type;
 public:
     lm_dlib_krls(const std::string &pred_name, kernel_type &kern, const double fact)
@@ -174,6 +238,14 @@ protected:
         reporting::report(reporting::VERBOSE) << "the resulting function has " << this->learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
 private:
+    lm_dlib_krls() { } // default constructor is private only for serialization
+    template<class Archive> void serialize(Archive &ar, const unsigned int version)
+	{
+	    ar & boost::serialization::base_object<lm_dlib_base<kernel_type> >(*this);
+//		ar & kern_;
+//		ar & fact_;
+	}
+
     kernel_type kern_;
     double fact_;
 };

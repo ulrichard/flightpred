@@ -3,6 +3,7 @@
 #include "common/features_weather.h"
 #include "common/flightpred_globals.h"
 #include "common/ga_evocosm.h"
+#include "common/lm_svm_dlib.h"
 #include "common/reporter.h"
 // postgre
 #include <pqxx/pqxx>
@@ -15,6 +16,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/timer.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/string.hpp>
 // std lib
 #include <iostream>
 
@@ -24,6 +28,7 @@ using geometry::point_ll_deg;
 using boost::lexical_cast;
 using boost::shared_ptr;
 namespace bgreg = boost::gregorian;
+namespace bfs   = boost::filesystem;
 using std::string;
 using std::vector;
 using std::map;
@@ -405,3 +410,68 @@ std::auto_ptr<solution_config> solution_manager::load_best_solution(const bool o
     return std::auto_ptr<solution_config>(new solution_config(solution_id));
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void solution_manager::export_solution(const bfs::path &backup_dir)
+{
+    bfs::create_directories(backup_dir);
+    bfs::path outfile(backup_dir / (site_name_ + ".flightpred"));
+	bfs::ofstream ofs(outfile, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+	if(!ofs.good())
+        throw std::runtime_error("could not write to " + outfile.string());
+/*
+	boost::archive::binary_oarchive oa(ofs);
+
+    // information about the flying site
+	oa << site_name_;
+	//oa <<
+
+    // register all derived algoritms
+    oa.register_type<lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    oa.register_type<lm_dlib_rvm<dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > > >();
+    oa.register_type<lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > > >();
+    oa.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+
+	// serialize the solution itself
+    std::auto_ptr<solution_config> sol = load_best_solution(true);
+    solution_config *sc = sol.get();
+	oa << sc;
+*/
+
+    ofs << site_name_;
+    std::auto_ptr<solution_config> sol = load_best_solution(true);
+    sol->write_to_stream(ofs);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void solution_manager::import_solution(const bfs::path &backup_dir)
+{
+    bfs::path infile(backup_dir / (site_name_ + ".flightpred"));
+    bfs::ifstream ifs(infile, std::ios_base::in | std::ios_base::binary);
+	if(!ifs.good())
+        throw std::runtime_error("file not found : " + infile.string());
+/*
+	boost::archive::binary_iarchive ia(ifs);
+    // read class state from archive
+    string site_name;
+	ia >> site_name;
+	if(site_name != site_name_)
+        throw std::runtime_error("wrong site : " + site_name + " != " + site_name_);
+
+    // register all derived algoritms
+//    ia.register_type<lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+//    ia.register_type<lm_dlib_rvm<dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > > >();
+//    ia.register_type<lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > > >();
+//    ia.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+
+    solution_config *sol = 0;
+//    ia >> sol;
+*/
+
+    ifs >> const_cast<string&>(site_name_);
+ //   if(site_name != site_name_)
+ //       throw std::runtime_error("wrong site : " + site_name + " != " + site_name_);
+    std::auto_ptr<solution_config> sol(new solution_config(ifs));
+
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+
+
+

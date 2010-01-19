@@ -5,7 +5,7 @@
 #include <common/solution_config.h>
 //boost
 #include <boost/noncopyable.hpp>
-//#include <boost/shared_ptr.hpp>
+#include <boost/filesystem.hpp>
 // std lib
 #include <string>
 #include <map>
@@ -24,6 +24,9 @@ public:
     void evolve_population(const size_t iterations, const double mutation_rate);
 
     std::auto_ptr<solution_config> load_best_solution(const bool onlyFullyTrained, const double maxTrainSec = 50.0);
+
+    void export_solution(const boost::filesystem::path &backup_dir);
+    void import_solution(const boost::filesystem::path &backup_dir);
 
 private:
     static size_t get_pred_site_id(const std::string &site_name);
