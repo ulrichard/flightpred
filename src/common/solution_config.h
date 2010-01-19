@@ -27,7 +27,6 @@ public:
         : train_sol_id_(0), generation_(generation), site_name_(site_name), solution_description_(solution_description)
     {   decode();  }
     explicit solution_config(const size_t db_id);
-    explicit solution_config(std::istream &is) { read_from_stream(is); }
     solution_config(const solution_config &org)
         : train_sol_id_(org.train_sol_id_), generation_(org.generation_), site_name_(org.site_name_),
           solution_description_(org.solution_description_), features_desc_(org.features_desc_), learning_machines_(org.learning_machines_)
@@ -53,12 +52,11 @@ public:
     const std::string   get_short_description() const;                            /// algorithm name, parameters and number of features
     const std::string   get_algorithm_name(const bool with_params) const;         /// algorithm name, parameters optional
     const std::set<features_weather::feat_desc> & get_weather_feature_desc() const { return features_desc_; }
-    void  write_to_stream(std::ostream &os);
 
     boost::shared_ptr<learning_machine> get_decision_function(const std::string &eval_name) const;
 
 private:
-    void read_from_stream(std::istream &is);
+    void write_to_db();
     solution_config() { }  // default constructable only for serialization
     template<class Archive> void serialize(Archive &ar, const unsigned int version)
 	{
@@ -71,9 +69,8 @@ private:
         if(Archive::is_loading::value)
 		{
 		     decode();
-		     // make sure the id is unique
-
-		     // insert if not already present
+		     // insert or overwrite
+		     write_to_db();
 		}
 
 	}

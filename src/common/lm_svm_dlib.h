@@ -115,6 +115,7 @@ public:
         reporting::report(reporting::VERBOSE) << pred_name_ << " has " << learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
 
+protected:
     virtual void write_to_stream(std::ostream &os)
     {
         dlib::serialize(normalizer_, os);
@@ -128,21 +129,6 @@ public:
     }
 
 private:
-/*
-    template<class Archive> void serialize(Archive &ar, const unsigned int version)
-	{
-	    ar & boost::serialization::base_object<learning_machine>(*this);
-
-	    if(Archive::is_saving)
-	    {
-            std::stringstream sstr;
-            dlib::serialize(normalizer_, sstr);
-
-	    }
-//        ar & normalizer_;
-//		ar & learnedfunc_;
-	}
-*/
 	template<class Archive>
     void save(Archive & ar, const unsigned int version) const
     {
@@ -150,26 +136,23 @@ private:
 
         std::stringstream sstr;
         dlib::serialize(normalizer_, sstr);
-
-//        ar & normalizer_;
-//		ar & learnedfunc_;
+        dlib::serialize(learnedfunc_, sstr);
+        std::string strs = sstr.str();
+        ar << strs;
     }
     template<class Archive>
     void load(Archive & ar, const unsigned int version)
     {
         ar & boost::serialization::base_object<learning_machine>(*this);
 
-	    if(Archive::is_saving)
-	    {
-            std::stringstream sstr;
-            dlib::serialize(normalizer_, sstr);
-
-	    }
-//        ar & normalizer_;
-//		ar & learnedfunc_;
+	    std::string strs;
+	    ar >> strs;
+	    std::stringstream sstr;
+	    sstr.str(strs);
+	    dlib::deserialize(normalizer_, sstr);
+        dlib::deserialize(learnedfunc_, sstr);
     }
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
-
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 
 protected:
     lm_dlib_base() { } // only for serialization of derived classes
@@ -205,11 +188,29 @@ protected:
 
 private:
     lm_dlib_rvm() { } // default constructor is private only for serialization
-    template<class Archive> void serialize(Archive &ar, const unsigned int version)
-	{
-	    ar & boost::serialization::base_object<lm_dlib_base<kernel_type> >(*this);
-//		ar & kern_;
-	}
+
+	template<class Archive>
+    void save(Archive & ar, const unsigned int version) const
+    {
+        ar & boost::serialization::base_object<lm_dlib_base<kernel_type> >(*this);
+
+        std::stringstream sstr;
+        dlib::serialize(kern_, sstr);
+        std::string strs = sstr.str();
+        ar << strs;
+    }
+    template<class Archive>
+    void load(Archive & ar, const unsigned int version)
+    {
+        ar & boost::serialization::base_object<lm_dlib_base<kernel_type> >(*this);
+
+	    std::string strs;
+	    ar >> strs;
+	    std::stringstream sstr;
+	    sstr.str(strs);
+	    dlib::deserialize(kern_, sstr);
+    }
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 
     kernel_type kern_;
 };
@@ -239,12 +240,31 @@ protected:
     }
 private:
     lm_dlib_krls() { } // default constructor is private only for serialization
-    template<class Archive> void serialize(Archive &ar, const unsigned int version)
-	{
-	    ar & boost::serialization::base_object<lm_dlib_base<kernel_type> >(*this);
-//		ar & kern_;
-//		ar & fact_;
-	}
+
+	template<class Archive>
+    void save(Archive & ar, const unsigned int version) const
+    {
+        ar & boost::serialization::base_object<lm_dlib_base<kernel_type> >(*this);
+
+        std::stringstream sstr;
+        dlib::serialize(kern_, sstr);
+        std::string strs = sstr.str();
+        ar << strs;
+        ar << fact_;
+    }
+    template<class Archive>
+    void load(Archive & ar, const unsigned int version)
+    {
+        ar & boost::serialization::base_object<lm_dlib_base<kernel_type> >(*this);
+
+	    std::string strs;
+	    ar >> strs;
+	    std::stringstream sstr;
+	    sstr.str(strs);
+	    dlib::deserialize(kern_, sstr);
+	    ar >> fact_;
+    }
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 
     kernel_type kern_;
     double fact_;

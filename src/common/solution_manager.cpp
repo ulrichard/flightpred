@@ -5,11 +5,13 @@
 #include "common/ga_evocosm.h"
 #include "common/lm_svm_dlib.h"
 #include "common/reporter.h"
+#include "common/GenGeomLibSerialize.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
 // ggl (boost sandbox)
 #include <geometry/io/wkt/fromwkt.hpp>
+#include <geometry/io/wkt/aswkt.hpp>
 // boost
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -417,14 +419,30 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
 	bfs::ofstream ofs(outfile, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 	if(!ofs.good())
         throw std::runtime_error("could not write to " + outfile.string());
-/*
 	boost::archive::binary_oarchive oa(ofs);
 
     // information about the flying site
 	oa << site_name_;
-	//oa <<
 
-    // register all derived algoritms
+	pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::export_solution");
+    std::stringstream sstr;
+    sstr << "SELECT AsText(location) as loc, country FROM pred_sites "
+         << "WHERE site_name='" << site_name_ << "'";
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("site not found : " + site_name_);
+    string country;
+    res[0]["country"].to(country);
+    string locstr;
+    res[0]["loc"].to(locstr);
+    geometry::point_ll_deg location;
+    if(!geometry::from_wkt(locstr, location))
+        throw std::runtime_error("failed to parse location as retured from the database : " + locstr);
+    oa << country;
+	oa << location;
+	trans.commit();
+
+    // register all derived algoritms that are in use
     oa.register_type<lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
     oa.register_type<lm_dlib_rvm<dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > > >();
     oa.register_type<lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > > >();
@@ -434,11 +452,7 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
     std::auto_ptr<solution_config> sol = load_best_solution(true);
     solution_config *sc = sol.get();
 	oa << sc;
-*/
 
-    ofs << site_name_;
-    std::auto_ptr<solution_config> sol = load_best_solution(true);
-    sol->write_to_stream(ofs);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::import_solution(const bfs::path &backup_dir)
@@ -447,7 +461,7 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
     bfs::ifstream ifs(infile, std::ios_base::in | std::ios_base::binary);
 	if(!ifs.good())
         throw std::runtime_error("file not found : " + infile.string());
-/*
+
 	boost::archive::binary_iarchive ia(ifs);
     // read class state from archive
     string site_name;
@@ -455,20 +469,55 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
 	if(site_name != site_name_)
         throw std::runtime_error("wrong site : " + site_name + " != " + site_name_);
 
+    string country;
+    ia >> country;
+    geometry::point_ll_deg location;
+	ia >> location;
+
+	pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::import_solution");
+    pqxx::result res = trans.exec("SELECT site_name, pred_site_id, AsText(location) as loc FROM pred_sites");
+    int site_id = -1;
+    for(size_t i=0; i<res.size(); ++i)
+    {
+        size_t siteid;
+        res[i]["pred_site_id"].to(siteid);
+        string sitenam;
+        res[i]["site_name"].to(sitenam);
+        if(sitenam == site_name)
+        {
+            site_id = siteid;
+            break;
+        }
+        string locstr;
+        res[i]["loc"].to(locstr);
+        geometry::point_ll_deg location;
+        if(!geometry::from_wkt(locstr, location))
+            throw std::runtime_error("failed to parse location as retured from the database : " + locstr);
+
+        // todo : use with different name but close location
+    }
+
+    if(site_id < 0)
+    {
+        // register the prediction site
+        static const size_t PG_SIR_WGS84 = 4326;
+        std::stringstream sstr;
+        sstr << "INSERT INTO pred_sites (site_name, country, location) VALUES ('"
+             << site_name << "', '" << country << "', "
+             << "ST_GeomFromText('" << geometry::make_wkt(location) << "', " << PG_SIR_WGS84 << "))";
+        trans.exec(sstr.str());
+    }
+
+
     // register all derived algoritms
-//    ia.register_type<lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
-//    ia.register_type<lm_dlib_rvm<dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > > >();
-//    ia.register_type<lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > > >();
-//    ia.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.register_type<lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.register_type<lm_dlib_rvm<dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.register_type<lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
 
     solution_config *sol = 0;
-//    ia >> sol;
-*/
+    ia >> sol;
 
-    ifs >> const_cast<string&>(site_name_);
- //   if(site_name != site_name_)
- //       throw std::runtime_error("wrong site : " + site_name + " != " + site_name_);
-    std::auto_ptr<solution_config> sol(new solution_config(ifs));
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

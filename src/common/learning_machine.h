@@ -38,7 +38,7 @@ public:
 private:
     template<class Archive> void serialize(Archive &ar, const unsigned int version)
 	{
-		ar & pred_name_;
+		ar & const_cast<std::string&>(pred_name_);
 	}
 
 protected:

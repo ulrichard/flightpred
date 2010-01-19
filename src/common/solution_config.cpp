@@ -252,24 +252,8 @@ shared_ptr<learning_machine> solution_config::get_decision_function(const std::s
     return fit->second;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void  solution_config::write_to_stream(std::ostream &os)
+void solution_config::write_to_db()
 {
-    os << generation_;
-    os << site_name_;
-    os << solution_description_;
-    for(map<std::string, boost::shared_ptr<learning_machine> >::const_iterator it = learning_machines_.begin(); it != learning_machines_.end(); ++it)
-        it->second->write_to_stream(os);
-}
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void solution_config::read_from_stream(std::istream &is)
-{
-    train_sol_id_ = 0;
-    is >> generation_;
-    is >> site_name_;
-    is >> solution_description_;
-    for(std::map<std::string, boost::shared_ptr<learning_machine> >::iterator it = learning_machines_.begin(); it != learning_machines_.end(); ++it)
-        it->second->read_from_stream(is);
-
     pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_config::read_from_stream");
 
     std::stringstream sstr;
