@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--export-solution --name Rothenflue --backup-dir /home/richi/flugbuch2" />
+				<Option parameters="--export-solution --name Rothenflue --backup-dir /home/richi/flugbuch2 --import-solution" />
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-Wmain" />
@@ -74,6 +74,7 @@
 			<Add directory="../" />
 		</Compiler>
 		<Unit filename="../../scripts/create_flightpred_db.sql" />
+		<Unit filename="../common/GenGeomLibSerialize.h" />
 		<Unit filename="../common/features_weather.cpp" />
 		<Unit filename="../common/features_weather.h" />
 		<Unit filename="../common/flightpred_globals.cpp" />
@@ -93,6 +94,7 @@
 		<Unit filename="../common/learning_machine.h" />
 		<Unit filename="../common/lm_svm_dlib.h" />
 		<Unit filename="../common/reporter.cpp" />
+		<Unit filename="../common/reporter.h" />
 		<Unit filename="../common/solution_config.cpp" />
 		<Unit filename="../common/solution_config.h" />
 		<Unit filename="../common/solution_manager.cpp" />

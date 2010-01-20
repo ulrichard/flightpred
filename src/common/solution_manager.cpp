@@ -453,6 +453,7 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
     solution_config *sc = sol.get();
 	oa << sc;
 
+    report(INFO) << "solution_config sucesfully exported to : " << outfile.string();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::import_solution(const bfs::path &backup_dir)
@@ -507,6 +508,7 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
              << "ST_GeomFromText('" << geometry::make_wkt(location) << "', " << PG_SIR_WGS84 << "))";
         trans.exec(sstr.str());
     }
+    trans.commit();
 
 
     // register all derived algoritms
@@ -518,7 +520,7 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
     solution_config *sol = 0;
     ia >> sol;
 
-
+    report(INFO) << "solution_config sucesfully imported from : " << infile.string();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

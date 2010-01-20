@@ -257,35 +257,40 @@ void solution_config::write_to_db()
     pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_config::read_from_stream");
 
     std::stringstream sstr;
-    sstr << "SELECT configuration, site_name, generation FROM trained_solutions INNER JOIN pred_sites "
+    sstr << "SELECT train_sol_id, configuration, site_name, generation FROM trained_solutions INNER JOIN pred_sites "
          << "ON trained_solutions.pred_site_id = pred_sites.pred_site_id "
          << "WHERE site_name='" << site_name_ << "'"
          << "AND   configuration='" << solution_description_ << "'";
-    pqxx::result res = trans.exec(sstr.str());
+    const string srch_conf_sql = sstr.str();
+    pqxx::result res = trans.exec(srch_conf_sql);
     if(!res.size())
     {
+        sstr.str("");
+        sstr << "SELECT pred_site_id FROM pred_sites WHERE site_name='" << site_name_ << "'";
+        res = trans.exec(sstr.str());
+        if(!res.size())
+            throw std::runtime_error("site not found: " + site_name_);
+        size_t site_id;
+        res[0][0].to(site_id);
+
         report(DEBUGING) << "solution_config was not in the db -> generate a new id.";
-        sstr << "INSERT INTO trained_solutions (site_name, configuration, generation) VALUES ("
-             << "'" << site_name_ << "', "
-             << "'" << solution_description_ << "', "
-             << generation_ << ")";
+        sstr.str("");
+        sstr << "INSERT INTO trained_solutions (pred_site_id, configuration, generation) "
+             << "VALUES (" << site_id << ", '" << solution_description_ << "', " << generation_ << ")";
         trans.exec(sstr.str());
+
+        res = trans.exec(srch_conf_sql);
+        if(!res.size())
+            throw std::runtime_error("insert failed");
     }
 
-    sstr << "SELECT configuration, site_name, generation FROM trained_solutions INNER JOIN pred_sites "
-         << "ON trained_solutions.pred_site_id = pred_sites.pred_site_id "
-         << "WHERE site_name='" << site_name_ << "'"
-         << "AND   configuration='" << solution_description_ << "'";
-    res = trans.exec(sstr.str());
-    if(!res.size())
-        throw std::runtime_error("insert failed");
     res[0]["train_sol_id"].to(train_sol_id_);
+    trans.commit();
 
     // write the learned machines to the database
     for(std::map<std::string, boost::shared_ptr<learning_machine> >::iterator it = learning_machines_.begin(); it != learning_machines_.end(); ++it)
         it->second->write_to_db(train_sol_id_);
 
-    trans.commit();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 
