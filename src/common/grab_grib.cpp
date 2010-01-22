@@ -3,6 +3,7 @@
 #include "common/geo_parser.h"
 #include "common/flightpred_globals.h"
 #include "common/reporter.h"
+#include "common/features_weather.h"
 // grib api
 #include "grib_api.h"
 // postgre
@@ -405,22 +406,6 @@ set<string> grib_grabber::get_std_params()
     return sel_params;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-struct pnt_ll_deg_dist_sorter
-{
-    pnt_ll_deg_dist_sorter(const point_ll_deg &srch_pnt)
-        : srch_pnt_(srch_pnt), strategy_(geometry::strategy::distance::vincenty<point_ll_deg>()) { }
-
-    bool operator()(const point_ll_deg &lhs, const point_ll_deg &rhs)
-    {
-        const double dist1 = geometry::distance(lhs, srch_pnt_, strategy_);
-        const double dist2 = geometry::distance(rhs, srch_pnt_, strategy_);
-        return dist1 < dist2;
-    }
-
-    const point_ll_deg srch_pnt_;
-    const geometry::strategy::distance::vincenty<geometry::point_ll_deg> strategy_;
-};
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(const double gridres, const size_t pnts_per_site) const
 {
     pqxx::transaction<> trans(flightpred_db::get_conn(), "get training locations");
@@ -438,18 +423,8 @@ boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(cons
         if(!geometry::from_wkt(locstr, site_location))
             throw std::runtime_error("invalid location read from pred_sites : " + locstr);
 
-        vector<point_ll_deg> tmploc;
-        double lonl = static_cast<int>(site_location.lon() / gridres) * gridres;
-        double latl = static_cast<int>(site_location.lat() / gridres) * gridres;
-        for(size_t i=0; i < pnts_per_site; ++i)
-            for(size_t j=0; j < pnts_per_site; ++j)
-                tmploc.push_back(point_ll_deg(geometry::longitude<>(lonl + (i - pnts_per_site / 2) * gridres),
-                                              geometry::latitude<>( latl + (j - pnts_per_site / 2) * gridres)));
-        assert(tmploc.size() > pnts_per_site);
-        std::sort(tmploc.begin(), tmploc.end(), pnt_ll_deg_dist_sorter(site_location));
-        vector<point_ll_deg>::iterator endsel = tmploc.begin();
-        std::advance(endsel, pnts_per_site);
-        std::copy(tmploc.begin(), endsel, std::inserter(locations, locations.end()));
+        vector<point_ll_deg> tmploc = features_weather::get_locations_around_site(site_location, pnts_per_site, gridres);
+        std::copy(tmploc.begin(), tmploc.end(), std::inserter(locations, locations.end()));
     }
 
     report(DEBUGING) << "grib_grabber::get_locations_around_sites(" << gridres << ", " << pnts_per_site << ") returns " << locations.size() << " locations.";

@@ -10,6 +10,8 @@
 #include <geometry/io/wkt/fromwkt.hpp>
 #include <geometry/io/wkt/aswkt.hpp>
 #include <geometry/util/graticule.hpp>
+#include <geometry/algorithms/distance.hpp>
+#include <geometry/strategies/geographic/geo_distance.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -48,6 +50,56 @@ void features_weather::generate_features(features_weather::feat_desc feat, const
             features.insert(feat);
         }
     }
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+struct pnt_ll_deg_dist_sorter
+{
+    pnt_ll_deg_dist_sorter(const point_ll_deg &srch_pnt)
+        : srch_pnt_(srch_pnt), strategy_(geometry::strategy::distance::vincenty<point_ll_deg>()) { }
+
+    bool operator()(const point_ll_deg &lhs, const point_ll_deg &rhs)
+    {
+        const double dist1 = geometry::distance(lhs, srch_pnt_, strategy_);
+        const double dist2 = geometry::distance(rhs, srch_pnt_, strategy_);
+        return dist1 < dist2;
+    }
+
+    const point_ll_deg srch_pnt_;
+    const geometry::strategy::distance::vincenty<geometry::point_ll_deg> strategy_;
+};
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_deg &site_location, const size_t pnts_per_site, const double gridres)
+{
+    vector<point_ll_deg> tmploc;
+    double lonl = static_cast<int>(site_location.lon() / gridres) * gridres;
+    double latl = static_cast<int>(site_location.lat() / gridres) * gridres;
+    for(size_t i=0; i < pnts_per_site; ++i)
+        for(size_t j=0; j < pnts_per_site; ++j)
+            tmploc.push_back(point_ll_deg(geometry::longitude<>(lonl + (i - pnts_per_site / 2) * gridres),
+                                          geometry::latitude<>( latl + (j - pnts_per_site / 2) * gridres)));
+    assert(tmploc.size() > pnts_per_site);
+    std::sort(tmploc.begin(), tmploc.end(), pnt_ll_deg_dist_sorter(site_location));
+    vector<point_ll_deg>::iterator endsel = tmploc.begin();
+    std::advance(endsel, pnts_per_site);
+    tmploc.erase(endsel, tmploc.end());
+
+    return tmploc;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+features_weather::feat_desc  features_weather::get_random_feature(const geometry::point_ll_deg &site_location)
+{
+    vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 2.5);
+    vector<point_ll_deg> locations_far  = get_locations_around_site(site_location, 16, 2.5);
+    // parameters and levels
+    const array<string, 2> featgnd = {"PRES", "TMP"};
+    const array<string, 7> featair = {"HGT", "TMP", "UGRD", "VGRD", "ABSV", "RH", "VVEL"}; //, "CLWMR"};
+    const array<size_t, 4> levels  = {0, 850, 700, 500};
+
+    // todo : generate a random feature
+    feat_desc fd;
+
+
+    return fd;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 set<features_weather::feat_desc> features_weather::get_standard_features(const point_ll_deg &site_location) const

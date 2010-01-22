@@ -6,6 +6,8 @@
 #include <libevocosm/roulette.h>
 // postgre
 #include <pqxx/pqxx>
+// ggl (boost sandbox)
+#include <geometry/io/wkt/fromwkt.hpp>
 // boost
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -15,6 +17,11 @@
 //#include <boost/lambda/core.hpp>
 //#include <boost/lambda/bind.hpp>
 //#include <boost/lambda/if.hpp>
+#include <boost/random/linear_congruential.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/uniform_real.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random.hpp>
 // std lib
 #include <iostream>
 #include <stdexcept>
@@ -39,12 +46,23 @@ reproducer::reproducer(const size_t pred_site_id, const double mutation_rate, si
     : pred_site_id_(pred_site_id), mutation_rate_(mutation_rate), current_generation_(current_generation)
 {
     report(DEBUGING) << "reproducer::reproducer(" << pred_site_id << ", " << mutation_rate << ", " << current_generation << ") -> " << current_generation_;
-    // load all known configurations into the set
+    // get the location of the current site
     pqxx::transaction<> trans(flightpred_db::get_conn(), "reproducer::reproducer");
     std::stringstream sstr;
+    sstr << "SELECT AsText(location) AS loc FROM pred_sites WHERE pred_site_id=" << pred_site_id_;
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("prediction site not found");
+    string tmploc;
+    res[0][0].to(tmploc);
+    if(!geometry::from_wkt(tmploc, site_location_))
+        throw std::runtime_error("failed to parse the weather location as retured from the database : " + tmploc);
+
+    // load all known configurations into the set
+    sstr.str("");
     sstr << "SELECT configuration FROM trained_solutions "
          << "WHERE pred_site_id=" << pred_site_id_;
-    pqxx::result res = trans.exec(sstr.str());
+    res = trans.exec(sstr.str());
     for(size_t i=0; i<res.size(); ++i)
     {
         string sol_conf;
@@ -188,12 +206,39 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     // then mutate the features
     std::set<features_weather::feat_desc> features =  src.get_weather_feature_desc();
 
-    // todo : mutations will include : drop, modify, add
+    boost::mt19937 rng;                           // produces randomness out of thin air see pseudo-random number generators
+    boost::uniform_int<> distr(0, features.size() / 10); // distribution that maps to 1..xx see random number distributions
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen(rng, distr);  // glues randomness with mapping
 
-    std::copy(features.begin(), features.end(), std::ostream_iterator<features_weather::feat_desc>(sstr, " "));
+    // add some new features
+    const size_t target_count_add = features.size() + randgen();
+    while(features.size() < target_count_add)
+        features.insert(features_weather::get_random_feature(site_location_));
 
+    // remove some features
+    const size_t target_count_sub = features.size() - randgen();
+    while(features.size() > target_count_sub)
+    {
+        boost::uniform_int<> distr(0, features.size()); // distribution that maps to 1..xx see random number distributions
+        boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen(rng, distr);  // glues randomness with mapping
+
+        std::set<features_weather::feat_desc>::iterator it = features.begin();
+        std::advance(it, randgen());
+        features.erase(it);
+    }
+
+    // mutate some features
+    std::transform(features.begin(), features.end(),
+        std::ostream_iterator<features_weather::feat_desc>(sstr, " "),
+        bind(&reproducer::mutate_feature, this, ::_1));
 
     return solution_config(src.get_site_name(), sstr.str(), current_generation_ + 1);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+features_weather::feat_desc reproducer::mutate_feature(const features_weather::feat_desc &oldfeat)
+{
+
+    return features_weather::feat_desc(oldfeat);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

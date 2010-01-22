@@ -74,11 +74,12 @@ class reproducer : public libevocosm::reproducer<organism>
 public:
     reproducer(const size_t pred_site_id, const double mutation_rate, size_t &current_generation);
     reproducer(const reproducer &src)
-        : pred_site_id_(src.pred_site_id_), mutation_rate_(src.mutation_rate_), current_generation_(src.current_generation_), solution_descriptions_(src.solution_descriptions_) { }
+        : pred_site_id_(src.pred_site_id_), site_location_(src.site_location_), mutation_rate_(src.mutation_rate_), current_generation_(src.current_generation_), solution_descriptions_(src.solution_descriptions_) { }
     virtual ~reproducer()  { }
     reproducer & operator=(const reproducer &source)
     {
-        pred_site_id_ = source.pred_site_id_;
+        pred_site_id_  = source.pred_site_id_;
+        site_location_ = source.site_location_;
         mutation_rate_ = source.mutation_rate_;
         current_generation_ = source.current_generation_;
         solution_descriptions_ = source.solution_descriptions_;
@@ -95,8 +96,10 @@ public:
 
 private:
     solution_config make_mutated_clone(const solution_config &src);
+    features_weather::feat_desc  mutate_feature(const features_weather::feat_desc &oldfeat);
 
     size_t pred_site_id_;
+    geometry::point_ll_deg site_location_;
     double mutation_rate_;
     size_t &current_generation_;
     std::set<std::string> solution_descriptions_; //! all the descriptions in the system so far.
