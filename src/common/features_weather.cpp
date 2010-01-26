@@ -3,6 +3,7 @@
 #include "common/grib_pred_model.h"
 #include "common/flightpred_globals.h"
 #include "common/reporter.h"
+#include "common/grab_grib.h"
 //#include "area_mgr.h"
 // postgre
 #include <pqxx/pqxx>
@@ -19,6 +20,12 @@
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/random/linear_congruential.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/uniform_real.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random.hpp>
+#include <boost/unordered_set.hpp>
 // standard library
 #include <vector>
 #include <map>
@@ -88,18 +95,72 @@ vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 features_weather::feat_desc  features_weather::get_random_feature(const geometry::point_ll_deg &site_location)
 {
-    vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 2.5);
-    vector<point_ll_deg> locations_far  = get_locations_around_site(site_location, 16, 2.5);
-    // parameters and levels
-    const array<string, 2> featgnd = {"PRES", "TMP"};
-    const array<string, 7> featair = {"HGT", "TMP", "UGRD", "VGRD", "ABSV", "RH", "VVEL"}; //, "CLWMR"};
-    const array<size_t, 4> levels  = {0, 850, 700, 500};
-
-    // todo : generate a random feature
     feat_desc fd;
 
+    const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 2.5);
+    const vector<point_ll_deg> locations_far  = get_locations_around_site(site_location, 16, 2.5);
+    boost::unordered_set<point_ll_deg> locations;
+    std::copy(locations_near.begin(), locations_near.end(), std::inserter(locations, locations.end()));
+    std::copy(locations_far.begin(),  locations_far.end(),  std::inserter(locations, locations.end()));
+
+    // pick a location
+    boost::mt19937 rng;                           // produces randomness out of thin air see pseudo-random number generators
+    boost::uniform_int<> distr_loc(0, locations.size()); // distribution that maps to 1..xx see random number distributions
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_loc(rng, distr_loc);  // glues randomness with mapping
+    boost::unordered_set<point_ll_deg>::const_iterator itloc = locations.begin();
+    std::advance(itloc, randgen_loc());
+    fd.location = *itloc;
+    const bool is_near_location = std::find(locations_near.begin(), locations_near.end(), fd.location) != locations_near.end();
+
+    // pick an altitude level
+    const std::set<string> levels = grib_grabber::get_std_levels(is_near_location);
+    boost::uniform_int<> distr_lvl(0, levels.size()); // distribution that maps to 1..xx see random number distributions
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_lvl(rng, distr_lvl);  // glues randomness with mapping
+    std::set<string>::const_iterator itlvl = levels.begin();
+    std::advance(itlvl, randgen_lvl());
+    fd.level = atoi(itlvl->c_str());
+
+    // pick a parameter
+    std::set<string> parameters_air = grib_grabber::get_std_params();
+    std::set<string> parameters_gnd;
+    parameters_gnd.insert("PRES");
+    parameters_gnd.insert("TMP");
+    const std::set<string> &param = (fd.level ? parameters_air : parameters_gnd);
+    boost::uniform_int<> distr_prm(0, param.size()); // distribution that maps to 1..xx see random number distributions
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_prm(rng, distr_prm);  // glues randomness with mapping
+    std::set<string>::const_iterator itprm = param.begin();
+    std::advance(itprm, randgen_prm());
+    fd.param = *itprm;
+
+    // pick a time interval
+    boost::uniform_int<> distr_ivr(-2, 3); // distribution that maps to 1..xx see random number distributions
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_ivr(rng, distr_ivr);  // glues randomness with mapping
+    fd.reltime = bpt::hours(6 * randgen_ivr());
 
     return fd;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+features_weather::feat_desc  features_weather::mutate_feature(features_weather::feat_desc feat)
+{
+    feat_desc rand_feat = get_random_feature(feat.location);
+
+    boost::mt19937 rng;
+    boost::uniform_int<> distr_mut(0, 4);
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_mut(rng, distr_mut);
+
+    if(randgen_mut() == 0)
+        feat.location = rand_feat.location;
+
+    if(randgen_mut() == 1)
+        feat.level = rand_feat.level;
+
+    if(randgen_mut() == 2)
+        feat.param = rand_feat.param;
+
+    if(randgen_mut() == 3)
+        feat.reltime = rand_feat.reltime;
+
+    return feat;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 set<features_weather::feat_desc> features_weather::get_standard_features(const point_ll_deg &site_location) const

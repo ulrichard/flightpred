@@ -43,6 +43,7 @@ public:
 
     static std::vector<geometry::point_ll_deg> get_locations_around_site(const geometry::point_ll_deg &site_location, const size_t pnts_per_site, const double gridres);
     static feat_desc    get_random_feature(const geometry::point_ll_deg &site_location);
+    static feat_desc    mutate_feature(feat_desc feat);
     std::set<feat_desc> get_standard_features(const geometry::point_ll_deg &site_location) const;
 
     std::vector<double> get_features(const std::set<feat_desc> &descriptions, const boost::gregorian::date &day, const bool future) const;

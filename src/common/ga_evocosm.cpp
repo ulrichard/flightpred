@@ -219,26 +219,27 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     const size_t target_count_sub = features.size() - randgen();
     while(features.size() > target_count_sub)
     {
-        boost::uniform_int<> distr(0, features.size()); // distribution that maps to 1..xx see random number distributions
-        boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen(rng, distr);  // glues randomness with mapping
+        boost::uniform_int<> distr_ia(0, features.size()); // distribution that maps to 1..xx see random number distributions
+        boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_ia(rng, distr_ia);  // glues randomness with mapping
 
         std::set<features_weather::feat_desc>::iterator it = features.begin();
-        std::advance(it, randgen());
+        std::advance(it, randgen_ia());
         features.erase(it);
     }
 
     // mutate some features
-    std::transform(features.begin(), features.end(),
-        std::ostream_iterator<features_weather::feat_desc>(sstr, " "),
-        bind(&reproducer::mutate_feature, this, ::_1));
+    boost::uniform_int<> distr_mut(0, 100);
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_mut(rng, distr_mut);  // glues randomness with mapping
+    BOOST_FOREACH(const features_weather::feat_desc &feat, features)
+    {
+        if(randgen_mut() >= mutation_rate_ * 100)
+            sstr << features_weather::mutate_feature(feat);
+        else
+            sstr << feat;
+        sstr << " ";
+    }
 
     return solution_config(src.get_site_name(), sstr.str(), current_generation_ + 1);
-}
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-features_weather::feat_desc reproducer::mutate_feature(const features_weather::feat_desc &oldfeat)
-{
-
-    return features_weather::feat_desc(oldfeat);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

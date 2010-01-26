@@ -96,7 +96,6 @@ public:
 
 private:
     solution_config make_mutated_clone(const solution_config &src);
-    features_weather::feat_desc  mutate_feature(const features_weather::feat_desc &oldfeat);
 
     size_t pred_site_id_;
     geometry::point_ll_deg site_location_;

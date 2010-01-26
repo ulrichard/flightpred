@@ -38,6 +38,9 @@ public:
 
 //    virtual void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to) = 0;
 
+    static std::set<std::string>     get_std_levels(const bool full);
+    static std::set<std::string>     get_std_params();
+
 protected:
     struct request
     {
@@ -54,10 +57,7 @@ protected:
 
     static std::string get_base_url(const std::string &model, bool future);
     static size_t      get_model_id(const std::string &model);
-    static std::set<std::string>     get_std_levels(const bool full);
-    static std::set<std::string>     get_std_params();
     boost::unordered_set<geometry::point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
-
 
     const std::string        baseurl_;
     const std::string        modelname_;
