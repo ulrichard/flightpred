@@ -10,6 +10,7 @@
 // ggl (boost sandbox)
 #include <geometry/io/wkt/fromwkt.hpp>
 #include <geometry/io/wkt/aswkt.hpp>
+#include <geometry/io/wkt/streamwkt.hpp>
 #include <geometry/util/graticule.hpp>
 #include <geometry/algorithms/distance.hpp>
 #include <geometry/strategies/geographic/geo_distance.hpp>
@@ -26,6 +27,7 @@
 #include <boost/random/variate_generator.hpp>
 #include <boost/random.hpp>
 #include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
 // standard library
 #include <vector>
 #include <map>
@@ -77,6 +79,10 @@ struct pnt_ll_deg_dist_sorter
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_deg &site_location, const size_t pnts_per_site, const double gridres)
 {
+    static boost::unordered_map<point_ll_deg, std::map<double, std::map<size_t, vector<point_ll_deg> > > > cache;
+    if(!cache[site_location][gridres][pnts_per_site].empty())
+        return cache[site_location][gridres][pnts_per_site];
+
     vector<point_ll_deg> tmploc;
     double lonl = static_cast<int>(site_location.lon() / gridres) * gridres;
     double latl = static_cast<int>(site_location.lat() / gridres) * gridres;
@@ -90,11 +96,14 @@ vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_
     std::advance(endsel, pnts_per_site);
     tmploc.erase(endsel, tmploc.end());
 
+    cache[site_location][gridres][pnts_per_site] = tmploc;
+
     return tmploc;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 features_weather::feat_desc  features_weather::get_random_feature(const geometry::point_ll_deg &site_location)
 {
+    report(DEBUGING) << "features_weather::get_random_feature(" << /*site_location <<*/ ")";
     feat_desc fd;
 
     const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 2.5);
@@ -142,6 +151,7 @@ features_weather::feat_desc  features_weather::get_random_feature(const geometry
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 features_weather::feat_desc  features_weather::mutate_feature(features_weather::feat_desc feat)
 {
+    report(DEBUGING) << "features_weather::mutate_feature(" << feat << ")";
     feat_desc rand_feat = get_random_feature(feat.location);
 
     boost::mt19937 rng;
