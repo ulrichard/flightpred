@@ -72,7 +72,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         double dval;
         for(size_t j=0; j<5; ++j)
         {
-            res[i][1 + j].to(dval);
+            res[i][static_cast<unsigned int>(1 + j)].to(dval);
             if(dval < 1.0)
                 dval = 0.0;
             labelsbydate[day][j] = dval;
