@@ -155,7 +155,7 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
     sstr.str("");
     sstr << "Longest training time : " << max_train_time;
 
-    footertext_ = new Wt::WText(impl_, sstr.str());
+    footertext_ = new Wt::WText(sstr.str(), impl_);
     std::cout << sstr.str() << std::endl;
 
 }

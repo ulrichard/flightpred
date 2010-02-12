@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
-		<Project filename="train/flightpred_train.cbp" active="1" />
+		<Project filename="train/flightpred_train.cbp" />
 		<Project filename="web/flightpred_wt.cbp" />
-		<Project filename="test/flightpred_test.cbp" />
+		<Project filename="test/flightpred_test.cbp" active="1" />
 	</Workspace>
 </CodeBlocks_workspace_file>
