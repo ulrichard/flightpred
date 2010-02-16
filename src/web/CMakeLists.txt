@@ -20,3 +20,11 @@ INSTALL(TARGETS flightpred_web.fcgi
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 
+INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/create_flightpred_db.sql DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
+
+INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/flightpred.conf DESTINATION /etc/apache2/sites-available)
+
+INSTALL(DIRECTORY ${flightpred_MAIN_DIR}/www_docroot DESTINATION
+    ${CMAKE_INSTALL_PREFIX}/share/flightpred/)
+
+

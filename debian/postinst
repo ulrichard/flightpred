@@ -16,12 +16,18 @@ set -e
 # the debian-policy package
 
 . /usr/share/debconf/confmodule
-. /usr/share/dbconfig-common/dpkg/postinst.pgsql
-dbc_go flightpred $@
+#. /usr/share/dbconfig-common/dpkg/postinst.pgsql
+#dbc_go flightpred $@
 
 
-db_get flightpred/user_account && DB_USER="$RET"
-db_get flightpred/database_name && DB_NAME="$RET"
+#db_get flightpred/user_account && DB_USER="$RET"
+#db_get flightpred/database_name && DB_NAME="$RET"
+
+export DB_USER="flightpred"
+export DB_NAME="flightpred"
+
+echo DB_USER: $DB_USER
+echo DB_NAME: $DB_NAME
 
 case "$1" in
 	configure)
@@ -41,15 +47,23 @@ case "$1" in
 		    echo "user = $DB_USER" >> /etc/flightpred.conf
 		fi
 	
-		su postgres -c "psql -c \"ALTER USER $DB_USER WITH SUPERUSER\"" >> /dev/null
+#		su postgres -c "psql -c \"ALTER USER $DB_USER WITH SUPERUSER\"" #>> /dev/null
+#		sudo -u postgres psql -e -a -c "ALTER USER flightpred WITH SUPERUSER"
+#		sudo -u postgres dropdb   -e flightpred
+		sudo -u postgres psql -e -a -c "DROP DATABASE IF EXISTS flightpred"
+		sudo -u postgres createdb -e flightpred
+		sudo -u postgres createlang plpgsql flightpred
+		sudo -u postgres psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql
+		sudo -u postgres psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
+		sudo -u postgres psql -e -a -d flightpred -f /usr/share/flightpred/create_flightpred_db.sql
 
-	# set up the environment for the webapp
+		# set up the environment for the webapp
 		mkdir -p /var/run/flightpred
     		chown -R www-data:www-data /var/run/flightpred
 		# register with apache
-		a2enmod fcgid
+		a2enmod fastcgi
 		echo "register flightpred with apache"
-		a2ensite /etc/apache2/sites-available/flightpred.conf 
+		a2ensite flightpred.conf 
 		;;
 	*)
 		#

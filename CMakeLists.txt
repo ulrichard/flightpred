@@ -2,6 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT(flightpred)
 SET(CMAKE_MODULE_PATH ${flightpred_SOURCE_DIR})
+SET(flightpred_MAIN_DIR ${flightpred_SOURCE_DIR})
 
 SET(VERSION_SERIES 0)
 SET(VERSION_MAJOR 0)
@@ -37,10 +38,6 @@ SET(WEBGROUP apache CACHE STRING "Webserver groupname (e.g. apache or www or use
 
 SUBDIRS(3rd-party/json_spirit/json_spirit src)
 
-INSTALL(FILES ${PROJECT_SOURCE_DIR}/scripts/create_flightpred_db.sql DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
-
-INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/www_docroot DESTINATION
-    ${CMAKE_INSTALL_PREFIX}/share/flightpred/)
 
 #IF(NOT EXISTS ${CONFIGDIR}/wt_config.xml)
 #  INSTALL(FILES ${PROJECT_SOURCE_DIR}/wt_config.xml DESTINATION ${CONFIGDIR})

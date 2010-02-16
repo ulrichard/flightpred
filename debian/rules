@@ -54,6 +54,8 @@ install: build
 	# $(MAKE) DESTDIR=$(CURDIR)/debian/flightpred install
 	(cd $(CURDIR)/build-debian; $(MAKE) install DESTDIR=$(CURDIR)/debian/flightpred/ )
 
+	(cd $(CURDIR)/debian/flightpred/usr/share/flightpred/www_docroot; ln -f $(CURDIR)/debian/flightpred/usr/bin/flightpred_web.fcgi)
+
 	for TASK in install upgrade; do \
 		mkdir -p $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/flightpred/$$TASK; \
 		/bin/echo -e "#!/bin/sh\nsu postgres -c /usr/lib/flightpred/$${TASK}_database" > $(CURDIR)/debian/flightpred/usr/share/dbconfig-common/scripts/flightpred/$$TASK/pgsql; \
