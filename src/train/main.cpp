@@ -45,8 +45,6 @@ vector<string> get_site_names()
     std::stringstream sstr;
     sstr << "SELECT site_name FROM pred_sites";
     pqxx::result res = trans.exec(sstr.str());
-    if(!res.size())
-        throw std::invalid_argument("no sites found");
     for(size_t i=0; i<res.size(); ++i)
     {
         string tmpstr;
@@ -102,8 +100,8 @@ int main(int argc, char* argv[])
             ("db-host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
             ("db-port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
             ("db-name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
-            ("db-user",       po::value<string>(&db_user)->default_value("postgres"),     "name of the database user")
-            ("db-password",   po::value<string>(&db_password)->default_value("postgres"), "password of the database user")
+            ("db-user",       po::value<string>(&db_user)->default_value(getenv("USER")), "name of the database user")
+            ("db-password",   po::value<string>(&db_password)->default_value(""),         "password of the database user")
             ;
         po::variables_map vm;
         po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -112,8 +110,37 @@ int main(int argc, char* argv[])
         dtstart = bgreg::from_string(start_date);
         dtend   = bgreg::from_string(end_date);
         const string db_conn_str = "host=" + db_host + " port=" + lexical_cast<string>(db_port)
+                                 + " dbname=" + db_name + " user=" + db_user
+                                 + (db_password.empty() ? string("") : " password=" + db_password);
+        try
+        {
+            flightpred_db::init(db_conn_str);
+        }
+        catch(std::exception &ex)
+        {
+            try
+            {
+                if(db_password != "postgres")
+                    throw;
+
+                cout << "Database password for user " << db_user << ":";
+                std::cin >> db_password;
+
+                const string db_conn_str = "host=" + db_host + " port=" + lexical_cast<string>(db_port)
                                  + " dbname=" + db_name + " user=" + db_user + " password=" + db_password;
-        flightpred_db::init(db_conn_str);
+
+                flightpred_db::init(db_conn_str);
+            }
+            catch(std::exception &ex)
+            {
+                std::stringstream sstr;
+                sstr << desc << std::endl << std::endl
+                     << "Failed to connect to the database " << db_conn_str << std::endl
+                     << "For further help see : https://help.ubuntu.com/community/PostgreSQL" << std::endl
+                     << "Error: " << ex.what();
+                throw std::runtime_error(sstr.str());
+            }
+        }
         const geometry::point_ll_deg pos = parse_position(position);
 
         const vector<string> site_names = get_site_names();

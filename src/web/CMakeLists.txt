@@ -15,10 +15,6 @@ SET_TARGET_PROPERTIES(
     DEBUG_POSTFIX "d"
   )
 
-INSTALL(TARGETS flightpred_web.fcgi
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 
 INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/create_flightpred_db.sql DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
 
@@ -27,4 +23,6 @@ INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/flightpred.conf DESTINATION /etc/ap
 INSTALL(DIRECTORY ${flightpred_MAIN_DIR}/www_docroot DESTINATION
     ${CMAKE_INSTALL_PREFIX}/share/flightpred/)
 
+INSTALL(TARGETS flightpred_web.fcgi
+    RUNTIME DESTINATION share/flightpred/www_docroot)
 

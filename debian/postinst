@@ -64,6 +64,7 @@ case "$1" in
 		a2enmod fastcgi
 		echo "register flightpred with apache"
 		a2ensite flightpred.conf 
+		/etc/init.d/apache2 reload
 		;;
 	*)
 		#
