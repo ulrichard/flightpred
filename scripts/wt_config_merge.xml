@@ -2,6 +2,9 @@
 	<session-management>
 		<timeout>3600</timeout>
 	</session-management>
+	<connector-fcgi>
+		<run-directory>/var/run/flightpred</run-directory>
+	</connector-fcgi>
 	<max-request-size>5120</max-request-size>
 	<session-id-length>16</session-id-length>
 	<properties>
