@@ -3,6 +3,8 @@
 #include "FlightForecast.h"
 #include "WeatherMap.h"
 #include "Populations.h"
+// pqxx
+#include <pqxx/pqxx>
 // witty
 #include <Wt/WEnvironment>
 #include <Wt/WText>
@@ -18,7 +20,8 @@ using namespace flightpred;
 using std::string;
 using std::vector;
 
-#define _(STRING) gettext(STRING)
+//#define _(STRING) gettext(STRING)
+#define _(STRING) (STRING)
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // callback function is called everytime when a user enters the page. Can be used to authenticate.
@@ -52,10 +55,22 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     try
     {
         // get flight forecasts from the db
-        const string db_conn_str = "host=localhost dbname=flightpred user=" + string(getenv("USER"));
+//        const string db_conn_str = "host=localhost dbname=flightpred user=" + string(getenv("USER") ? getenv("USER") : "www-data");
+        const string db_conn_str = "host=localhost dbname=flightpred user=flightpred password=flightpred";
 //        const string db_conn_str = "host=localhost dbname=flightpred user=postgres password=postgres";
 //        const string db_conn_str = "host=192.168.2.160 port=5432 dbname=flightpred user=postgres password=postgres";
 
+        // first see if we can connect to the database, and if not put out a good errormessage
+        try
+        {
+            pqxx::connection conn(db_conn_str);
+            pqxx::transaction<> trans(conn, "web prediction");
+            pqxx::result res = trans.exec("SELECT pred_site_id FROM pred_sites");
+        }
+        catch(std::exception &ex)
+        {
+            throw std::runtime_error(string("Failed to connect to the database. You may have to configure the database server, so that the webserver can access it. -> ") + ex.what());
+        }
 
         Wt::WTabWidget *tabw = new Wt::WTabWidget(root());
 

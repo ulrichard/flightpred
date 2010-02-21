@@ -1,4 +1,4 @@
-<application-settings location="/usr/share/flightpred/www_docroot/flightpred.fcgi">
+<application-settings location="/usr/share/flightpred/www_docroot/flightpred_web.fcgi">
 	<session-management>
 		<timeout>3600</timeout>
 	</session-management>
