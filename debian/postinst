@@ -38,18 +38,16 @@ case "$1" in
 		    echo "user = flightpred" >> /etc/flightpred.conf
 
 #			su postgres -c "psql -c \"ALTER USER $DB_USER WITH SUPERUSER\"" #>> /dev/null
-#			sudo -u postgres psql -e -a -c "CREATE ROLE flightpred WITH NOSUPERUSER, NOCREATEDB, NOCREATEROLE"
-			sudo -u postgres createuser -D -R -S flightpred
-			sudo -u postgres createuser -D -R -S www-data
 			sudo -u postgres psql -e -a -c "DROP DATABASE IF EXISTS flightpred"
-			sudo -u postgres createdb -e flightpred
-			sudo -u postgres psql -e -a -c "GRANT ALL ON DATABASE flightpred TO flightpred"
-			sudo -u postgres psql -e -a -c "GRANT ALL ON DATABASE flightpred TO \"www-data\""
-			sudo -u postgres createlang plpgsql flightpred
-			sudo -u postgres psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql
-			sudo -u postgres psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
-			sudo -u postgres psql -e -a -d flightpred -f /usr/share/flightpred/create_flightpred_db.sql
-
+			sudo -u postgres psql -e -a -c "CREATE USER flightpred WITH PASSWORD 'flightpred' SUPERUSER"
+			sudo -u flightpred createdb -e flightpred
+			sudo -u flightpred createlang plpgsql flightpred
+			sudo -u flightpred psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql
+			sudo -u flightpred psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
+			#sudo -u flightpred psql -e -a -c "ALTER DATABASE flightpred OWNER TO flightpred"
+			sudo -u flightpred psql -e -a -d flightpred -f /usr/share/flightpred/create_flightpred_db.sql
+			sudo -u postgres psql -e -a -c "ALTER ROLE flightpred NOSUPERUSER
+" 
 		fi
 	
 
