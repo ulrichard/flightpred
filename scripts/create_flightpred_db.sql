@@ -1,4 +1,28 @@
 
+CREATE TABLE pred_sites
+(
+	pred_site_id SERIAL PRIMARY KEY,
+	site_name    varchar(50) NOT NULL,
+	country      varchar(5)
+);
+SELECT AddGeometryColumn('pred_sites','location',4326,'POINT',2);
+CREATE UNIQUE INDEX predSitesByName ON pred_sites(site_name);
+INSERT INTO pred_sites (site_name, location, country) values ('Fiesch',      GeomFromText('POINT(  8.1145333332485592 46.411933333078998)', 4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Grindelwald', GeomFromText('POINT(  8.0552869234381106 46.656613323997803)', 4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Niesen',      GeomFromText('POINT(  7.6476388888888902 46.644222222434202)', 4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Rothenflue',  GeomFromText('POINT(  8.7019931164065607 47.018337296086003)', 4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Engelberg',   GeomFromText('POINT(  8.4053166664971304 46.840041666560701)', 4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Uetliberg',   GeomFromText('POINT(  8.5012333333333299 47.323266666666697)', 4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Fanas',       GeomFromText('POINT(  9.68967            47.0035)',            4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Scuol',       GeomFromText('POINT( 10.2742             46.8132)',            4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Gana',        GeomFromText('POINT(  8.90968            46.1955)',            4326), 'CH');
+INSERT INTO pred_sites (site_name, location, country) values ('Quixada',     GeomFromText('POINT(-39.0078             -5.03638)',           4326), 'BR');
+INSERT INTO pred_sites (site_name, location, country) values ('De Aar',      GeomFromText('POINT( 24.0271            -30.6979)',            4326), 'ZA');
+INSERT INTO pred_sites (site_name, location, country) values ('Billing Bir', GeomFromText('POINT( 76.7435             32.056)',             4326), 'IN');
+INSERT INTO pred_sites (site_name, location, country) values ('Bassano',     GeomFromText('POINT( 11.7705             45.8222)',            4326), 'IT');
+INSERT INTO pred_sites (site_name, location, country) values ('Valadares',   GeomFromText('POINT(-41.9151            -18.8865)',            4326), 'BR');
+
+
 CREATE TABLE contests
 (
 	contest_id SERIAL PRIMARY KEY,
@@ -40,29 +64,6 @@ CREATE TABLE flights
 	CONSTRAINT FK_pilot_id     FOREIGN KEY(pilot_id)     REFERENCES pilots     (pilot_id)   ON DELETE CASCADE,	CONSTRAINT FK_contest_id   FOREIGN KEY(contest_id)   REFERENCES contests   (contest_id) ON DELETE CASCADE,	CONSTRAINT FK_site_id      FOREIGN KEY(site_id)      REFERENCES sites      (site_id)
 );
 CREATE INDEX flightByDate ON flights (flight_date, distance);
-
-CREATE TABLE pred_sites
-(
-	pred_site_id SERIAL PRIMARY KEY,
-	site_name    varchar(50) NOT NULL,
-	country      varchar(5)
-);
-SELECT AddGeometryColumn('pred_sites','location',4326,'POINT',2);
-CREATE UNIQUE INDEX predSitesByName ON pred_sites(site_name);
-INSERT INTO pred_sites (site_name, location, country) values ('Fiesch',      GeomFromText('POINT(  8.1145333332485592 46.411933333078998)', 4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Grindelwald', GeomFromText('POINT(  8.0552869234381106 46.656613323997803)', 4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Niesen',      GeomFromText('POINT(  7.6476388888888902 46.644222222434202)', 4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Rothenflue',  GeomFromText('POINT(  8.7019931164065607 47.018337296086003)', 4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Engelberg',   GeomFromText('POINT(  8.4053166664971304 46.840041666560701)', 4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Uetliberg',   GeomFromText('POINT(  8.5012333333333299 47.323266666666697)', 4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Fanas',       GeomFromText('POINT(  9.68967            47.0035)',            4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Scuol',       GeomFromText('POINT( 10.2742             46.8132)',            4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Gana',        GeomFromText('POINT(  8.90968            46.1955)',            4326), 'CH');
-INSERT INTO pred_sites (site_name, location, country) values ('Quixada',     GeomFromText('POINT(-39.0078             -5.03638)',           4326), 'BR');
-INSERT INTO pred_sites (site_name, location, country) values ('De Aar',      GeomFromText('POINT( 24.0271            -30.6979)',            4326), 'ZA');
-INSERT INTO pred_sites (site_name, location, country) values ('Billing Bir', GeomFromText('POINT( 76.7435             32.056)',             4326), 'IN');
-INSERT INTO pred_sites (site_name, location, country) values ('Bassano',     GeomFromText('POINT( 11.7705             45.8222)',            4326), 'IT');
-INSERT INTO pred_sites (site_name, location, country) values ('Valadares',   GeomFromText('POINT(-41.9151            -18.8865)',            4326), 'BR');
 
 CREATE TABLE trained_solutions
 (

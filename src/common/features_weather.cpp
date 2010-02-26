@@ -333,27 +333,33 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 bgreg::date_period features_weather::get_feature_date_period(const bool future_table) const
 {
-    pqxx::transaction<> trans(flightpred_db::get_conn(), "collect weather features");
-    const string table_name(future_table ? "weather_pred_future" : "weather_pred");
-    std::stringstream sstr;
-    sstr << "SELECT pred_time FROM " << table_name << " " << "ORDER BY pred_time ASC LIMIT 5";
-    pqxx::result res = trans.exec(sstr.str());
-    if(!res.size())
-        throw std::runtime_error("no weather features found.");
-    string strfrom;
-    res[0][0].to(strfrom);
-    const bpt::ptime ptfrom = bpt::time_from_string(strfrom);
-    sstr.str("");
-    sstr << "SELECT pred_time FROM " << table_name << " " << "ORDER BY pred_time DESC LIMIT 5";
-    res = trans.exec(sstr.str());
-    if(!res.size())
-        throw std::runtime_error("no weather features found.");
-    string strto;
-    res[0][0].to(strto);
-    const bpt::ptime ptto = bpt::time_from_string(strto);
+    try
+    {
+        pqxx::transaction<> trans(flightpred_db::get_conn(), "collect weather features");
+        const string table_name(future_table ? "weather_pred_future" : "weather_pred");
+        std::stringstream sstr;
+        sstr << "SELECT pred_time FROM " << table_name << " " << "ORDER BY pred_time ASC LIMIT 5";
+        pqxx::result res = trans.exec(sstr.str());
+        if(!res.size())
+            throw std::runtime_error("no weather features found.");
+        string strfrom;
+        res[0][0].to(strfrom);
+        const bpt::ptime ptfrom = bpt::time_from_string(strfrom);
+        sstr.str("");
+        sstr << "SELECT pred_time FROM " << table_name << " " << "ORDER BY pred_time DESC LIMIT 5";
+        res = trans.exec(sstr.str());
+        if(!res.size())
+            throw std::runtime_error("no weather features found.");
+        string strto;
+        res[0][0].to(strto);
+        const bpt::ptime ptto = bpt::time_from_string(strto);
 
-    return bgreg::date_period(ptfrom.date() + bgreg::days(1), ptto.date() - bgreg::days(1));
-//    return bgreg::date_period(ptto.date() - bgreg::days(150), ptto.date() - bgreg::days(1));
+        return bgreg::date_period(ptfrom.date() + bgreg::days(1), ptto.date() - bgreg::days(1));
+    }
+    catch(std::exception&)
+    {
+        return bgreg::date_period(bgreg::date(2006, 10, 1), bgreg::date(2009, 9, 30));
+    }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
