@@ -72,11 +72,11 @@ FlightForecast::FlightForecast(const std::string &db_conn_str, const size_t fore
     Wt::WTable *maintable = new Wt::WTable(impl_);
     maintable->setStyleClass("forecastTable");
     for(size_t j=0; j<forecast_days; ++j)
-        makePredDay(today + bgreg::days(j), maintable->elementAt(0, j), maintable->elementAt(1, j));
+        makePredDay(today + bgreg::days(j), maintable->elementAt(0, j), maintable->elementAt(1, j), !j);
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *parentForTable, Wt::WContainerWidget *parentForMap)
+void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *parentForTable, Wt::WContainerWidget *parentForMap, const bool showMap)
 {
     // get flight forecasts from the db
     pqxx::connection conn(db_conn_str_);
@@ -143,42 +143,45 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 
 #if WT_SERIES >= 0x3
 
-    parentForMap->setStyleClass("forecastTableCell");
-    Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parentForMap);
-    gmap->resize(352, 300);
-    gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
-    gmap->enableScrollWheelZoom();
-    gmap->enableDragging();
-
-    pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
-
-    for(size_t i=0; i<model->rowCount(); ++i)
+    if(showMap)
     {
-        const string site_name = boost::any_cast<string>(model->data(i, 0));
-        const double max_dist  = boost::any_cast<double>(model->data(i, 2));
+        parentForMap->setStyleClass("forecastTableCell");
+        Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parentForMap);
+        gmap->resize(352, 300);
+        gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
+        gmap->enableScrollWheelZoom();
+        gmap->enableDragging();
 
-        std::stringstream sstr;
-        sstr << "SELECT AsText(location) as loc from pred_sites WHERE site_name='" << site_name << "'";
-        pqxx::result res = trans.exec(sstr.str());
-        if(!res.size())
-            continue;
+        pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
 
-        string dbloc;
-        res[0][0].to(dbloc);
-        geometry::point_ll_deg dbpos;
-        geometry::from_wkt(dbloc, dbpos);
+        for(size_t i=0; i<model->rowCount(); ++i)
+        {
+            const string site_name = boost::any_cast<string>(model->data(i, 0));
+            const double max_dist  = boost::any_cast<double>(model->data(i, 2));
 
-        const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
-//        gmap->addMarker(gmCoord, "/sigma.gif");
-        const double radiusKm = max_dist / 10.0;
-        gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9);
+            std::stringstream sstr;
+            sstr << "SELECT AsText(location) as loc from pred_sites WHERE site_name='" << site_name << "'";
+            pqxx::result res = trans.exec(sstr.str());
+            if(!res.size())
+                continue;
 
-        bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
-        bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
-        bbox.second.setLatitude( std::max(bbox.second.latitude(),  dbpos.lat()));
-        bbox.second.setLongitude(std::max(bbox.second.longitude(), dbpos.lon()));
+            string dbloc;
+            res[0][0].to(dbloc);
+            geometry::point_ll_deg dbpos;
+            geometry::from_wkt(dbloc, dbpos);
+
+            const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
+    //        gmap->addMarker(gmCoord, "/sigma.gif");
+            const double radiusKm = max_dist / 10.0;
+            gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9);
+
+            bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
+            bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
+            bbox.second.setLatitude( std::max(bbox.second.latitude(),  dbpos.lat()));
+            bbox.second.setLongitude(std::max(bbox.second.longitude(), dbpos.lon()));
+        }
+        gmap->zoomWindow(bbox);
     }
-    gmap->zoomWindow(bbox);
 #endif
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

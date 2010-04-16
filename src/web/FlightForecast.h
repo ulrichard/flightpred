@@ -23,7 +23,7 @@ public:
     virtual ~FlightForecast() { }
 
 private:
-    void makePredDay(const boost::gregorian::date &day, Wt::WContainerWidget *parentForTable, Wt::WContainerWidget *parentForMap);
+    void makePredDay(const boost::gregorian::date &day, Wt::WContainerWidget *parentForTable, Wt::WContainerWidget *parentForMap, const bool showMap);
     void try_imbue(std::ostream &ostr, const std::string &localename);
 
     Wt::WContainerWidget *impl_;

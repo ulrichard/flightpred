@@ -5,7 +5,7 @@ FIND_PACKAGE(Wt 2.2.4 REQUIRED)
 #FIND_PACKAGE(Fcgi REQUIRED)
 
 ADD_EXECUTABLE(flightpred_web.fcgi main.cpp WGoogleMapEx.cpp FlightForecast.cpp WeatherMap.cpp Populations.cpp)
-TARGET_LINK_LIBRARIES(flightpred_web.fcgi flightpred_common wt wtfcgi wtext pqxx grib_api )
+TARGET_LINK_LIBRARIES(flightpred_web.fcgi flightpred_common wt wtfcgi wtext pqxx grib_api)
 
 SET_TARGET_PROPERTIES(
     flightpred_web.fcgi

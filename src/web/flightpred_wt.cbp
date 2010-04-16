@@ -11,8 +11,11 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--docroot ../../www_docroot --http-address 0.0.0.0 --http-port 8080" />
+				<Option parameters="--docroot /usr/share/flightpred/www_docroot/ --http-address 0.0.0.0 --http-port 8080" />
 				<Compiler>
+					<Add option="-march=pentium3" />
+					<Add option="-Wmain" />
+					<Add option="-Wall" />
 					<Add option="-g" />
 					<Add option="-D_DEBUG" />
 					<Add directory=".." />
@@ -33,7 +36,11 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-march=pentium3" />
+					<Add option="-fexpensive-optimizations" />
 					<Add option="-O2" />
+					<Add option="-Wmain" />
+					<Add option="-Wall" />
 					<Add directory=".." />
 					<Add directory="../../3rd-party/dclib" />
 					<Add directory="../../3rd-party/ggl/boost/ggl" />
