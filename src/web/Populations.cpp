@@ -82,7 +82,11 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
          << "ORDER BY train_time ASC";
     pqxx::result res = trans.exec(sstr.str());
     if(!res.size())
-        throw std::runtime_error("no population found");
+    {
+        std::cout << "critical error during session initialization : " << std::endl;
+        new Wt::WText("no population found", impl_);
+        return;
+    }
 
     boost::regex regx("\\w+\\(\\w+");
     set<string> confclasses;

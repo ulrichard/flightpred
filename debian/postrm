@@ -24,16 +24,12 @@ if [ -f /usr/share/dbconfig-common/dpkg/postrm.pgsql ]; then
    dbc_go flightpred $@
 fi
 
-db_get flightpred/database_name && DB_NAME="$RET"
-db_get flightpred/user_account && DB_USER="$RET" || DB_USER=flightpred
 
 case "$1" in
     purge)
 	rm -f /etc/flightpred.conf
-	if [ -n "$DB_USER" ]; then
-	    deluser --remove-home $DB_USER >> /dev/null || true
-	    delgroup --only-if-empty $DB_USER >> /dev/null || true
-	fi
+	deluser --remove-home flightpred >> /dev/null || true
+	delgroup --only-if-empty flightpred >> /dev/null || true
     ;;
 
     upgrade)
@@ -41,10 +37,10 @@ case "$1" in
     	# By this time, all sql files should have been overwritten by the new 
 	# version's, so this should be ok (even if this is called from the old 
 	# postrm script). 
-#	su $DB_USER -c "/usr/lib/wdb/upgrade_database -d $DB_NAME"
+#	su flightpred -c "/usr/lib/wdb/upgrade_database -d flightpred"
 
 	# Extra sanity check after upgrade
-#	INSTALLED_VERSION=`su postgres -c "psql $DB_NAME -tc 'SELECT wci.version()' | cut -sd\  -f3"`
+#	INSTALLED_VERSION=`su postgres -c "psql flightpred -tc 'SELECT wci.version()' | cut -sd\  -f3"`
 #	NEW_VERSION=`echo $2 | sed s/-.*//`
 #	test $INSTALLED_VERSION = $NEW_VERSION
 	# Fail goes to new-postrm: failed-upgrade
@@ -60,7 +56,7 @@ case "$1" in
      
 	abort-upgrade)
 	    # Called on new postrm
-#	    INSTALLED_VERSION=`su postgres -c "psql $DB_NAME -tc 'SELECT wci.version()' | cut -sd\  -f3"`
+#	    INSTALLED_VERSION=`su postgres -c "psql flightpred -tc 'SELECT wci.version()' | cut -sd\  -f3"`
 #	    OLD_VERSION=`echo $2 | sed s/-.*//`
 	
 	    # If this fails, leaves package in half-installed state.

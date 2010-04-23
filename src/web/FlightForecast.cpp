@@ -53,9 +53,7 @@ FlightForecast::FlightForecast(const std::string &db_conn_str, const size_t fore
     pqxx::transaction<> trans(conn, "web prediction");
     const bgreg::date today(boost::posix_time::second_clock::universal_time().date());
 
-    std::stringstream sstr;
-    sstr << "SELECT pred_site_id, site_name, AsText(location) as loc FROM pred_sites";
-    pqxx::result res = trans.exec(sstr.str());
+    pqxx::result res = trans.exec("SELECT pred_site_id, site_name, AsText(location) as loc FROM pred_sites");
     if(!res.size())
         throw std::invalid_argument("no sites found");
 

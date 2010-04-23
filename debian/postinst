@@ -24,13 +24,13 @@ case "$1" in
 	configure)
         #Create flightpred admin user
 		if ! grep -q "^flightpred:" /etc/passwd ; then
-		    adduser --gecos 0 --disabled-password flightpred
+		    adduser --gecos 0 --disabled-password --disabled-login flightpred
 		    # Remove any old crontab entries if this account have had any before
 		    su flightpred -c "crontab -r" 2> /dev/null || true
 		fi
 		echo 'PATH=$PATH:/usr/lib/flightpred/' >> /home/flightpred/.bashrc
 	
-		# Generate config file
+		# Generate config file and set up the database
 		if [ ! -f /etc/flightpred.conf ]; then
 		    echo "database = flightpred" > /etc/flightpred.conf
 		    PORT=`pg_lsclusters -h | grep main | xargs echo | cut -d' ' -f3`
@@ -46,14 +46,18 @@ case "$1" in
 			sudo -u flightpred psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
 			#sudo -u flightpred psql -e -a -c "ALTER DATABASE flightpred OWNER TO flightpred"
 			sudo -u flightpred psql -e -a -d flightpred -f /usr/share/flightpred/create_flightpred_db.sql
-			sudo -u postgres psql -e -a -c "ALTER ROLE flightpred NOSUPERUSER
-" 
+			sudo -u postgres psql -e -a -c "ALTER ROLE flightpred NOSUPERUSER" 
 		fi
 	
 
 		# set up the environment for the webapp
-		mkdir -p /var/run/flightpred
-    		chown -R www-data:www-data /var/run/flightpred
+#		mkdir -p /var/run/flightpred
+#    	chown -R www-data:www-data /var/run/flightpred
+		mkdir -p /usr/run/flightpred
+    	chown -R www-data:www-data /usr/run/flightpred
+
+		chown -R flightpred:www-data /home/flightpred
+		chmod -R 775 /home/flightpred
 
 		if ! grep -q "^flightpred:" /etc/wt/wt_config.xml ; then
 			chmod +x /usr/share/flightpred/append_wt_config.pl
@@ -66,7 +70,7 @@ case "$1" in
 		a2enmod fastcgi
 		echo "register flightpred with apache"
 		a2ensite flightpred.conf 
-		/etc/init.d/apache2 reload
+		/etc/init.d/apache2 restart
 		;;
 	*)
 		#
