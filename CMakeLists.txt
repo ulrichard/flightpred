@@ -33,13 +33,9 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 MARK_AS_ADVANCED( CONFIGDIR )
 SET(CONFIGURATION "${CONFIGDIR}/wt_config.xml" CACHE PATH "Path to the wt configuration file")
 
-SET(WEBUSER apache CACHE STRING "Webserver username (e.g. apache or www)")
-SET(WEBGROUP apache CACHE STRING "Webserver groupname (e.g. apache or www or users)")
+SET(WEBUSER www-data CACHE STRING "Webserver username (e.g. apache or www)")
+SET(WEBGROUP www-data CACHE STRING "Webserver groupname (e.g. apache or www or users)")
 
 SUBDIRS(3rd-party/json_spirit/json_spirit src)
 
-
-#IF(NOT EXISTS ${CONFIGDIR}/wt_config.xml)
-#  INSTALL(FILES ${PROJECT_SOURCE_DIR}/wt_config.xml DESTINATION ${CONFIGDIR})
-#ENDIF (NOT EXISTS ${CONFIGDIR}/wt_config.xml)
 

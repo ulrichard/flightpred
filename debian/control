@@ -3,7 +3,7 @@ Section: web
 Priority: optional
 Maintainer: Richard Ulrich <richi@paraeasy.ch>
 Build-Depends: debhelper (>= 7), libfcgi0ldbl, 
- libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, 
+ libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev,
  libwt-dev, libwtext-dev, libwtfcgi-dev, postgis, libpqxx-dev, proj (>=4.6.0), adduser, libgrib-api-dev (>=1.7.0), postgresql-contrib-8.3
 standards-Version: 3.8.1.0
 Homepage: http://sourceforge.net/projects/flightpred

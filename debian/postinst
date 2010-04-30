@@ -51,8 +51,6 @@ case "$1" in
 	
 
 		# set up the environment for the webapp
-#		mkdir -p /var/run/flightpred
-#    	chown -R www-data:www-data /var/run/flightpred
 		mkdir -p /usr/run/flightpred
     	chown -R www-data:www-data /usr/run/flightpred
 
@@ -71,6 +69,7 @@ case "$1" in
 		echo "register flightpred with apache"
 		a2ensite flightpred.conf 
 		/etc/init.d/apache2 restart
+		echo "apache restarted"
 		;;
 	*)
 		#
