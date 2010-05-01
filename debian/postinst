@@ -68,7 +68,11 @@ case "$1" in
 		a2enmod fastcgi
 		echo "register flightpred with apache"
 		a2ensite flightpred.conf 
-		/etc/init.d/apache2 restart > /dev/null
+		if which invoke-rc.d >/dev/null 2>&1; then
+	     	invoke-rc.d apache2 restart
+     	else
+     		/etc/init.d/apache2 restart
+     	fi
 		echo "apache restarted"
 		;;
 	*)
