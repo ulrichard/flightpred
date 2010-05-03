@@ -16,8 +16,8 @@ set -e
 # the debian-policy package
 
 . /usr/share/debconf/confmodule
-. /usr/share/dbconfig-common/dpkg/postinst.pgsql
-dbc_go flightpred $@
+#. /usr/share/dbconfig-common/dpkg/postinst.pgsql
+#dbc_go flightpred $@
 
 
 case "$1" in
