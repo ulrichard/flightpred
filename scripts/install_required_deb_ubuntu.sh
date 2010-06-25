@@ -6,4 +6,5 @@ sudo apt-get install postgresql-8.4 postgresql-contrib-8.4 postgresql-client-8.4
 sudo apt-get install libboost-dev libboost-program-options-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-program-options-dev
 #sudo apt-get install liblog4cpp5-dev libreadline5-dev libjasper1
 sudo apt-get install libcoyotl-dev libevocosm-dev
+sudo apt-get install libwt-dev libwthttp-dev libwtext-dev libwtfcgi-dev
 
