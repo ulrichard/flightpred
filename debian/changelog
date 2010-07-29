@@ -1,3 +1,9 @@
+flightpred (0.0.2) lucid; urgency=low
+
+  * trying to get it into the ppa
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue, 10 Nov 2009 20:05:17 +0100
+
 flightpred (0.0.1) lucid; urgency=low
 
   * initial packaging
