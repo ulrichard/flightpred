@@ -1,3 +1,9 @@
+flightpred (0.0.5) lucid; urgency=low
+
+  * added libevocosm-dev, libcoyotl-dev dependencies to debian/control
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Fri, 30 Jul 2010 01:05:17 +0100
+
 flightpred (0.0.4) lucid; urgency=low
 
   * FindWt.cmake needs to find wthttp as described here : http://www.mail-archive.com/witty-interest@lists.sourceforge.net/msg04051.html
