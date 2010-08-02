@@ -41,8 +41,8 @@ case "$1" in
 			su postgres   -c "psql -e -a -c \"CREATE USER flightpred WITH PASSWORD 'flightpred' SUPERUSER\""	 >> /dev/null
 			su flightpred -c "createdb -e flightpred"															 >> /dev/null
 			su flightpred -c "createlang plpgsql flightpred"													 >> /dev/null
-			su flightpred -c "psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql"		 >> /dev/null
-			su flightpred -c "psql -e -a -d flightpred -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql" >> /dev/null
+			su flightpred -c "psql -e -a -d flightpred -f /usr/share/postgresql/8.4/contrib/postgis.sql"		 >> /dev/null
+			su flightpred -c "psql -e -a -d flightpred -f /usr/share/postgresql/8.4/contrib/spatial_ref_sys.sql" >> /dev/null
 			su flightpred -c "psql -e -a -d flightpred -f /usr/share/flightpred/create_flightpred_db.sql"		 >> /dev/null
 			su postgres   -c "psql -e -a -c \"ALTER ROLE flightpred NOSUPERUSER\"" 								 >> /dev/null
 		fi
