@@ -1,3 +1,0 @@
-This package uses quilt to manage all modifications to the upstream
-sources.  See `/usr/share/doc/quilt/README.source' to get more
-information on how to use it.

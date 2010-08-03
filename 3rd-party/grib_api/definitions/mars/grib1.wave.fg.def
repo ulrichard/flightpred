@@ -1,3 +1,0 @@
-transient conceptDir = "mars";
-concept waveDomain(unknown,"wave_domain.def",conceptDir,conceptDir) : no_copy;
-alias mars.domain = waveDomain;

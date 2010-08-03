@@ -1,3 +1,0 @@
-if(systemNumber != 0) { alias mars.system = systemNumber; }
-alias mars.number = perturbationNumber;
-alias mars.method = methodNumber;
