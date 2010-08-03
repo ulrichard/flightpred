@@ -9,7 +9,8 @@ case "$1" in
 		#
 		echo "remove flightpred from apache"
 		a2dissite flightpred.conf
-		/etc/init.d/apache2 reload
+		#/etc/init.d/apache2 reload
+		apache2ctl restart
 		;;
 	failed-upgrade)
 		;;

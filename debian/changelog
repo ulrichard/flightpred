@@ -1,3 +1,9 @@
+flightpred (0.0.7) lucid; urgency=low
+
+  * trying "apache2ctl restart" in debian/postinst hoping that it won't hang.
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Wed,  04 Aug 2010 00:07:10 +0200
+
 flightpred (0.0.6) lucid; urgency=low
 
   * adapted debian/postinst to the postgis version used in lucid.
