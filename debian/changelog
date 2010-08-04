@@ -1,3 +1,9 @@
+flightpred (0.0.8) lucid; urgency=low
+
+  * fixed the hanging debian/postinst that troubled a while. I found the solution in the postinst script of the gallery package of which I found a mailing list that indicated that they used to have the same problem.
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu,  05 Aug 2010 01:22:10 +0200
+
 flightpred (0.0.7) lucid; urgency=low
 
   * trying "apache2ctl restart" in debian/postinst hoping that it won't hang.
