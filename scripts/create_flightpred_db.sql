@@ -29,7 +29,8 @@ CREATE TABLE contests
 	contest_name   varchar(50)  NOT NULL,
 	website        varchar(256) NOT NULL
 );
-INSERT INTO contests (contest_name, website) values ('onlinecontest', 'http://www.onlinecontest.org');INSERT INTO contests (contest_name, website) values ('xcontest',      'http://www.xcontest.org');
+INSERT INTO contests (contest_name, website) values ('onlinecontest', 'http://www.onlinecontest.org');
+INSERT INTO contests (contest_name, website) values ('xcontest',      'http://www.xcontest.org');
 
 CREATE TABLE pilots
 (
@@ -61,7 +62,9 @@ CREATE TABLE flights
 	distance     real         NOT NULL,
 	score	     int          NOT NULL,
 	duration     real,
-	CONSTRAINT FK_pilot_id     FOREIGN KEY(pilot_id)     REFERENCES pilots     (pilot_id)   ON DELETE CASCADE,	CONSTRAINT FK_contest_id   FOREIGN KEY(contest_id)   REFERENCES contests   (contest_id) ON DELETE CASCADE,	CONSTRAINT FK_site_id      FOREIGN KEY(site_id)      REFERENCES sites      (site_id)
+	CONSTRAINT FK_pilot_id     FOREIGN KEY(pilot_id)     REFERENCES pilots     (pilot_id)   ON DELETE CASCADE,
+	CONSTRAINT FK_contest_id   FOREIGN KEY(contest_id)   REFERENCES contests   (contest_id) ON DELETE CASCADE,
+	CONSTRAINT FK_site_id      FOREIGN KEY(site_id)      REFERENCES sites      (site_id)
 );
 CREATE INDEX flightByDate ON flights (flight_date, distance);
 
@@ -95,8 +98,9 @@ CREATE TABLE weather_models
 );
 
 INSERT INTO weather_models (model_name, grid_step, url_past, url_future) values 
-('GFS', 2.5, 'nomad3.ncep.noaa.gov/pub/reanalysis-2/6hr/pgb/', 'nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/');
-CREATE TABLE weather_pred
+('GFS', 1, 'nomads.ncdc.noaa.gov/data/gfsanl/', 'nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/');
+              
+CREATE TABLE weather_pred
 (
 	weather_pred_id SERIAL PRIMARY KEY,
 	model_id    int                          NOT NULL,

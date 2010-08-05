@@ -56,11 +56,11 @@ void flight_grabber::grab_flights(const bgreg::date &from, const bgreg::date &to
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::read_json(const bfs::path &jsonfile)
 {
-    std::cout << "Reading json file : " << jsonfile << std::endl;
     assert(bfs::exists(jsonfile));
     boost::timer btim;
     bfs::ifstream is(jsonfile);
     json_spirit::mValue val;
+    std::cout << "Reading json file : " << jsonfile << std::endl;
     json_spirit::read(is, val);
 
     std::cout << "json file read in " << btim.elapsed() << "sec" << std::endl;

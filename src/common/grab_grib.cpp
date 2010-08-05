@@ -26,6 +26,7 @@
 #include <boost/algorithm/minmax_element.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/algorithm/string.hpp>
 // standard library
 #include <sstream>
 #include <iomanip>
@@ -68,7 +69,7 @@ using std::stringstream;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 grib_grabber::grib_grabber(const string &modelname, size_t download_pack, const bool is_future)
     : baseurl_(get_base_url(modelname, is_future)), modelname_(modelname),
-      db_model_id_(get_model_id(modelname)), download_pack_(download_pack), is_future_(is_future)
+      db_model_id_(get_model_id(modelname)), grid_res_(get_grid_res(modelname)), download_pack_(download_pack), is_future_(is_future)
 {
 
 }
@@ -99,6 +100,20 @@ size_t grib_grabber::get_model_id(const string &model)
     size_t dbid;
     res[0][0].to(dbid);
     return dbid;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+double grib_grabber::get_grid_res(const std::string &model)
+{
+    pqxx::transaction<> trans(flightpred_db::get_conn(), "get model details");
+
+    std::stringstream sstr;
+    sstr << "SELECT grid_step FROM weather_models where model_name ='" << model << "'";
+    pqxx::result res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("No details found in the db for weather prediction model " + model);
+    double grid_step;
+    res[0][0].to(grid_step);
+    return grid_step;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber::download_data(const string &url, std::ostream &ostr, const list<request> &requests)
@@ -449,73 +464,83 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
 {
     static const set<string>  sel_levels = get_std_levels(true);
     static const set<string>  sel_param  = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(2.5, 4);
-    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(2.5, 16);
+    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(grid_res_, 4);
+    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(grid_res_, 16);
 
     // download the grib files
-    for(bgreg::date mon(from.year(), from.month(), 1); mon <= to; mon += bgreg::months(1))
+    for(bgreg::date cday(from); cday <= to; cday += bgreg::days(1))
     {
-        // first, get the inventory
-        std::stringstream ssurl;
-        ssurl << baseurl_ << "pgb." << std::setfill('0') << std::setw(4) << static_cast<int>(mon.year())
-              << std::setw(2) << static_cast<int>(mon.month());
-
-        std::stringstream buf_inv;
-        download_data(ssurl.str() + ".inv", buf_inv, list<request>());
-
-        list<request> requests;
-        string line;
-        while(std::getline(buf_inv, line))
+        for(size_t i=0; i<4; ++i)
         {
-            boost::char_separator<char> sep(":");
-            boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
-            vector<string> vtokens;
-            std::copy(tokens.begin(), tokens.end(), back_inserter(vtokens));
-            if(vtokens.size() < 7)
-                continue;
-            // todo : grib2 has a range field
-            request req;
-            req.range_start = lexical_cast<size_t>(vtokens[1]);
-            req.range_end   = 0;
-            if(requests.size() && !requests.back().range_end)
-                requests.back().range_end = req.range_start;
-            if(vtokens[2].length() == 12 && vtokens[2].substr(0, 2) == "d=")
+            // first, get the inventory
+            std::stringstream ssurl;
+            ssurl << baseurl_ << std::setfill('0') << std::setw(4) << static_cast<int>(cday.year())
+                              << std::setw(2) << static_cast<int>(cday.month())
+                       << "/" << std::setfill('0') << std::setw(4) << static_cast<int>(cday.year())
+                              << std::setw(2) << static_cast<int>(cday.month())
+                              << std::setw(2) << static_cast<int>(cday.day())
+              << "/gfsanl_3_" << std::setfill('0') << std::setw(4) << static_cast<int>(cday.year())
+                              << std::setw(2) << static_cast<int>(cday.month())
+                              << std::setw(2) << static_cast<int>(cday.day())
+                       << "_" << std::setw(2) << static_cast<int>(i * 6) << "00_000";
+
+            std::stringstream buf_inv;
+            download_data(ssurl.str() + ".inv", buf_inv, list<request>());
+
+            list<request> requests;
+            string line;
+            while(std::getline(buf_inv, line))
             {
-                req.pred_time = bpt::ptime(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
-                                           bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
-                predrun_ = req.pred_time;
-                if(req.pred_time.date() >=from && req.pred_time.date() <= to)
-                    if(sel_levels.find(vtokens[4]) != sel_levels.end() && sel_param.find(vtokens[3]) != sel_param.end())
-                    {
-                        req.level = atoi(vtokens[4].c_str());
-                        req.param = vtokens[3];
-
-                        if(requests.size() >= download_pack_)
+                boost::char_separator<char> sep(":");
+                boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
+                vector<string> vtokens;
+                std::copy(tokens.begin(), tokens.end(), back_inserter(vtokens));
+                if(vtokens.size() < 7)
+                    continue;
+                // todo : grib2 has a range field
+                request req;
+                req.range_start = lexical_cast<size_t>(vtokens[1]);
+                req.range_end   = 0;
+                if(requests.size() && !requests.back().range_end)
+                    requests.back().range_end = req.range_start;
+                if(vtokens[2].length() == 12 && boost::to_upper_copy(vtokens[2].substr(0, 2)) == "D=")
+                {
+                    req.pred_time = bpt::ptime(bgreg::from_undelimited_string(vtokens[2].substr(2, 8)),
+                                               bpt::hours(lexical_cast<int>(vtokens[2].substr(10, 2))));
+                    predrun_ = req.pred_time;
+                    if(req.pred_time.date() >=from && req.pred_time.date() <= to)
+                        if(sel_levels.find(vtokens[4]) != sel_levels.end() && sel_param.find(vtokens[3]) != sel_param.end())
                         {
-                            // download the data
-                            stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
-                            download_data(ssurl.str(), buf_grib, requests);
+                            req.level = atoi(vtokens[4].c_str());
+                            req.param = vtokens[3];
 
-                            // decode the grib data and write into the database
-                            dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
+                            if(requests.size() >= download_pack_)
+                            {
+                                // download the data
+                                stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
+                                download_data(ssurl.str(), buf_grib, requests);
 
-                            //requests.clear();
+                                // decode the grib data and write into the database
+                                dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
+
+                                //requests.clear();
+                            }
+
+                            requests.push_back(req);
                         }
+                }
+            } // while getline
 
-                        requests.push_back(req);
-                    }
+            if(requests.size())
+            {
+                // download the data
+                stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
+                download_data(ssurl.str() + ".grb", buf_grib, requests);
+
+                // decode the grib data and write into the database
+                dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
             }
-        } // while getline
-
-        if(requests.size())
-        {
-            // download the data
-            stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
-            download_data(ssurl.str(), buf_grib, requests);
-
-            // decode the grib data and write into the database
-            dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
-        }
+        } // for the run 00 06 12 18 GMT
     } // for day
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -525,8 +550,8 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
 {
     const set<string>       sel_levels    = get_std_levels(true);
     const set<string>       sel_param     = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(2.5, 4);
-    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(2.5, 16);
+    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(grid_res_, 4);
+    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(grid_res_, 16);
 
     const bpt::time_duration usual_pred_run_time = bpt::hours(12); // the usual max time for the prediction results to become online available
     const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;
@@ -650,8 +675,8 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
 {
     const set<string>       sel_levels    = get_std_levels(true);
     const set<string>       sel_param     = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(2.5, 4);
-    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(2.5, 16);
+    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(grid_res_, 4);
+    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(grid_res_, 16);
 
     const bpt::time_duration usual_pred_run_time = bpt::hours(3); // the usual max time for the prediction results to become online available
     const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;

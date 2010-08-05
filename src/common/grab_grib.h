@@ -57,11 +57,13 @@ protected:
 
     static std::string get_base_url(const std::string &model, bool future);
     static size_t      get_model_id(const std::string &model);
+    static double      get_grid_res(const std::string &model);
     boost::unordered_set<geometry::point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
 
     const std::string        baseurl_;
     const std::string        modelname_;
     const size_t             db_model_id_;
+    const double             grid_res_;
     const size_t             download_pack_;
     const bool               is_future_;
     static const size_t      PG_SIR_WGS84 = 4326;
