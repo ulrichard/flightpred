@@ -518,7 +518,7 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
                             {
                                 // download the data
                                 stringstream buf_grib(ios_base::out | ios_base::in | ios_base::binary);
-                                download_data(ssurl.str(), buf_grib, requests);
+                                download_data(ssurl.str() + ".grb", buf_grib, requests);
 
                                 // decode the grib data and write into the database
                                 dispatch_grib_data(buf_grib, requests, sel_locations_close, sel_locations_wide);
