@@ -71,7 +71,7 @@ public:
     grib_pred_model_gfs() {}
 
     virtual const std::string                                  name() const { return "GFS"; };
-    virtual double                                             getGridResolution() const { return 2.5; }; // deg
+    virtual double                                             getGridResolution() const { return 1.0; }; // deg  // todo: read from db
     virtual const std::set<size_t>                           & getPressureLevels() const;
     virtual const std::set<boost::posix_time::time_duration> & getPredRunTimes() const;
     virtual const std::set<boost::posix_time::time_duration> & getFutureTimes() const;
