@@ -106,8 +106,8 @@ features_weather::feat_desc  features_weather::get_random_feature(const geometry
     report(DEBUGING) << "features_weather::get_random_feature(" << /*site_location <<*/ ")";
     feat_desc fd;
 
-    const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 2.5);
-    const vector<point_ll_deg> locations_far  = get_locations_around_site(site_location, 16, 2.5);
+    const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 1.0); // todo : get the resolution from the database
+    const vector<point_ll_deg> locations_far  = get_locations_around_site(site_location, 16, 1.0);
     boost::unordered_set<point_ll_deg> locations;
     std::copy(locations_near.begin(), locations_near.end(), std::inserter(locations, locations.end()));
     std::copy(locations_far.begin(),  locations_far.end(),  std::inserter(locations, locations.end()));
@@ -118,6 +118,7 @@ features_weather::feat_desc  features_weather::get_random_feature(const geometry
     boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_loc(rng, distr_loc);  // glues randomness with mapping
     boost::unordered_set<point_ll_deg>::const_iterator itloc = locations.begin();
     std::advance(itloc, randgen_loc());
+    assert(itloc != locations.end());
     fd.location = *itloc;
     const bool is_near_location = std::find(locations_near.begin(), locations_near.end(), fd.location) != locations_near.end();
 
@@ -127,6 +128,7 @@ features_weather::feat_desc  features_weather::get_random_feature(const geometry
     boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_lvl(rng, distr_lvl);  // glues randomness with mapping
     std::set<string>::const_iterator itlvl = levels.begin();
     std::advance(itlvl, randgen_lvl());
+    assert(itlvl != levels.end());
     fd.level = atoi(itlvl->c_str());
 
     // pick a parameter
@@ -139,7 +141,10 @@ features_weather::feat_desc  features_weather::get_random_feature(const geometry
     boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_prm(rng, distr_prm);  // glues randomness with mapping
     std::set<string>::const_iterator itprm = param.begin();
     std::advance(itprm, randgen_prm());
-    fd.param = *itprm;
+    if(itprm == param.end())
+        fd.param = *param.begin();  // todo : this is an ugly workaround -> consult the boost::random documentation
+    else
+        fd.param = *itprm;
 
     // pick a time interval
     boost::uniform_int<> distr_ivr(-2, 3); // distribution that maps to 1..xx see random number distributions

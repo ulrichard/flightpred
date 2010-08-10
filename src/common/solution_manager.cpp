@@ -36,8 +36,6 @@ using std::vector;
 using std::map;
 using std::set;
 
-
-
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::fill_label_cache()
 {
@@ -366,12 +364,24 @@ const double solution_manager::test_fitness(const solution_config &sol)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const bool solution_manager::used_for_training(const bgreg::date &day) const
 {
-    return day.day_of_week() == 0; // sunday
+    if(day.day_of_week() != 0) // sunday)
+        return false;
+
+    if(ignored_days_.find(day) != ignored_days_.end() || ignored_days_.find(day - bgreg::days(1)) != ignored_days_.end() || ignored_days_.find(day + bgreg::days(1)) != ignored_days_.end())
+        return false;
+
+    return true;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const bool solution_manager::used_for_validation(const bgreg::date &day) const
 {
-    return day.day_of_week() == 6; // saturday
+    if(day.day_of_week() != 6) // saturday
+        return false;
+
+    if(ignored_days_.find(day) != ignored_days_.end() || ignored_days_.find(day - bgreg::days(1)) != ignored_days_.end() || ignored_days_.find(day + bgreg::days(1)) != ignored_days_.end())
+        return false;
+
+    return true;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 size_t solution_manager::get_pred_site_id(const std::string &site_name)
@@ -387,6 +397,33 @@ size_t solution_manager::get_pred_site_id(const std::string &site_name)
     size_t pred_site_id;
     res[0]["pred_site_id"].to(pred_site_id);
     return pred_site_id;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+const set<bgreg::date> solution_manager::get_ignored_days()
+{
+    set<bgreg::date> ignored_days;
+
+    try
+    {
+        pqxx::transaction<> trans(flightpred_db::get_conn(), "fill_max_distance_cache");
+        std::stringstream sstr;
+        sstr << "SELECT pred_day FROM pred_ignore";
+        pqxx::result res = trans.exec(sstr.str());
+
+        for(size_t i=0; i<res.size(); ++i)
+        {
+            string datestr;
+            res[i][0].to(datestr);
+            bgreg::date day(bgreg::from_string(datestr));
+            ignored_days.insert(day);
+        }
+    }
+    catch (std::exception &ex)
+    {
+        report(WARN) << "Failed to load ignored days. Using all possible dates.";
+    }
+
+    return ignored_days;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 std::auto_ptr<solution_config> solution_manager::load_best_solution(const bool onlyFullyTrained, const double maxTrainSec)

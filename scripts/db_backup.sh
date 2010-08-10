@@ -10,5 +10,6 @@ sudo -u postgres pg_dump -a -b -t trained_solutions   flightpred > ../backup/tra
 sudo -u postgres pg_dump -a -b -t weather_models      flightpred > ../backup/weather_models.sql
 sudo -u postgres pg_dump -a -b -t weather_pred        flightpred > ../backup/weather_pred.sql
 sudo -u postgres pg_dump -a -b -t weather_pred_future flightpred > ../backup/weather_pred_future.sql
+sudo -u postgres pg_dump -a -b -t pred_ignore		  flightpred > ../backup/pred_ignore.sql
 sudo -u postgres pg_dump -a -b -t flight_pred         flightpred > ../backup/flight_pred.sql
 

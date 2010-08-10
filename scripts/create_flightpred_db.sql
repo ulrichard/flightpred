@@ -129,6 +129,13 @@ CREATE INDEX weatherFutByTime         ON weather_pred_future (pred_time, run_tim
 CREATE INDEX weatherFutByLvLParamTime ON weather_pred_future (level, parameter, pred_time);
 CREATE INDEX weatherFutByLocation     ON weather_pred_future USING GIST (location);
 
+CREATE TABLE pred_ignore
+(
+	pred_ignore_id SERIAL PRIMARY KEY,
+	model_id    int           NOT NULL,
+	pred_day    date 		  NOT NULL,
+	CONSTRAINT FK_model_id FOREIGN KEY(model_id) REFERENCES weather_models(model_id) ON DELETE CASCADE
+);
 
 CREATE TABLE flight_pred
 (

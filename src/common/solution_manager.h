@@ -18,7 +18,8 @@ class solution_manager : public boost::noncopyable
 {
 public:
     solution_manager(const std::string &site_name)
-        : site_name_(site_name), pred_site_id_(get_pred_site_id(site_name)), weather_(true), date_extremes_(weather_.get_feature_date_period(false)) { }
+        : site_name_(site_name), pred_site_id_(get_pred_site_id(site_name)), weather_(true),
+          date_extremes_(weather_.get_feature_date_period(false)), ignored_days_(get_ignored_days()) { }
     virtual ~solution_manager() { };
 
     void evolve_population(const size_t iterations, const double mutation_rate);
@@ -30,6 +31,7 @@ public:
 
 private:
     static size_t get_pred_site_id(const std::string &site_name);
+    static const std::set<boost::gregorian::date> get_ignored_days();
     std::vector<boost::shared_ptr<solution_config> > initialize_population();
     std::vector<boost::shared_ptr<solution_config> > get_initial_generation();
     void  fill_label_cache();
@@ -42,6 +44,7 @@ private:
     const size_t      pred_site_id_;
     features_weather  weather_;
     const boost::gregorian::date_period date_extremes_;
+    const std::set<boost::gregorian::date> ignored_days_;
     typedef std::map<const std::set<features_weather::feat_desc>, std::map<boost::gregorian::date, std::vector<double> > > WeatherFeatureCacheType;
     WeatherFeatureCacheType  weathercache_;
     std::map<boost::gregorian::date, double> max_distances_;
