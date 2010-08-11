@@ -206,11 +206,10 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     // then mutate the features
     std::set<features_weather::feat_desc> features =  src.get_weather_feature_desc();
 
-    boost::mt19937 rng;                           // produces randomness out of thin air see pseudo-random number generators
-    boost::uniform_int<> distr(0, features.size() / 10); // distribution that maps to 1..xx see random number distributions
-    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen(rng, distr);  // glues randomness with mapping
+    static boost::mt19937 rng;
 
     // add some new features
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen(rng, boost::uniform_int<>(0, features.size() / 10));
     const size_t target_count_add = features.size() + randgen();
     report(DEBUGING) << "add some new features from " << features.size() << " up to " << target_count_add;
     while(features.size() < target_count_add)
@@ -219,20 +218,17 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     // remove some features
     const size_t target_count_sub = features.size() - randgen();
     report(DEBUGING) << "drop some features from " << features.size() << " down to " << target_count_sub;
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_ia(rng, boost::uniform_int<>(0, features.size() - 1));
     while(features.size() > target_count_sub)
     {
-        boost::uniform_int<> distr_ia(0, features.size()); // distribution that maps to 1..xx see random number distributions
-        boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_ia(rng, distr_ia);  // glues randomness with mapping
-
         std::set<features_weather::feat_desc>::iterator it = features.begin();
-        std::advance(it, randgen_ia());
+        std::advance(it, randgen_ia() % features.size());
         features.erase(it);
     }
 
     // mutate some features
     report(DEBUGING) << "mutate some features";
-    boost::uniform_int<> distr_mut(0, 100);
-    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_mut(rng, distr_mut);  // glues randomness with mapping
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_mut(rng, boost::uniform_int<>(0, 100));
     BOOST_FOREACH(const features_weather::feat_desc &feat, features)
     {
         if(randgen_mut() >= mutation_rate_ * 100)

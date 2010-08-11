@@ -103,7 +103,7 @@ vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 features_weather::feat_desc  features_weather::get_random_feature(const geometry::point_ll_deg &site_location)
 {
-    report(DEBUGING) << "features_weather::get_random_feature(" << /*site_location <<*/ ")";
+    report(DEBUGING) << "features_weather::get_random_feature(" << geometry::make_wkt(site_location) << ")";
     feat_desc fd;
 
     const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 1.0); // todo : get the resolution from the database
@@ -112,24 +112,27 @@ features_weather::feat_desc  features_weather::get_random_feature(const geometry
     std::copy(locations_near.begin(), locations_near.end(), std::inserter(locations, locations.end()));
     std::copy(locations_far.begin(),  locations_far.end(),  std::inserter(locations, locations.end()));
 
+    static boost::mt19937 rng; // produces randomness out of thin air see pseudo-random number generators
+
     // pick a location
-    boost::mt19937 rng;                           // produces randomness out of thin air see pseudo-random number generators
-    boost::uniform_int<> distr_loc(0, locations.size()); // distribution that maps to 1..xx see random number distributions
-    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_loc(rng, distr_loc);  // glues randomness with mapping
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_loc(rng, boost::uniform_int<>(0, locations.size() - 1));
+    const size_t advloc = randgen_loc();
     boost::unordered_set<point_ll_deg>::const_iterator itloc = locations.begin();
-    std::advance(itloc, randgen_loc());
+    std::advance(itloc, advloc);
     assert(itloc != locations.end());
     fd.location = *itloc;
     const bool is_near_location = std::find(locations_near.begin(), locations_near.end(), fd.location) != locations_near.end();
+    report(DEBUGING) << "new location (" << geometry::make_wkt(fd.location) << ") is " << (is_near_location ? "near" : "far") << " [" << advloc << "/" << locations.size() << "]";
 
     // pick an altitude level
-    const std::set<string> levels = grib_grabber::get_std_levels(is_near_location);
-    boost::uniform_int<> distr_lvl(0, levels.size()); // distribution that maps to 1..xx see random number distributions
-    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_lvl(rng, distr_lvl);  // glues randomness with mapping
+    static const std::set<string> levels = grib_grabber::get_std_levels(is_near_location);
+    static boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_lvl(rng, boost::uniform_int<>(0, levels.size() - 1));
+    const size_t advlvl = randgen_lvl();
     std::set<string>::const_iterator itlvl = levels.begin();
-    std::advance(itlvl, randgen_lvl());
+    std::advance(itlvl, advlvl);
     assert(itlvl != levels.end());
     fd.level = atoi(itlvl->c_str());
+    report(DEBUGING) << "new altitude (" << fd.level << ") " << " [" << advlvl << "/" << levels.size() << "]";
 
     // pick a parameter
     std::set<string> parameters_air = grib_grabber::get_std_params();
@@ -137,19 +140,22 @@ features_weather::feat_desc  features_weather::get_random_feature(const geometry
     parameters_gnd.insert("PRES");
     parameters_gnd.insert("TMP");
     const std::set<string> &param = (fd.level ? parameters_air : parameters_gnd);
-    boost::uniform_int<> distr_prm(0, param.size()); // distribution that maps to 1..xx see random number distributions
-    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_prm(rng, distr_prm);  // glues randomness with mapping
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_prm(rng, boost::uniform_int<>(0, param.size() - 1));
     std::set<string>::const_iterator itprm = param.begin();
-    std::advance(itprm, randgen_prm());
-    if(itprm == param.end())
-        fd.param = *param.begin();  // todo : this is an ugly workaround -> consult the boost::random documentation
-    else
-        fd.param = *itprm;
+    const size_t advprm = randgen_prm();
+    std::advance(itprm, advprm);
+    assert(itprm != param.end());
+    fd.param = *param.begin();
+    report(DEBUGING) << "new parameter (" << fd.param << ") " << " [" << advprm << "/" << param.size() << "]";
 
     // pick a time interval
-    boost::uniform_int<> distr_ivr(-2, 3); // distribution that maps to 1..xx see random number distributions
-    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_ivr(rng, distr_ivr);  // glues randomness with mapping
+    ; // distribution that maps to 1..xx see random number distributions
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  randgen_ivr(rng, boost::uniform_int<>(-2, 3));
     fd.reltime = bpt::hours(6 * randgen_ivr());
+    report(DEBUGING) << "new relative time (" << fd.reltime << ") ";
+
+
+    report(DEBUGING) << "new feature (" << fd << ") ";
 
     return fd;
 }

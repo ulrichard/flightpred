@@ -333,7 +333,8 @@ const double solution_manager::test_fitness(const solution_config &sol)
 
     // validate
     report(VERBOSE) << "validate the learning machine : " << sol.get_short_description() <<  std::endl;
-    double sum_err = 0;
+    double sum_err = 0.0, sum_km = 0.0, sum_km_pred = 0.0;
+    size_t validation_count = 0;
     for(bgreg::day_iterator dit(date_extremes_.begin()); *dit <= date_extremes_.end(); ++dit)
     {
         if(used_for_validation(*dit))
@@ -343,12 +344,18 @@ const double solution_manager::test_fitness(const solution_config &sol)
             const double predval_p = predval > 0.0 ? predval : 0.0; // to catch nan
             const double & realval = max_distances_[*dit];
             const double err = fabs(realval - predval_p);
-            sum_err  += err;
+            sum_err     += err;
+            sum_km      += realval;
+            sum_km_pred += predval_p;
+            ++validation_count;
         }
     }
-    report(INFO) << "validation result for : " << sol.get_short_description()
+    report(INFO) << "validation result for : " << sol.get_short_description() << std::endl
                  << " gen " << sol.get_generation()
-                 << " total error in km is " << sum_err <<  std::endl;
+                 << " total error in km : " << sum_err <<  std::endl
+                 << " total flown km    : " << sum_km << std::endl
+                 << " total predicted km : " << sum_km_pred << std::endl
+                 << " validated with " << validation_count << " days" << std::endl;
 
     // todo : handle different generations
     pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::test_fitness");

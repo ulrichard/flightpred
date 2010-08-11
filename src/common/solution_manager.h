@@ -29,9 +29,10 @@ public:
     void export_solution(const boost::filesystem::path &backup_dir);
     void import_solution(const boost::filesystem::path &backup_dir);
 
+    static const std::set<boost::gregorian::date> get_ignored_days();
+
 private:
     static size_t get_pred_site_id(const std::string &site_name);
-    static const std::set<boost::gregorian::date> get_ignored_days();
     std::vector<boost::shared_ptr<solution_config> > initialize_population();
     std::vector<boost::shared_ptr<solution_config> > get_initial_generation();
     void  fill_label_cache();

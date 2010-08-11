@@ -35,6 +35,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
 {
     report(INFO) << "train_svm::train(" << site_name << ", " << bgreg::to_iso_extended_string(from)
                  << ", " << bgreg::to_iso_extended_string(to) <<  ")";
+    const std::set<boost::gregorian::date> ignored_days = solution_manager::get_ignored_days();
     features_weather weather(false);
 
     // get the id and geographic position of the prediction site
@@ -87,7 +88,6 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
 
     // get the feature descriptions of the weather data
     const set<features_weather::feat_desc> &features = sol->get_weather_feature_desc();
-//    const set<features_weather::feat_desc> features = weather.get_standard_features(pred_location);
 
     report(INFO) << "collecting features for " << site_name;
     learning_machine::SampleType      training_samples;
@@ -95,6 +95,10 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     array<vector<double>, 5> labels;
     for(bgreg::date day = from; day <= to; day += bgreg::days(1))
     {
+        // we ignore some days where the grib data is incomplete
+        if(ignored_days.find(day) != ignored_days.end() || ignored_days.find(day - bgreg::days(1)) != ignored_days.end() || ignored_days.find(day + bgreg::days(1)) != ignored_days.end())
+            continue;
+
         if(labelsbydate.find(day) != labelsbydate.end())
         {
             for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
