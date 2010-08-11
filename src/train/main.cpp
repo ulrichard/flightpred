@@ -87,6 +87,7 @@ int main(int argc, char* argv[])
             ("import-solution",    "restore solutions that were trained before and saved to a file (name, backup-dir)")
             ("get-future-weather", "get future weather prediction grib data for central europe (download-pack)")
             ("forecast",           "predict possible flights for the next few days")
+            ("db-maintenance",     "delete old unused data, analyze indices...")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
             ("position",      po::value<string>(&position)->default_value("N 0 E 0"), "geographic position")
             ("area-radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training [m]")
@@ -260,6 +261,29 @@ int main(int argc, char* argv[])
             else
                 std::for_each(site_names.begin(), site_names.end(),
                     boost::bind(&forecast::prediction_run, boost::ref(fcst), _1, pred_days));
+
+            show_help_msg = false;
+        }
+
+        if(vm.count("db-maintenance"))
+        {
+            {
+                pqxx::transaction<> trans(flightpred_db::get_conn(), "db-maintenance");
+
+                report(INFO) << "Delete old records with future weather predictions that are no longer in the future.";
+                std::stringstream sstr;
+                sstr << "delete from weather_pred_future where pred_time < '"
+                     << bgreg::to_iso_extended_string(bgreg::day_clock::local_day() - bgreg::days(2)) << " 00:00:00' ";
+                trans.exec(sstr.str());
+                trans.commit();
+            }
+
+            {
+                pqxx::nontransaction nontrans(flightpred_db::get_conn());
+                report(INFO) << "prune deleted records and update index analysis.";
+                nontrans.exec("VACUUM ANALYZE");
+                nontrans.commit();
+            }
 
             show_help_msg = false;
         }
