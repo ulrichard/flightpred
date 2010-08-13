@@ -1,5 +1,5 @@
 mkdir ../backup
-sudo -u postgres pg_dump                              flightpred > ../backup/dbdump.sql
+#sudo -u postgres pg_dump                              flightpred > ../backup/dbdump.sql
 
 sudo -u postgres pg_dump -a -b -t pred_sites          flightpred > ../backup/pred_sites.sql
 sudo -u postgres pg_dump -a -b -t contests            flightpred > ../backup/contests.sql

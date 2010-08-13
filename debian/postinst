@@ -46,6 +46,9 @@ case "$1" in
 			su flightpred -c "psql -e -a -d flightpred -f /usr/share/flightpred/create_flightpred_db.sql"		 >> /dev/null
 			su postgres   -c "psql -e -a -c \"ALTER ROLE flightpred NOSUPERUSER\"" 								 >> /dev/null
 		fi
+
+		su flightpred -c "psql -e -a -c \"update weather_models set url_past='nomads.ncdc.noaa.gov/data/gfsanl/', grid_step=1.0 where model_name='GFS';\" "
+
 	
 
 		# set up the environment for the webapp

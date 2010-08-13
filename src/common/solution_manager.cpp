@@ -427,7 +427,7 @@ const set<bgreg::date> solution_manager::get_ignored_days()
     }
     catch (std::exception &ex)
     {
-        report(WARN) << "Failed to load ignored days. Using all possible dates.";
+        report(WARN) << "Failed to load ignored days. Using all possible dates: " << ex.what();
     }
 
     return ignored_days;
