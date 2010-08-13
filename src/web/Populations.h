@@ -23,11 +23,12 @@ public:
     virtual ~Populations() { }
 
 private:
-    void ShowPopulation(const Wt::WString &site_name);
+    void ShowPopulation();
 
     Wt::WContainerWidget *impl_;
     const std::string db_conn_str_;
     Wt::WComboBox *areas_;
+    Wt::WComboBox *criteria_;
     Wt::Chart::WCartesianChart *chart_;
     Wt::WText *footertext_;
 };

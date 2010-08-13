@@ -503,6 +503,8 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
 void solution_manager::import_solution(const bfs::path &backup_dir)
 {
     bfs::path infile(backup_dir / (site_name_ + ".flightpred"));
+    if(!bfs::exists(infile))
+        throw std::runtime_error("file not found : " + infile.string());
     bfs::ifstream ifs(infile, std::ios_base::in | std::ios_base::binary);
 	if(!ifs.good())
         throw std::runtime_error("file not found : " + infile.string());

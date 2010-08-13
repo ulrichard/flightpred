@@ -35,14 +35,15 @@ Populations::Populations(const string &db_conn_str, Wt::WContainerWidget *parent
 
     pqxx::connection conn(db_conn_str_);
     pqxx::transaction<> trans(conn, "web populations");
-
     std::stringstream sstr;
+
+    // areas
+    Wt::WText *txtarea = new Wt::WText("Area", impl_);
+    areas_ = new  Wt::WComboBox(impl_);
     sstr << "SELECT site_name from pred_sites";
     pqxx::result res = trans.exec(sstr.str());
     if(!res.size())
         throw std::runtime_error("no sites found");
-
-    areas_ = new  Wt::WComboBox(impl_);
     for(size_t i=0; i<res.size(); ++i)
     {
         string site_name;
@@ -50,17 +51,26 @@ Populations::Populations(const string &db_conn_str, Wt::WContainerWidget *parent
         areas_->addItem(site_name);
     }
     areas_->setCurrentIndex(0);
-#if WT_SERIES >= 0x3
-    areas_->sactivated().connect(SLOT(this, Populations::ShowPopulation));
-#else
-    areas_->sactivated.connect(SLOT(this, Populations::ShowPopulation));
-#endif
-    ShowPopulation(areas_->currentText());
+    areas_->activated().connect(SLOT(this, Populations::ShowPopulation));
 
+
+    // criteria
+    Wt::WText *txtcrit = new Wt::WText("Criteria", impl_);
+    criteria_ = new  Wt::WComboBox(impl_);
+    criteria_->addItem("Algorithm");
+    criteria_->addItem("Generation");
+    criteria_->setCurrentIndex(0);
+    criteria_->activated().connect(SLOT(this, Populations::ShowPopulation));
+
+
+
+    ShowPopulation();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void Populations::ShowPopulation(const Wt::WString &site_name)
+void Populations::ShowPopulation()
 {
+    const Wt::WString &site_name = areas_->currentText();
+
     if(chart_)
     {
         impl_->removeWidget(chart_);
@@ -84,13 +94,13 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
     if(!res.size())
     {
         std::cout << "critical error during session initialization : " << std::endl;
-        new Wt::WText("no population found", impl_);
+        footertext_ = new Wt::WText("no population found", impl_);
         return;
     }
 
     boost::regex regx("\\w+\\(\\w+");
     set<string> confclasses;
-    typedef map<size_t, vector<pair<string, double> > > SolutionsT;
+    typedef map<size_t, vector<pair<string, double> > > SolutionsT; // train_time, algorithm, validation_error
     SolutionsT  solutions;
     double max_train_time = 0.0;
     static const double train_time_treshold = 60.0;
@@ -99,16 +109,21 @@ void Populations::ShowPopulation(const Wt::WString &site_name)
     {
         size_t train_sol_id;
         res[i]["train_sol_id"].to(train_sol_id);
+        size_t generation;
+        res[i]["generation"].to(generation);
         string config;
         res[i]["configuration"].to(config);
         boost::smatch regxmatch;
         if(boost::regex_search(config, regxmatch, regx))
         {
-            const string confclass = regxmatch[0] + ")";
+            string confclass = regxmatch[0] + ")";
             double train_time;
             res[i]["train_time"].to(train_time);
             double validation_error;
             res[i]["validation_error"].to(validation_error);
+
+            if(criteria_->currentText() == "Generation")
+                confclass = boost::lexical_cast<string>(generation);
 
             confclasses.insert(confclass);
             if(train_time <= train_time_treshold)

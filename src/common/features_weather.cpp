@@ -86,10 +86,11 @@ vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_
     vector<point_ll_deg> tmploc;
     double lonl = static_cast<int>(site_location.lon() / gridres) * gridres;
     double latl = static_cast<int>(site_location.lat() / gridres) * gridres;
-    for(size_t i=0; i < pnts_per_site; ++i)
-        for(size_t j=0; j < pnts_per_site; ++j)
-            tmploc.push_back(point_ll_deg(geometry::longitude<>(lonl + (i - pnts_per_site / 2) * gridres),
-                                          geometry::latitude<>( latl + (j - pnts_per_site / 2) * gridres)));
+    const int si_pnts_per_site = pnts_per_site; // signed
+    for(int i = -si_pnts_per_site / 2; i < si_pnts_per_site / 2; ++i)
+        for(int j = -si_pnts_per_site / 2; j < si_pnts_per_site / 2; ++j)
+            tmploc.push_back(point_ll_deg(geometry::longitude<>(lonl + i * gridres),
+                                          geometry::latitude<>( latl + j * gridres)));
     assert(tmploc.size() > pnts_per_site);
     std::sort(tmploc.begin(), tmploc.end(), pnt_ll_deg_dist_sorter(site_location));
     vector<point_ll_deg>::iterator endsel = tmploc.begin();

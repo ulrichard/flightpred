@@ -95,7 +95,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
         std::stringstream sstr;
         sstr << "SELECT ";
         std::copy(pred_names.begin(), pred_names.end(), std::ostream_iterator<string>(sstr, ", "));
-        sstr << "train_sol_id FROM flight_pred WHERE pred_site_id='" << it->first << "' "
+        sstr << "train_sol_id FROM flight_pred WHERE pred_site_id=" << it->first << " "
              << "AND pred_day='" << bgreg::to_iso_extended_string(day) << "' ORDER BY calculated DESC";
         pqxx::result res = trans.exec(sstr.str());
 
@@ -110,7 +110,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
         }
         else
             for(size_t i=0; i<pred_names.size(); ++i)
-                model->setData(row, i + 1, any(0.0));
+                model->setData(row, i + 1, any(-1.0));
     }
     model->sort(1, Wt::DescendingOrder);
 
@@ -119,7 +119,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 //    boost::date_time::date_facet *facet(new boost::date_time::date_facet("%A %x"));
 //    sstr.imbue(std::locale(sstr.getloc(), facet));
     sstr << day;
-    static const bgreg::date today(boost::posix_time::second_clock::universal_time().date());
+    static const bgreg::date today(boost::gregorian::day_clock::local_day());
     if(day == today)
         sstr << _(" (today)");
     if(day == today + bgreg::days(1))
@@ -157,6 +157,9 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
             const string site_name = boost::any_cast<string>(model->data(i, 0));
             const double max_dist  = boost::any_cast<double>(model->data(i, 2));
 
+            if(max_dist < 0.0)
+                continue;
+
             std::stringstream sstr;
             sstr << "SELECT AsText(location) as loc from pred_sites WHERE site_name='" << site_name << "'";
             pqxx::result res = trans.exec(sstr.str());
@@ -169,7 +172,8 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
             geometry::from_wkt(dbloc, dbpos);
 
             const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
-    //        gmap->addMarker(gmCoord, "/sigma.gif");
+//            gmap->addMarker(gmCoord, "/sigma16.gif");
+            gmap->addMarker(gmCoord, "/sigma.gif");
             const double radiusKm = max_dist / 10.0;
             gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9);
 

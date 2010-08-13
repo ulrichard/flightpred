@@ -79,12 +79,12 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
         {
             sstr.str("");
             sstr << "UPDATE pred_sites SET location="
-                 << "GeomFromText('" << geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << ")) WHERE"
+                 << "GeomFromText('" << geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << ") WHERE "
                  << "site_name='" << name << "'";
             trans.exec(sstr.str());
         }
         sstr.str("");
-        sstr << "SELECT pred_site_id, AsText(location) AS loc FROM pred_sites WHERE "
+        sstr << "SELECT pred_site_id, site_name, AsText(location) AS loc FROM pred_sites WHERE "
              << "site_name='" << name << "'";
         res = trans.exec(sstr.str());
         if(!res.size())

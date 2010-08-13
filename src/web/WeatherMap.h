@@ -30,6 +30,8 @@ private:
     const std::string db_conn_str_;
     const std::string model_name_;
     Wt::WComboBox *parameters_;
+    Wt::WComboBox *levels_;
+    Wt::WSlider   *time_slider_;
     Wt::WGoogleMapEx *gmap_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

@@ -12,6 +12,7 @@
 //#include <geometry/io/wkt/aswkt.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/timer.hpp>
 #include <boost/array.hpp>
 #include <boost/bind.hpp>
@@ -23,6 +24,7 @@
 using namespace flightpred;
 using namespace flightpred::reporting;
 namespace bgreg = boost::gregorian;
+namespace bpt   = boost::posix_time;
 using boost::array;
 using std::vector;
 using std::set;
@@ -126,7 +128,8 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     double traintime = 0.0;
     for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
     {
-        report(INFO) << "train the support vector machine for " << flightpred_globals::pred_values[i] << " at site: " << site_name <<  std::endl;
+        report(INFO) << "\nTrain the machine learning algorithm for " << flightpred_globals::pred_values[i] << " at site: " << site_name;
+        report(INFO) << "This can take a long time, seriously. Starting at " << bpt::to_simple_string(bpt::second_clock::local_time()) << "\n";
         boost::timer btim;
         sol->get_decision_function(flightpred_globals::pred_values[i])->train(training_samples, labels[i]);
         traintime += btim.elapsed();
