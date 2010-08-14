@@ -1,8 +1,7 @@
 PROJECT(flightpred_web)
-SET(CMAKE_MODULE_PATH ${flightpred_train_SOURCE_DIR})
+SET(CMAKE_MODULE_PATH ${flightpred_web_SOURCE_DIR})
 
-FIND_PACKAGE(Wt 2.2.4 REQUIRED)
-#FIND_PACKAGE(Fcgi REQUIRED)
+FIND_PACKAGE(Wt 3.0 REQUIRED)
 
 ADD_EXECUTABLE(flightpred_web.fcgi main.cpp WGoogleMapEx.cpp FlightForecast.cpp WeatherMap.cpp Populations.cpp)
 TARGET_LINK_LIBRARIES(flightpred_web.fcgi flightpred_common wt wtfcgi wtext pqxx grib_api)

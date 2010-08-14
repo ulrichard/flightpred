@@ -22,7 +22,7 @@ LINK_DIRECTORIES(${BOOST_LIB_DIRS})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
-SUBDIRS(common train web)
+SUBDIRS(common train web test)
 
 
 

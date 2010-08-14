@@ -157,7 +157,7 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
     algo_desc = algo_desc.substr(regxmatch[0].length());
 
     // second the kernel parameters
-    boost::regex rgxdbl("\\d+(\\.\\d+(e[+-]\\d{1,3})?)?\\s*");
+    boost::regex rgxdbl("\\d+((\\.\\d+)?(e[+-]\\d{1,3})?)?\\s*");
     while(boost::regex_search(algo_desc, regxmatch, rgxdbl))
     {
         string nbr = regxmatch[0];
