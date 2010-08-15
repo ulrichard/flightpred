@@ -5,16 +5,17 @@
 #include "common/reporter.h"
 #include "common/features_weather.h"
 #include "common/solution_manager.h"
+#include "common/GenGeomLibSerialize.h"
 // grib api
 #include "grib_api.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-#include <geometry/geometry.hpp>
-#include <geometry/io/wkt/aswkt.hpp>
-#include <geometry/io/wkt/fromwkt.hpp>
-#include <geometry/algorithms/distance.hpp>
-#include <geometry/strategies/geographic/geo_distance.hpp>
+//#include <boost/geometry/geometry.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/extensions/gis/geographic/strategies/vincenty.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -41,7 +42,7 @@
 
 using namespace flightpred;
 using namespace flightpred::reporting;
-using geometry::point_ll_deg;
+using boost::geometry::point_ll_deg;
 namespace bfs = boost::filesystem;
 namespace bgreg = boost::gregorian;
 namespace bpt = boost::posix_time;
@@ -325,7 +326,7 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req,
     while(grib_iterator_next(iter, &lat, &lon, &value))
         if(value != missingValue)
         {
-            const point_ll_deg location = point_ll_deg(geometry::longitude<>(lon), geometry::latitude<>(lat));
+            const point_ll_deg location = point_ll_deg(boost::geometry::longitude<>(lon), boost::geometry::latitude<>(lat));
             if(sel_locations_wide.find(location) == sel_locations_wide.end())
                 continue;
 
@@ -436,8 +437,7 @@ boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(cons
         string locstr;
         res[i]["loc"].to(locstr);
         point_ll_deg site_location;
-        if(!geometry::from_wkt(locstr, site_location))
-            throw std::runtime_error("invalid location read from pred_sites : " + locstr);
+        boost::geometry::read_wkt(locstr, site_location);
 
         vector<point_ll_deg> tmploc = features_weather::get_locations_around_site(site_location, pnts_per_site, gridres);
         std::copy(tmploc.begin(), tmploc.end(), std::inserter(locations, locations.end()));
@@ -446,17 +446,6 @@ boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(cons
     report(DEBUGING) << "grib_grabber::get_locations_around_sites(" << gridres << ", " << pnts_per_site << ") returns " << locations.size() << " locations.";
 
     return locations;
-}
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-size_t geometry::hash_value(const geometry::point_ll_deg &pnt)
-{
-    return boost::hash_value(pnt.lat()) + boost::hash_value(pnt.lon());
-}
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-bool geometry::operator==(const geometry::point_ll_deg &lhs, const geometry::point_ll_deg &rhs)
-{
-    return lhs.lon() == rhs.lon() && lhs.lat() == rhs.lat();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -670,6 +659,7 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/*
 template<bool islat>
 struct get_pnt_latlon
 {
@@ -707,8 +697,8 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
     const pair<latIterT, latIterT> minmax_lat = minmax_element(
         make_transform_iterator(sel_locations_wide.begin(), get_pnt_latlon<true>()),
         make_transform_iterator(sel_locations_wide.end(),   get_pnt_latlon<true>()));
-    const point_ll_deg bboxmin(geometry::longitude<>(*minmax_lon.first),  geometry::latitude<>(*minmax_lat.first));
-    const point_ll_deg bboxmax(geometry::longitude<>(*minmax_lon.second), geometry::latitude<>(*minmax_lat.second));
+    const point_ll_deg bboxmin(boost::geometry::longitude<>(*minmax_lon.first),  boost::geometry::latitude<>(*minmax_lat.first));
+    const point_ll_deg bboxmax(boost::geometry::longitude<>(*minmax_lon.second), boost::geometry::latitude<>(*minmax_lat.second));
 
     set<string> req_fields;
     req_fields.insert("tmpsfc");
@@ -735,7 +725,7 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
 
         read_ascii_data(buf_response);
     }
-/*
+
     // download the grib files
     for(bpt::ptime preddt = lastmidnight; preddt < bpt::second_clock::universal_time() + future_time; preddt += bpt::hours(6))
     {
@@ -774,7 +764,7 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
 
 
     } // for day
-*/
+
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber_gfs_OPeNDAP::read_ascii_data(std::istream &istr)
@@ -794,5 +784,6 @@ void grib_grabber_gfs_OPeNDAP::read_ascii_data(std::istream &istr)
 
     } // while getline
 }
+*/
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

@@ -5,23 +5,26 @@
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-#include <geometry/geometry.hpp>
-#include <geometry/geometries/latlong.hpp>
-#include <geometry/algorithms/distance.hpp>
-#include <geometry/strategies/geographic/geo_distance.hpp>
-//#include <geometry/io/wkt/streamwkt.hpp>
-#include <geometry/io/wkt/aswkt.hpp>
+//#include <boost/geometry/geometry.hpp>
+#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
+//#include <boost/geometry/strategies/geographic/geo_distance.hpp>
+#include <boost/geometry/extensions/gis/geographic/strategies/vincenty.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/math/constants/constants.hpp>
 // standard library
 #include <sstream>
 #include <algorithm>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 using namespace flightpred;
-using geometry::point_ll_deg;
+using boost::geometry::point_ll_deg;
 using boost::lexical_cast;
 using boost::tuple;
 using boost::make_tuple;
@@ -32,6 +35,8 @@ using std::vector;
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // the following function is only here as long as it's not part of the ggl
+namespace boost
+{
 namespace geometry
 {
 // Formula to calculate the point at a distance/angle from another point
@@ -39,20 +44,21 @@ namespace geometry
 template <typename P1, typename P2>
 inline void point_at_distance(P1 const& p1, double distance, double tc, double radius, P2& p2)
 {
-    double earth_perimeter = radius * geometry::math::two_pi;
-    double d = (distance / earth_perimeter) * geometry::math::two_pi;
-    double const& lat1 = geometry::get_as_radian<1>(p1);
-    double const& lon1 = geometry::get_as_radian<0>(p1);
+    double earth_perimeter = radius * 2.0 * boost::math::constants::pi<double>();
+    double d = (distance / earth_perimeter) * 2.0 * boost::math::constants::pi<double>();
+    double const& lat1 = boost::geometry::get_as_radian<1>(p1);
+    double const& lon1 = boost::geometry::get_as_radian<0>(p1);
 
     // http://williams.best.vwh.net/avform.htm#LL
     double lat = asin(sin(lat1)*cos(d)+cos(lat1)*sin(d)*cos(tc));
     double dlon = atan2(sin(tc)*sin(d)*cos(lat1),cos(d)-sin(lat1)*sin(lat));
     double lon = lon1 - dlon;
 
-    geometry::set_from_radian<1>(p2, lat);
-    geometry::set_from_radian<0>(p2, lon);
+    boost::geometry::set_from_radian<1>(p2, lat);
+    boost::geometry::set_from_radian<0>(p2, lon);
 }
 } // namespace geometry
+} // namespace boost
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area_radius)
@@ -72,14 +78,14 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
         {
             sstr.str("");
             sstr << "INSERT INTO pred_sites (site_name, location) VALUES ('" << name << "', "
-                 << "GeomFromText('" << geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << "))";
+                 << "GeomFromText('" << boost::geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << "))";
             trans.exec(sstr.str());
         }
         else if(pos.lat() || pos.lon())
         {
             sstr.str("");
             sstr << "UPDATE pred_sites SET location="
-                 << "GeomFromText('" << geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << ") WHERE "
+                 << "GeomFromText('" << boost::geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << ") WHERE "
                  << "site_name='" << name << "'";
             trans.exec(sstr.str());
         }
@@ -95,8 +101,8 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
         res[0]["site_name"].to(site_name);
         string dbloc;
         res[0]["loc"].to(dbloc);
-        geometry::point_ll_deg dbpos;
-        geometry::from_wkt(dbloc, dbpos);
+        boost::geometry::point_ll_deg dbpos;
+        boost::geometry::read_wkt(dbloc, dbpos);
         pred_sites.push_back(make_tuple(pred_site_id, site_name, dbpos));
     }
     else
@@ -113,8 +119,8 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
             res[i]["site_name"].to(site_name);
             string dbloc;
             res[i]["loc"].to(dbloc);
-            geometry::point_ll_deg dbpos;
-            geometry::from_wkt(dbloc, dbpos);
+            boost::geometry::point_ll_deg dbpos;
+            boost::geometry::read_wkt(dbloc, dbpos);
             pred_sites.push_back(make_tuple(pred_site_id, site_name, dbpos));
         }
     }
@@ -123,9 +129,9 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
     for(vector<tuple<size_t, string, point_ll_deg> >::iterator it = pred_sites.begin(); it != pred_sites.end(); ++it)
     {
         static const double average_earth_radius = 6372795.0;
-        geometry::point_ll_deg bbox1, bbox2;
-        point_at_distance(it->get<2>(), area_radius * 2.0,  45 * geometry::math::d2r, average_earth_radius, bbox1);
-        point_at_distance(it->get<2>(), area_radius * 2.0, 235 * geometry::math::d2r, average_earth_radius, bbox2);
+        boost::geometry::point_ll_deg bbox1, bbox2;
+        point_at_distance(it->get<2>(), area_radius * 2.0,  45 * boost::geometry::math::d2r, average_earth_radius, bbox1);
+        point_at_distance(it->get<2>(), area_radius * 2.0, 235 * boost::geometry::math::d2r, average_earth_radius, bbox2);
 
         // todo : move the bounding box points by the radius amount
         sstr.str("");
@@ -142,11 +148,11 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
             res[i]["site_id"].to(site_id);
             string dbloc;
             res[i]["loc"].to(dbloc);
-            geometry::point_ll_deg dbpos;
-            geometry::from_wkt(dbloc, dbpos);
+            point_ll_deg dbpos;
+            boost::geometry::read_wkt(dbloc, dbpos);
 
             // calculate the distance
-            const double dist = geometry::distance(it->get<2>(), dbpos, geometry::strategy::distance::vincenty<geometry::point_ll_deg>());
+            const double dist = boost::geometry::distance(it->get<2>(), dbpos, boost::geometry::strategy::distance::vincenty<point_ll_deg>());
             if(dist <= area_radius)
             {
                 sstr.str("");

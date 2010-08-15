@@ -1,7 +1,7 @@
 // flightpred
 #include "grib_pred_model.h"
 // ggl (boost sandbox)
-#include <geometry/geometry.hpp>
+//#include <boost/geometry/geometry.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -13,7 +13,7 @@
 #include <algorithm>
 
 using namespace flightpred;
-using geometry::point_ll_deg;
+using boost::geometry::point_ll_deg;
 namespace bgreg = boost::gregorian;
 namespace bpt = boost::posix_time;
 using boost::posix_time::ptime;
@@ -139,7 +139,7 @@ vector<pair<size_t, string> >  grib_pred_model_gfs::getStandardProperties() cons
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-grib_measure::grib_measure(const grib_pred_model *pred_model, const geometry::point_ll_deg &pos,
+grib_measure::grib_measure(const grib_pred_model *pred_model, const point_ll_deg &pos,
       size_t lvl, const std::string &prop, double val, const ptime &pred_start, const time_duration &pred_future)
     : pred_model_(pred_model), pos_(pos), level_(lvl), prop_(prop), pred_start_(pred_start), pred_future_(pred_future), val_(val)
 {
@@ -156,7 +156,7 @@ grib_measure::grib_measure(const grib_pred_model *pred_model, const geometry::po
     const set<time_duration> &futimes = pred_model_->getFutureTimes();
     if(futimes.find(pred_future_) == futimes.end())
         throw std::invalid_argument("Invalid prediction future time : " + bpt::to_simple_string(pred_future_));
-};
+}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 grib_pred_model * flightpred::get_grib_pred_model(const std::string &name)
 {

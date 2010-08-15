@@ -8,8 +8,7 @@
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
 // ggl (boost sandbox)
-#include <geometry/io/wkt/fromwkt.hpp>
-//#include <geometry/io/wkt/aswkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -25,6 +24,7 @@ using namespace flightpred;
 using namespace flightpred::reporting;
 namespace bgreg = boost::gregorian;
 namespace bpt   = boost::posix_time;
+using boost::geometry::point_ll_deg;
 using boost::array;
 using std::vector;
 using std::set;
@@ -52,9 +52,8 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     const size_t pred_site_id = tmp_pred_site_id;
     string tmpstr;
     res[0]["loc"].to(tmpstr);
-    geometry::point_ll_deg pred_location;
-    if(!geometry::from_wkt(tmpstr, pred_location))
-        throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
+    point_ll_deg pred_location;
+    boost::geometry::read_wkt(tmpstr, pred_location);
 
     // collect the labels
     report(INFO) << "collecting labels";

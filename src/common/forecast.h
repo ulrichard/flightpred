@@ -5,7 +5,7 @@
 
 #include "learning_machine.h"
 // ggl (boost sandbox)
-#include <geometry/geometries/latlong.hpp>
+#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 // boost
 #include <boost/noncopyable.hpp>
 #include <boost/array.hpp>

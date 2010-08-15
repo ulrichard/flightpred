@@ -2,7 +2,7 @@
 #define AREA_MGR_H_INCLUDED
 
 // ggl (boost sandbox)
-#include <geometry/geometries/latlong.hpp>
+#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 // boost
 #include <boost/noncopyable.hpp>
 // standard library
@@ -17,7 +17,7 @@ public:
     area_mgr() { }
     ~area_mgr() { }
 
-    void add_area(const std::string &name, const geometry::point_ll_deg &pos, double area_radius);
+    void add_area(const std::string &name, const boost::geometry::point_ll_deg &pos, double area_radius);
 private:
     static const size_t PG_SIR_WGS84 = 4326;
 };

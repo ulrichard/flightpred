@@ -10,7 +10,7 @@
 #include "common/flightpred_globals.h"
 #include "common/reporter.h"
 // ggl (boost sandbox)
-#include <geometry/geometries/latlong.hpp>
+#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 // boost
 #include <boost/program_options.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
                 throw std::runtime_error(sstr.str());
             }
         }
-        const geometry::point_ll_deg pos = parse_position(position);
+        const boost::geometry::point_ll_deg pos = parse_position(position);
 
         const vector<string> site_names = get_site_names();
 

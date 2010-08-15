@@ -6,7 +6,7 @@
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
 // ggl (boost sandbox)
-#include <geometry/io/wkt/fromwkt.hpp>
+//#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -30,7 +30,7 @@
 
 using namespace flightpred;
 using namespace flightpred::reporting;
-using geometry::point_ll_deg;
+using boost::geometry::point_ll_deg;
 using boost::shared_ptr;
 using boost::bind;
 using boost::ref;

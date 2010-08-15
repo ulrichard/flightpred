@@ -1,6 +1,7 @@
 // flightpred
 #include "WeatherMap.h"
 #include "common/grab_grib.h"
+#include "common/GenGeomLibSerialize.h"
 
 #if WT_SERIES >= 0x3
  #include "WGoogleMapEx.h"
@@ -15,8 +16,8 @@
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-#include <geometry/geometries/latlong.hpp>
-#include <geometry/io/wkt/fromwkt.hpp>
+#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -34,6 +35,7 @@
 using namespace flightpred;
 namespace bgreg = boost::gregorian;
 namespace bpt   = boost::posix_time;
+using boost::geometry::point_ll_deg;
 using boost::array;
 using boost::any;
 using std::string;
@@ -44,19 +46,6 @@ using std::endl;
 
 #define _(STRING) gettext(STRING)
 
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-namespace geometry
-{
-    size_t hash_value(const geometry::point_ll_deg &pnt)
-    {
-        return boost::hash_value(pnt.lat()) + boost::hash_value(pnt.lon());
-    }
-
-    bool operator==(const geometry::point_ll_deg &lhs, const geometry::point_ll_deg &rhs)
-    {
-        return lhs.lon() == rhs.lon() && lhs.lat() == rhs.lat();
-    }
-}; // namespace geometry
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 WeatherMap::WeatherMap(const std::string &db_conn_str, const std::string &model_name, Wt::WContainerWidget *parent)
@@ -147,14 +136,14 @@ void WeatherMap::loadWeatherMap()
     gmap_->clearOverlays();
 
     pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
-    boost::unordered_set<geometry::point_ll_deg> visited;
+    boost::unordered_set<point_ll_deg> visited;
 
     for(size_t i=0; i<res.size(); ++i)
     {
         string dbloc;
         res[i]["loc"].to(dbloc);
-        geometry::point_ll_deg dbpos;
-        geometry::from_wkt(dbloc, dbpos);
+        point_ll_deg dbpos;
+        boost::geometry::read_wkt(dbloc, dbpos);
         double val;
         res[i]["value"].to(val);
         string param;

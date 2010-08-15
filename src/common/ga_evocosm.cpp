@@ -7,7 +7,7 @@
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-#include <geometry/io/wkt/fromwkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -55,8 +55,7 @@ reproducer::reproducer(const size_t pred_site_id, const double mutation_rate, si
         throw std::runtime_error("prediction site not found");
     string tmploc;
     res[0][0].to(tmploc);
-    if(!geometry::from_wkt(tmploc, site_location_))
-        throw std::runtime_error("failed to parse the weather location as retured from the database : " + tmploc);
+    boost::geometry::read_wkt(tmploc, site_location_);
 
     // load all known configurations into the set
     sstr.str("");

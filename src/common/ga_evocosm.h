@@ -98,7 +98,7 @@ private:
     solution_config make_mutated_clone(const solution_config &src);
 
     size_t pred_site_id_;
-    geometry::point_ll_deg site_location_;
+    boost::geometry::point_ll_deg site_location_;
     double mutation_rate_;
     size_t &current_generation_;
     std::set<std::string> solution_descriptions_; //! all the descriptions in the system so far.

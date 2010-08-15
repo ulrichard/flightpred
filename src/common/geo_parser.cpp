@@ -15,7 +15,7 @@
 #include <utility>
 
 using namespace flightpred;
-using namespace geometry;
+using namespace boost::geometry;
 using namespace boost::spirit::classic;
 using boost::ref;
 using namespace phoenix;

@@ -4,7 +4,7 @@
 // json_spirit
 #include <json_spirit_reader.h>
 // ggl (boost sandbox)
-#include <geometry/geometries/latlong.hpp>
+#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/filesystem.hpp>
@@ -18,15 +18,15 @@ namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct flight
 {
-    size_t                  id;
-    std::string             pilot_name;
-    std::string             pilot_country;
-    std::string             takeoff_name;
-    std::string             takeoff_country;
-    geometry::point_ll_deg  pos;
-    double                  distance;
-    double                  score;
-    boost::gregorian::date  day;
+    size_t                          id;
+    std::string                     pilot_name;
+    std::string                     pilot_country;
+    std::string                     takeoff_name;
+    std::string                     takeoff_country;
+    boost::geometry::point_ll_deg   pos;
+    double                          distance;
+    double                          score;
+    boost::gregorian::date          day;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 class flight_grabber : public boost::noncopyable
@@ -52,7 +52,7 @@ private:
     const Contest cont_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-}; // namespace flightpred
+} // namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 #endif // GRAB_FLIGHTS_H_INCLUDED
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

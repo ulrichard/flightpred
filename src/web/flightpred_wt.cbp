@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--docroot /usr/share/flightpred/www_docroot/ --http-address 0.0.0.0 --http-port 8080" />
+				<Option parameters="--docroot /home/richi/sourcecode/flightpred/www_docroot --http-address 0.0.0.0 --http-port 8080" />
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-Wmain" />
@@ -20,7 +20,7 @@
 					<Add option="-D_DEBUG" />
 					<Add directory=".." />
 					<Add directory="../../3rd-party/dclib" />
-					<Add directory="../../3rd-party/ggl/boost/ggl" />
+					<Add directory="../../3rd-party/ggl" />
 				</Compiler>
 				<Linker>
 					<Add library="wt" />
@@ -43,7 +43,7 @@
 					<Add option="-Wall" />
 					<Add directory=".." />
 					<Add directory="../../3rd-party/dclib" />
-					<Add directory="../../3rd-party/ggl/boost/ggl" />
+					<Add directory="../../3rd-party/ggl" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -59,7 +59,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--docroot /usr/share/flightpred/www_docroot/ --http-address 0.0.0.0 --http-port 8080" />
+				<Option parameters="--docroot /home/richi/sourcecode/flightpred/www_docroot --http-address 0.0.0.0 --http-port 8080" />
 				<Compiler>
 					<Add option="-march=athlon64" />
 					<Add option="-Wmain" />
@@ -68,7 +68,7 @@
 					<Add option="-D_DEBUG" />
 					<Add directory=".." />
 					<Add directory="../../3rd-party/dclib" />
-					<Add directory="../../3rd-party/ggl/boost/ggl" />
+					<Add directory="../../3rd-party/ggl" />
 				</Compiler>
 				<Linker>
 					<Add library="wt" />

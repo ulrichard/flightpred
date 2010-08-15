@@ -4,7 +4,7 @@
 // flightpred
 #include "grib_pred_model.h"
 // ggl (boost sandbox)
-#include <geometry/geometries/latlong.hpp>
+#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 // boost
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
@@ -21,12 +21,6 @@
 #include <istream>
 #include <utility>
 
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-namespace geometry
-{
-    size_t hash_value(const geometry::point_ll_deg &pnt);
-    bool operator==(const geometry::point_ll_deg &lhs, const geometry::point_ll_deg &rhs);
-}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 namespace flightpred
 {
@@ -52,13 +46,13 @@ protected:
     grib_grabber(const std::string &modelname, size_t download_pack, const bool is_future);
     void download_data(const std::string &url, std::ostream &ostr, const std::list<request> &requests);
     void dispatch_grib_data(std::istream &istr, std::list<request> &requests,
-            const boost::unordered_set<geometry::point_ll_deg> &sel_locations_close,
-            const boost::unordered_set<geometry::point_ll_deg> &sel_locations_wide);
+            const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_close,
+            const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_wide);
 
     static std::string get_base_url(const std::string &model, bool future);
     static size_t      get_model_id(const std::string &model);
     static double      get_grid_res(const std::string &model);
-    boost::unordered_set<geometry::point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
+    boost::unordered_set<boost::geometry::point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
 
     const std::string        baseurl_;
     const std::string        modelname_;
@@ -71,8 +65,8 @@ protected:
 
 private:
     void read_grib_data(std::istream &istr, const request &req,
-            const boost::unordered_set<geometry::point_ll_deg> &sel_locations_close,
-            const boost::unordered_set<geometry::point_ll_deg> &sel_locations_wide);
+            const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_close,
+            const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_wide);
     size_t read_until(std::istream &istr, const std::string &srchstr);
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -98,18 +92,20 @@ public:
 
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+/*
 class grib_grabber_gfs_OPeNDAP : public grib_grabber
 {
 public:
     grib_grabber_gfs_OPeNDAP(const std::string &db_conn_str)
-        : grib_grabber("GFS", 1, true) { } // "nomads.ncep.noaa.gov:9090/dods/gfs/"
+        : grib_grabber("GFS", 1, true) { db_conn_str; } // "nomads.ncep.noaa.gov:9090/dods/gfs/"
     virtual ~grib_grabber_gfs_OPeNDAP() { }
 
     virtual void grab_grib(const boost::posix_time::time_duration &future_time);
 protected:
     void read_ascii_data(std::istream &istr);
 };
+*/
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-}; // namespace flightpred
+} // namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 #endif // GRAB_GRIB_H_INCLUDED

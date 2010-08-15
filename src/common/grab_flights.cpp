@@ -4,7 +4,7 @@
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-#include <geometry/io/wkt/aswkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost
 #include <boost/filesystem/fstream.hpp>
 #include <boost/bind.hpp>
@@ -143,7 +143,7 @@ void flight_grabber::write_flight_to_db(const flight &fl)
         const size_t PG_SIR_WGS84 = 4326;
         std::stringstream sstr;
         sstr << "INSERT INTO sites (site_name, location, country) values ('"
-             << fl.takeoff_name << "', GeomFromText('" << geometry::make_wkt(fl.pos) << "', "
+             << fl.takeoff_name << "', GeomFromText('" << boost::geometry::make_wkt(fl.pos) << "', "
              << PG_SIR_WGS84 << "), '" << fl.takeoff_country << "') " << "RETURNING site_id";
         res = trans.exec(sstr.str());
         res[0]["site_id"].to(site_id);

@@ -4,16 +4,18 @@
 #include "common/flightpred_globals.h"
 #include "common/reporter.h"
 #include "common/grab_grib.h"
+#include "common/GenGeomLibSerialize.h"
 //#include "area_mgr.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-#include <geometry/io/wkt/fromwkt.hpp>
-#include <geometry/io/wkt/aswkt.hpp>
-#include <geometry/io/wkt/streamwkt.hpp>
-#include <geometry/util/graticule.hpp>
-#include <geometry/algorithms/distance.hpp>
-#include <geometry/strategies/geographic/geo_distance.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
+//#include <boost/geometry/extensions/gis/io/wkt/stream_wkt.hpp>
+#include <boost/geometry/extensions/gis/latlong/detail/graticule.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
+//#include <boost/geometry/strategies/geographic/geo_distance.hpp>
+#include <boost/geometry/extensions/gis/geographic/strategies/vincenty.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -35,7 +37,7 @@
 
 using namespace flightpred;
 using namespace flightpred::reporting;
-using geometry::point_ll_deg;
+using boost::geometry::point_ll_deg;
 namespace bgreg = boost::gregorian;
 namespace bpt   = boost::posix_time;
 using boost::lexical_cast;
@@ -50,7 +52,7 @@ using std::string;
 void features_weather::generate_features(features_weather::feat_desc feat, const vector<point_ll_deg> &locations,
     const bpt::time_duration &from, const bpt::time_duration &to, set<feat_desc> &features) const
 {
-    for(vector<geometry::point_ll_deg>::const_iterator itl = locations.begin(); itl != locations.end(); ++itl)
+    for(vector<boost::geometry::point_ll_deg>::const_iterator itl = locations.begin(); itl != locations.end(); ++itl)
     {
         feat.location = *itl;
         for(bpt::time_duration tdur = from; tdur <= to; tdur += bpt::hours(6))
@@ -64,17 +66,18 @@ void features_weather::generate_features(features_weather::feat_desc feat, const
 struct pnt_ll_deg_dist_sorter
 {
     pnt_ll_deg_dist_sorter(const point_ll_deg &srch_pnt)
-        : srch_pnt_(srch_pnt), strategy_(geometry::strategy::distance::vincenty<point_ll_deg>()) { }
+        : srch_pnt_(srch_pnt), strategy_(boost::geometry::strategy::distance::vincenty<point_ll_deg>()) { }
+//        : srch_pnt_(srch_pnt), strategy_(boost::geometry::strategy::distance::comparable<point_ll_deg>()) { }
 
     bool operator()(const point_ll_deg &lhs, const point_ll_deg &rhs)
     {
-        const double dist1 = geometry::distance(lhs, srch_pnt_, strategy_);
-        const double dist2 = geometry::distance(rhs, srch_pnt_, strategy_);
+        const double dist1 = boost::geometry::distance(lhs, srch_pnt_, strategy_);
+        const double dist2 = boost::geometry::distance(rhs, srch_pnt_, strategy_);
         return dist1 < dist2;
     }
 
     const point_ll_deg srch_pnt_;
-    const geometry::strategy::distance::vincenty<geometry::point_ll_deg> strategy_;
+    const boost::geometry::strategy::distance::vincenty<boost::geometry::point_ll_deg> strategy_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_deg &site_location, const size_t pnts_per_site, const double gridres)
@@ -89,8 +92,8 @@ vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_
     const int si_pnts_per_site = pnts_per_site; // signed
     for(int i = -si_pnts_per_site / 2; i < si_pnts_per_site / 2; ++i)
         for(int j = -si_pnts_per_site / 2; j < si_pnts_per_site / 2; ++j)
-            tmploc.push_back(point_ll_deg(geometry::longitude<>(lonl + i * gridres),
-                                          geometry::latitude<>( latl + j * gridres)));
+            tmploc.push_back(point_ll_deg(boost::geometry::longitude<>(lonl + i * gridres),
+                                          boost::geometry::latitude<>( latl + j * gridres)));
     assert(tmploc.size() > pnts_per_site);
     std::sort(tmploc.begin(), tmploc.end(), pnt_ll_deg_dist_sorter(site_location));
     vector<point_ll_deg>::iterator endsel = tmploc.begin();
@@ -102,9 +105,9 @@ vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_
     return tmploc;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-features_weather::feat_desc  features_weather::get_random_feature(const geometry::point_ll_deg &site_location)
+features_weather::feat_desc  features_weather::get_random_feature(const boost::geometry::point_ll_deg &site_location)
 {
-    report(DEBUGING) << "features_weather::get_random_feature(" << geometry::make_wkt(site_location) << ")";
+    report(DEBUGING) << "features_weather::get_random_feature(" << boost::geometry::make_wkt(site_location) << ")";
     feat_desc fd;
 
     const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 1.0); // todo : get the resolution from the database
@@ -123,7 +126,7 @@ features_weather::feat_desc  features_weather::get_random_feature(const geometry
     assert(itloc != locations.end());
     fd.location = *itloc;
     const bool is_near_location = std::find(locations_near.begin(), locations_near.end(), fd.location) != locations_near.end();
-    report(DEBUGING) << "new location (" << geometry::make_wkt(fd.location) << ") is " << (is_near_location ? "near" : "far") << " [" << advloc << "/" << locations.size() << "]";
+    report(DEBUGING) << "new location (" << boost::geometry::make_wkt(fd.location) << ") is " << (is_near_location ? "near" : "far") << " [" << advloc << "/" << locations.size() << "]";
 
     // pick an altitude level
     static const std::set<string> levels = grib_grabber::get_std_levels(is_near_location);
@@ -193,10 +196,10 @@ set<features_weather::feat_desc> features_weather::get_standard_features(const p
     double lonl = static_cast<int>(site_location.lon() / gridres) * gridres;
     double latl = static_cast<int>(site_location.lat() / gridres) * gridres;
     vector<point_ll_deg> nearbyloc;
-    nearbyloc.push_back(point_ll_deg(geometry::longitude<>(lonl), geometry::latitude<>(latl)));
-    nearbyloc.push_back(point_ll_deg(geometry::longitude<>(lonl + gridres), geometry::latitude<>(latl)));
-    nearbyloc.push_back(point_ll_deg(geometry::longitude<>(lonl), geometry::latitude<>(latl + gridres)));
-    nearbyloc.push_back(point_ll_deg(geometry::longitude<>(lonl + gridres), geometry::latitude<>(latl + gridres)));
+    nearbyloc.push_back(point_ll_deg(boost::geometry::longitude<>(lonl), boost::geometry::latitude<>(latl)));
+    nearbyloc.push_back(point_ll_deg(boost::geometry::longitude<>(lonl + gridres), boost::geometry::latitude<>(latl)));
+    nearbyloc.push_back(point_ll_deg(boost::geometry::longitude<>(lonl), boost::geometry::latitude<>(latl + gridres)));
+    nearbyloc.push_back(point_ll_deg(boost::geometry::longitude<>(lonl + gridres), boost::geometry::latitude<>(latl + gridres)));
 
     // parameters and levels
     const array<string, 2> featgnd = {"PRES", "TMP"};
@@ -287,7 +290,7 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
         {
             if(it != locations.begin())
                 sstr << ", ";
-            sstr << "ST_GeomFromText('" << geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
+            sstr << "ST_GeomFromText('" << boost::geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
         }
         sstr << ")";
         pqxx::result res = trans.exec(sstr.str());
@@ -303,8 +306,7 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
             const bpt::ptime pred_time = bpt::time_from_string(tmpstr);
             currdesc.reltime = pred_time - bpt::ptime(day, bpt::time_duration(0, 0, 0));
             res[i]["loc"].to(tmpstr);
-            if(!geometry::from_wkt(tmpstr, currdesc.location))
-                throw std::runtime_error("failed to parse the weather location as retured from the database : " + tmpstr);
+            boost::geometry::read_wkt(tmpstr, currdesc.location);
             res[i]["level"].to(currdesc.level);
             res[i]["parameter"].to(currdesc.param);
 
@@ -444,7 +446,7 @@ std::ostream & flightpred::operator<<(std::ostream &ostr, const features_weather
 {
     ostr << "FEATURE(" << feat.model
          << " " << bpt::to_simple_string(feat.reltime)
-         << " " << geometry::make_wkt(feat.location)
+         << " " << boost::geometry::make_wkt(feat.location)
          << " " << feat.level
          << " " << feat.param << ")";
     return ostr;

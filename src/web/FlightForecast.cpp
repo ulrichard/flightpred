@@ -15,8 +15,8 @@
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-#include <geometry/geometries/latlong.hpp>
-#include <geometry/io/wkt/fromwkt.hpp>
+#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -168,8 +168,8 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 
             string dbloc;
             res[0][0].to(dbloc);
-            geometry::point_ll_deg dbpos;
-            geometry::from_wkt(dbloc, dbpos);
+            boost::geometry::point_ll_deg dbpos;
+            boost::geometry::read_wkt(dbloc, dbpos);
 
             const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
 //            gmap->addMarker(gmCoord, "/sigma16.gif");

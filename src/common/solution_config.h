@@ -45,12 +45,12 @@ public:
         return *this;
     }
 
-    const size_t get_solution_id() const { return train_sol_id_; }                /// the id number in the database
-    const size_t get_generation()  const { return generation_; }                  /// the generation in the evolution
-    const std::string & get_site_name() const { return site_name_; }              /// flying site
-    const std::string & get_description() const { return solution_description_; } /// full length with all the features
-    const std::string   get_short_description() const;                            /// algorithm name, parameters and number of features
-    const std::string   get_algorithm_name(const bool with_params) const;         /// algorithm name, parameters optional
+    size_t get_solution_id() const { return train_sol_id_; }                /// the id number in the database
+    size_t get_generation()  const { return generation_; }                  /// the generation in the evolution
+    const std::string& get_site_name() const { return site_name_; }              /// flying site
+    const std::string& get_description() const { return solution_description_; } /// full length with all the features
+    const std::string  get_short_description() const;                            /// algorithm name, parameters and number of features
+    const std::string  get_algorithm_name(const bool with_params) const;         /// algorithm name, parameters optional
     const std::set<features_weather::feat_desc> & get_weather_feature_desc() const { return features_desc_; }
 
     boost::shared_ptr<learning_machine> get_decision_function(const std::string &eval_name) const;

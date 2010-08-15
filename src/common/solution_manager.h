@@ -37,9 +37,9 @@ private:
     std::vector<boost::shared_ptr<solution_config> > get_initial_generation();
     void  fill_label_cache();
     const std::vector<double> & get_sample(const std::set<features_weather::feat_desc> &fdesc, const boost::gregorian::date &day);
-    const bool   used_for_training(const boost::gregorian::date &day) const;
-    const bool   used_for_validation(const boost::gregorian::date &day) const;
-    const double test_fitness(const solution_config &sol);
+    bool   used_for_training(const boost::gregorian::date &day) const;
+    bool   used_for_validation(const boost::gregorian::date &day) const;
+    double test_fitness(const solution_config &sol);
 
     const std::string site_name_;
     const size_t      pred_site_id_;

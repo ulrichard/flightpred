@@ -10,8 +10,8 @@
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
 // ggl (boost sandbox)
-#include <geometry/io/wkt/fromwkt.hpp>
-#include <geometry/io/wkt/aswkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -26,7 +26,7 @@
 
 using namespace flightpred;
 using namespace flightpred::reporting;
-using geometry::point_ll_deg;
+using boost::geometry::point_ll_deg;
 using boost::lexical_cast;
 using boost::shared_ptr;
 namespace bgreg = boost::gregorian;
@@ -108,9 +108,8 @@ vector<shared_ptr<solution_config> > solution_manager::get_initial_generation()
         throw std::invalid_argument("site not found : " + site_name_);
     string tmpstr;
     res[0]["loc"].to(tmpstr);
-    geometry::point_ll_deg pred_location;
-    if(!geometry::from_wkt(tmpstr, pred_location))
-        throw std::runtime_error("failed to parse the prediction site location as retured from the database : " + tmpstr);
+    point_ll_deg pred_location;
+    boost::geometry::read_wkt(tmpstr, pred_location);
 
     // get the default feature descriptions of the weather data
     const set<features_weather::feat_desc> features = weather_.get_standard_features(pred_location);
@@ -316,7 +315,7 @@ vector<shared_ptr<solution_config> > solution_manager::initialize_population()
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /** @brief test how well a solution can predict the flights.
     @return the total error in km */
-const double solution_manager::test_fitness(const solution_config &sol)
+double solution_manager::test_fitness(const solution_config &sol)
 {
     report(VERBOSE) << "solution_manager::test_fitness(" << sol.get_short_description() <<  ")";
     learning_machine::SampleType samples;
@@ -369,7 +368,7 @@ const double solution_manager::test_fitness(const solution_config &sol)
     return sum_err;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-const bool solution_manager::used_for_training(const bgreg::date &day) const
+bool solution_manager::used_for_training(const bgreg::date &day) const
 {
     if(day.day_of_week() != 0) // sunday)
         return false;
@@ -380,7 +379,7 @@ const bool solution_manager::used_for_training(const bgreg::date &day) const
     return true;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-const bool solution_manager::used_for_validation(const bgreg::date &day) const
+bool solution_manager::used_for_validation(const bgreg::date &day) const
 {
     if(day.day_of_week() != 6) // saturday
         return false;
@@ -479,9 +478,8 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
     res[0]["country"].to(country);
     string locstr;
     res[0]["loc"].to(locstr);
-    geometry::point_ll_deg location;
-    if(!geometry::from_wkt(locstr, location))
-        throw std::runtime_error("failed to parse location as retured from the database : " + locstr);
+    point_ll_deg location;
+    boost::geometry::read_wkt(locstr, location);
     oa << country;
 	oa << location;
 	trans.commit();
@@ -518,7 +516,7 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
 
     string country;
     ia >> country;
-    geometry::point_ll_deg location;
+    point_ll_deg location;
 	ia >> location;
 
 	pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::import_solution");
@@ -537,9 +535,8 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
         }
         string locstr;
         res[i]["loc"].to(locstr);
-        geometry::point_ll_deg location;
-        if(!geometry::from_wkt(locstr, location))
-            throw std::runtime_error("failed to parse location as retured from the database : " + locstr);
+        point_ll_deg location;
+        boost::geometry::read_wkt(locstr, location);
 
         // todo : use with different name but close location
     }
@@ -551,7 +548,7 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
         std::stringstream sstr;
         sstr << "INSERT INTO pred_sites (site_name, country, location) VALUES ('"
              << site_name << "', '" << country << "', "
-             << "ST_GeomFromText('" << geometry::make_wkt(location) << "', " << PG_SIR_WGS84 << "))";
+             << "ST_GeomFromText('" << boost::geometry::make_wkt(location) << "', " << PG_SIR_WGS84 << "))";
         trans.exec(sstr.str());
     }
     trans.commit();

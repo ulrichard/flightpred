@@ -7,7 +7,7 @@
 #include <pqxx/pqxx>
 //#include <pqxx/largeobject>
 // ggl (boost sandbox)
-#include <geometry/io/wkt/fromwkt.hpp>
+#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/foreach.hpp>
