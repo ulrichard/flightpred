@@ -454,8 +454,8 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
 {
     static const set<string>  sel_levels = get_std_levels(true);
     static const set<string>  sel_param  = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(grid_res_, 4);
-    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(grid_res_, 16);
+    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(grid_res_, 8);
+    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(grid_res_, 20);
     const std::set<boost::gregorian::date> ignored_days = solution_manager::get_ignored_days();
 
     // download the grib files
@@ -551,8 +551,8 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
 {
     const set<string>       sel_levels    = get_std_levels(true);
     const set<string>       sel_param     = get_std_params();
-    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(grid_res_, 4);
-    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(grid_res_, 16);
+    const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(grid_res_, 8);
+    const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(grid_res_, 20);
 
     const bpt::time_duration usual_pred_run_time = bpt::hours(12); // the usual max time for the prediction results to become online available
     const bpt::ptime now = bpt::second_clock::universal_time() - usual_pred_run_time;

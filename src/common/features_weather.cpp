@@ -11,11 +11,11 @@
 // ggl (boost sandbox)
 #include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 #include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
-//#include <boost/geometry/extensions/gis/io/wkt/stream_wkt.hpp>
 #include <boost/geometry/extensions/gis/latlong/detail/graticule.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
-//#include <boost/geometry/strategies/geographic/geo_distance.hpp>
 #include <boost/geometry/extensions/gis/geographic/strategies/vincenty.hpp>
+#include <boost/geometry/algorithms/comparable_distance.hpp>
+#include <boost/geometry/strategies/strategies.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -66,18 +66,16 @@ void features_weather::generate_features(features_weather::feat_desc feat, const
 struct pnt_ll_deg_dist_sorter
 {
     pnt_ll_deg_dist_sorter(const point_ll_deg &srch_pnt)
-        : srch_pnt_(srch_pnt), strategy_(boost::geometry::strategy::distance::vincenty<point_ll_deg>()) { }
-//        : srch_pnt_(srch_pnt), strategy_(boost::geometry::strategy::distance::comparable<point_ll_deg>()) { }
+        : srch_pnt_(srch_pnt) { }
 
     bool operator()(const point_ll_deg &lhs, const point_ll_deg &rhs)
     {
-        const double dist1 = boost::geometry::distance(lhs, srch_pnt_, strategy_);
-        const double dist2 = boost::geometry::distance(rhs, srch_pnt_, strategy_);
+        const double dist1 = boost::geometry::comparable_distance(lhs, srch_pnt_);
+        const double dist2 = boost::geometry::comparable_distance(rhs, srch_pnt_);
         return dist1 < dist2;
     }
 
     const point_ll_deg srch_pnt_;
-    const boost::geometry::strategy::distance::vincenty<boost::geometry::point_ll_deg> strategy_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_deg &site_location, const size_t pnts_per_site, const double gridres)
