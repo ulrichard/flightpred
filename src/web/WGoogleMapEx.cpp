@@ -14,11 +14,16 @@
 #include <fstream>
 
 using namespace Wt;
+using boost::geometry::point_ll_deg;
+using boost::geometry::longitude;
+using boost::geometry::latitude;
 using std::string;
 
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // the following function is only here as long as it's not part of boost::geometry
+namespace boost
+{
 namespace geometry
 {
 // Formula to calculate the point at a distance/angle from another point
@@ -40,6 +45,7 @@ inline void point_at_distance(P1 const& p1, double distance, double tc, double r
     boost::geometry::set_from_radian<0>(p2, lon);
 }
 } // namespace geometry
+} // namespace boost
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 WGoogleMapEx::WGoogleMapEx(WContainerWidget *parent)
     : WGoogleMap(parent)
@@ -113,23 +119,24 @@ void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
 
     doGmJavaScript(strm.str(), true);
 */
-/*
+
     // workaround as long as we have the problem with the loading order of the javascript -> works only for one map per page
     static const double average_earth_radius = 6372795.0;
-    geometry::point_ll_deg posi(geometry::longitude<>(pos.longitude()), geometry::latitude<>(pos.latitude()));
-    std::cout << "Circle around " << geometry::make_wkt(posi) << std::endl;
+    point_ll_deg posi(longitude<>(pos.longitude()), latitude<>(pos.latitude()));
+    std::cout << "Circle around " << boost::geometry::make_wkt(posi) << std::endl;
     std::vector<Coordinate> circlepnts;
     const size_t steps = 50;
     for(size_t i=0; i<steps; ++i)
     {
-        geometry::point_ll_deg perifer;
+        point_ll_deg perifer;
         point_at_distance(posi, radiusKm * 1000,  2 * M_PI * i / steps, average_earth_radius, perifer);
         circlepnts.push_back(Coordinate(perifer.lat(), perifer.lon()));
     }
     circlepnts.push_back(circlepnts.front());
     assert(circlepnts.size() == steps + 1);
     addPolyline(circlepnts, strokeColor, strokeWeightPx, strokeOpacity);
-*/
+
+/*
     // second workaround: draw direcly here without using js lib
     std::ostringstream strm;
     strm << "var svgNS = \"http://www.w3.org/2000/svg\"; "
@@ -166,24 +173,45 @@ void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
          << jsRef() << ".map.getPane(G_MAP_MAP_PANE).appendChild(circle); ";
 //         << "circle.unsuspendRedraw(rdrh); "
 //         << "circle.forceRedraw(); ";
-
     doGmJavaScript(strm.str(), true);
 
     std::ofstream ofs("/tmp/gmcircle.js");
     ofs << strm.str();
-
+*/
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void WGoogleMapEx::addArrow(const Coordinate &pos, const double rotationDeg,
         const WColor &color, const float opacity, const std::string &tooltip)
 {
+/*
     std::ostringstream strm;
     strm << "var pos = new google.maps.LatLng(" << pos.latitude() << ", " << pos.longitude() << "); "
          << "var arrow = new BDCCArrow(pos, " << rotationDeg << ", \"" << color.cssText() << "\", "
          <<         opacity << ", \"" << tooltip << "\"); "
          << jsRef() << ".map.addOverlay(arrow);";
-
     doGmJavaScript(strm.str(), true);
+*/
+    // second attempt
+    static const double average_earth_radius = 6372795.0;
+    point_ll_deg posi(longitude<>(pos.longitude()), latitude<>(pos.latitude()));
+    std::cout << "Arrow at " << boost::geometry::make_wkt(posi) << std::endl;
+    std::vector<Coordinate> arrowpnts;
+    // tail
+    point_ll_deg pnt;
+    point_at_distance(posi, 20000,  2.0 * M_PI * rotationDeg / 360.0, average_earth_radius, pnt);
+    arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
+    // tip
+    arrowpnts.push_back(Coordinate(posi.lat(), posi.lon()));
+    // right
+    point_at_distance(posi, 5000,  2.0 * M_PI * (rotationDeg + 30) / 360.0, average_earth_radius, pnt);
+    arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
+    // left
+    point_at_distance(posi, 5000,  2.0 * M_PI * (rotationDeg - 30) / 360.0, average_earth_radius, pnt);
+    arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
+    // tip
+    arrowpnts.push_back(Coordinate(posi.lat(), posi.lon()));
+
+    addPolyline(arrowpnts, color, 2, opacity);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

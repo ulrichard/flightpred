@@ -24,7 +24,8 @@
 #include <boost/date_time/date_facet.hpp>
 #include <boost/array.hpp>
 #include <boost/any.hpp>
-#include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/bind.hpp>
 // gnu gettext
 #include <libintl.h>
 // standard library
@@ -60,7 +61,7 @@ WeatherMap::WeatherMap(const std::string &db_conn_str, const std::string &model_
 //    parameters_->addItem(_("Temperature"));
 //    parameters_->addItem(_("Humidity"));
     parameters_->setCurrentIndex(0);
-    parameters_->activated().connect(SLOT(this, WeatherMap::loadWeatherMap));
+    parameters_->activated().connect(boost::bind(&WeatherMap::loadWeatherMap, this, false));
 
     Wt::WText *txtlevel = new Wt::WText("Level", impl_);
     levels_ = new Wt::WComboBox(impl_);
@@ -72,8 +73,8 @@ WeatherMap::WeatherMap(const std::string &db_conn_str, const std::string &model_
     levels_->addItem(_("600 hp"));
     levels_->addItem(_("500 hp"));
     levels_->addItem(_("400 hp"));
-    levels_->setCurrentIndex(0);
-    levels_->activated().connect(SLOT(this, WeatherMap::loadWeatherMap));
+    levels_->setCurrentIndex(2);
+    levels_->activated().connect(boost::bind(&WeatherMap::loadWeatherMap, this, false));
 
     Wt::WText *txttime = new Wt::WText("Time", impl_);
     time_slider_ = new Wt::WSlider(impl_);
@@ -82,23 +83,22 @@ WeatherMap::WeatherMap(const std::string &db_conn_str, const std::string &model_
     time_slider_->setMinimum(-12);
     time_slider_->setMaximum(72);
     time_slider_->setValue(18);
-    time_slider_->valueChanged().connect(SLOT(this, WeatherMap::loadWeatherMap));
+    time_slider_->valueChanged().connect(boost::bind(&WeatherMap::loadWeatherMap, this, false));
 
 
     new Wt::WBreak(impl_);
-#if WT_SERIES >= 0x3
+
     gmap_ = new Wt::WGoogleMapEx(impl_);
     gmap_->resize(1000, 700);
     gmap_->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
     gmap_->enableScrollWheelZoom();
     gmap_->enableDragging();
-#endif
 
-    loadWeatherMap();
+    loadWeatherMap(true);
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void WeatherMap::loadWeatherMap()
+void WeatherMap::loadWeatherMap(const bool resize)
 {
     // get weather prediction data from the db
     pqxx::connection conn(db_conn_str_);
@@ -118,53 +118,57 @@ void WeatherMap::loadWeatherMap()
     const bpt::ptime when = bpt::ptime(bgreg::day_clock::local_day(), bpt::time_duration(sliderhr, 0, 0));
 
     sstr.str("");
-    sstr << "SELECT AsText(location) as loc, value FROM weather_pred_future "
+    sstr << "SELECT AsText(location) as loc, value, parameter FROM weather_pred_future "
          << "WHERE model_id=" << model_id << " ";
     if(parameters_->currentText() == "Wind")
-    {
-        sstr << "AND (parameter='UGRD' OR parameter='VGRD') ";
-    }
+        sstr << "AND parameter IN ('UGRD', 'VGRD') ";
     else
-        sstr << "AND parameter='" << parameters_->currentText().narrow() << "' ";
+        sstr << "AND parameter='TMP' ";
     sstr << "AND level="      << level << " "
          << "AND pred_time='" << bgreg::to_iso_extended_string(when.date()) << " "
          << std::setfill('0') << std::setw(2) << when.time_of_day().hours() << ":00:00' "
-         << "ORDER BY run_time DESC";
+         << "ORDER BY run_time ASC";
     res = trans.exec(sstr.str());
+    std::cout << sstr.str() << "  returned  " << res.size() << " records" << std::endl;
 
-#if WT_SERIES >= 0x3
-    gmap_->clearOverlays();
-
-    pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
-    boost::unordered_set<point_ll_deg> visited;
-
+    boost::unordered_map<point_ll_deg, std::map<string, double> > grib_values;
     for(size_t i=0; i<res.size(); ++i)
     {
         string dbloc;
         res[i]["loc"].to(dbloc);
         point_ll_deg dbpos;
         boost::geometry::read_wkt(dbloc, dbpos);
-        double val;
-        res[i]["value"].to(val);
         string param;
         res[i]["parameter"].to(param);
+        double val;
+        res[i]["value"].to(val);
 
-        if(visited.find(dbpos) != visited.end())
-            continue;
-        visited.insert(dbpos);
+        grib_values[dbpos][param] = val;
+    }
 
-        const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
+
+    gmap_->clearOverlays();
+
+    pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
+
+    for(boost::unordered_map<point_ll_deg, std::map<string, double> >::iterator it = grib_values.begin(); it != grib_values.end(); ++it)
+    {
+        const Wt::WGoogleMap::Coordinate gmCoord(it->first.lat(), it->first.lon());
 
         // bounding box
-        bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
-        bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
-        bbox.second.setLatitude( std::max(bbox.second.latitude(),  dbpos.lat()));
-        bbox.second.setLongitude(std::max(bbox.second.longitude(), dbpos.lon()));
+        bbox.first.setLatitude(  std::min(bbox.first.latitude(),   it->first.lat()));
+        bbox.first.setLongitude( std::min(bbox.first.longitude(),  it->first.lon()));
+        bbox.second.setLatitude( std::max(bbox.second.latitude(),  it->first.lat()));
+        bbox.second.setLongitude(std::max(bbox.second.longitude(), it->first.lon()));
 
 
         if(parameters_->currentText() == "Wind")
         {
-            gmap_->addArrow(gmCoord, 0, Wt::WColor("#FF0000"), 0.9, "");
+            const double angle  = atan(it->second["UGRD"] / it->second["VGRD"]);
+            const double length = sqrt(it->second["UGRD"] * it->second["UGRD"] + it->second["VGRD"] * it->second["VGRD"]);
+
+
+            gmap_->addArrow(gmCoord, angle / 2 / M_PI * 360, Wt::WColor("#FF0000"), 0.9, "");
 
         }
         else
@@ -172,8 +176,9 @@ void WeatherMap::loadWeatherMap()
             gmap_->addMarker(gmCoord, "/sigma.gif");
         }
     }
-    gmap_->zoomWindow(bbox);
-#endif
+
+    if(resize)
+        gmap_->zoomWindow(bbox);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

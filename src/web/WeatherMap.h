@@ -23,7 +23,7 @@ public:
     virtual ~WeatherMap() { }
 
 private:
-    void loadWeatherMap();
+    void loadWeatherMap(const bool resize);
 
 
     Wt::WContainerWidget *impl_;

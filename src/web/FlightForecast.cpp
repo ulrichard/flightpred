@@ -139,8 +139,6 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
         table->setRenderer(i + 1, "function change(val) { return val.toFixed(2); }");
     }
 
-#if WT_SERIES >= 0x3
-
     if(showMap)
     {
         parentForMap->setStyleClass("forecastTableCell");
@@ -184,7 +182,6 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
         }
         gmap->zoomWindow(bbox);
     }
-#endif
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void FlightForecast::try_imbue(std::ostream &ostr, const string &localename)

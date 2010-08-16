@@ -5,11 +5,14 @@
 // witty
 #include <Wt/WComboBox>
 #include <Wt/WText>
+#include <Wt/WColor>
+#include <Wt/WBrush>
 #include <Wt/Chart/WCartesianChart>
 #include <Wt/WStandardItemModel>
 // boost
 #include <boost/any.hpp>
 #include <boost/regex.hpp>
+#include <boost/format.hpp>
 // std lib
 #include <string>
 #include <vector>
@@ -123,7 +126,7 @@ void Populations::ShowPopulation()
             res[i]["validation_error"].to(validation_error);
 
             if(criteria_->currentText() == "Generation")
-                confclass = boost::lexical_cast<string>(generation);
+                confclass = (boost::format("%03d") % generation).str();
 
             confclasses.insert(confclass);
             if(train_time <= train_time_treshold)
@@ -165,11 +168,18 @@ void Populations::ShowPopulation()
     chart_->axis(Wt::Chart::YAxis).setTitle("error");
     for(set<string>::iterator it = confclasses.begin(); it != confclasses.end(); ++it)
     {
-        Wt::Chart::WDataSeries data1(Wt::Chart::WDataSeries(1 + std::distance(confclasses.begin(), it), Wt::Chart::PointSeries, Wt::Chart::Y1Axis));
+        const size_t npos = std::distance(confclasses.begin(), it);
+        Wt::Chart::WDataSeries data1(Wt::Chart::WDataSeries(1 + npos, Wt::Chart::PointSeries, Wt::Chart::Y1Axis));
         data1.setLegendEnabled(true);
+
+        if(criteria_->currentText() == "Generation")
+        {
+            // make older generations fade
+            const float brightness = 1.0 - (static_cast<float>(npos) / confclasses.size()); // 0.0 to 1.0
+            data1.setBrush(Wt::WBrush(Wt::WColor(255, brightness * 255, brightness * 255)));
+        }
         chart_->addSeries(data1);
     }
-
 
     sstr.str("");
     sstr << "Longest training time : " << max_train_time;
