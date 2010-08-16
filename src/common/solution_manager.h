@@ -19,7 +19,7 @@ class solution_manager : public boost::noncopyable
 public:
     solution_manager(const std::string &site_name)
         : site_name_(site_name), pred_site_id_(get_pred_site_id(site_name)), weather_(true),
-          date_extremes_(weather_.get_feature_date_period(false)), ignored_days_(get_ignored_days()) { }
+          date_extremes_(weather_.get_feature_date_period(false)), ignored_days_(get_ignored_days(true)) { }
     virtual ~solution_manager() { };
 
     void evolve_population(const size_t iterations, const double mutation_rate);
@@ -29,7 +29,7 @@ public:
     void export_solution(const boost::filesystem::path &backup_dir);
     void import_solution(const boost::filesystem::path &backup_dir);
 
-    static const std::set<boost::gregorian::date> get_ignored_days();
+    static const std::set<boost::gregorian::date> get_ignored_days(bool onlyConfirmed);
 
 private:
     static size_t get_pred_site_id(const std::string &site_name);

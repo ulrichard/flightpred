@@ -405,7 +405,7 @@ size_t solution_manager::get_pred_site_id(const std::string &site_name)
     return pred_site_id;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-const set<bgreg::date> solution_manager::get_ignored_days()
+const set<bgreg::date> solution_manager::get_ignored_days(bool onlyConfirmed)
 {
     set<bgreg::date> ignored_days;
 
@@ -414,6 +414,8 @@ const set<bgreg::date> solution_manager::get_ignored_days()
         pqxx::transaction<> trans(flightpred_db::get_conn(), "fill_max_distance_cache");
         std::stringstream sstr;
         sstr << "SELECT pred_day FROM pred_ignore";
+        if(onlyConfirmed)
+            sstr << " WHERE confirmed=true";
         pqxx::result res = trans.exec(sstr.str());
 
         for(size_t i=0; i<res.size(); ++i)

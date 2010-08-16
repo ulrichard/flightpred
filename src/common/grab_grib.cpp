@@ -69,9 +69,10 @@ using std::stringstream;
 // a description of the grib data fields can be found at:
 // http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2f00.shtml
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-grib_grabber::grib_grabber(const string &modelname, size_t download_pack, const bool is_future)
+grib_grabber::grib_grabber(const string &modelname, size_t download_pack, const bool is_future, const bool ignore_errors)
     : baseurl_(get_base_url(modelname, is_future)), modelname_(modelname),
-      db_model_id_(get_model_id(modelname)), grid_res_(get_grid_res(modelname)), download_pack_(download_pack), is_future_(is_future)
+      db_model_id_(get_model_id(modelname)), grid_res_(get_grid_res(modelname)),
+      download_pack_(download_pack), is_future_(is_future), ignore_errors_(ignore_errors)
 {
 
 }
@@ -456,7 +457,7 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
     static const set<string>  sel_param  = get_std_params();
     const boost::unordered_set<point_ll_deg> sel_locations_close = get_locations_around_sites(grid_res_, 8);
     const boost::unordered_set<point_ll_deg> sel_locations_wide  = get_locations_around_sites(grid_res_, 20);
-    const std::set<boost::gregorian::date> ignored_days = solution_manager::get_ignored_days();
+    const std::set<boost::gregorian::date> ignored_days = solution_manager::get_ignored_days(true);
 
     // download the grib files
     for(bgreg::date cday(from); cday <= to; cday += bgreg::days(1))
@@ -538,7 +539,20 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
         catch(std::exception& ex)
         {
             if(ignored_days.find(cday) != ignored_days.end())
+            {
                 report(ERROR) << "error on a day that is known to be problematic : " << ex.what();
+                continue;
+            }
+
+            pqxx::transaction<> trans(flightpred_db::get_conn(), "add ignored day");
+            std::stringstream sstr;
+            sstr << "INSERT INTO pred_ignore (model_id, pred_day) VALUES (" << db_model_id_ << ", '"
+                 << bgreg::to_iso_extended_string(cday) << "')";
+            trans.exec(sstr.str());
+            trans.commit();
+
+            if(ignore_errors_)
+                report(ERROR) << "error : " << ex.what();
             else
                 throw;
         }

@@ -43,7 +43,7 @@ protected:
         std::string param;
         size_t range_start, range_end; // byte positions in the large grib file on the server
     };
-    grib_grabber(const std::string &modelname, size_t download_pack, const bool is_future);
+    grib_grabber(const std::string &modelname, size_t download_pack, const bool is_future, const bool ignore_errors);
     void download_data(const std::string &url, std::ostream &ostr, const std::list<request> &requests);
     void dispatch_grib_data(std::istream &istr, std::list<request> &requests,
             const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_close,
@@ -60,6 +60,7 @@ protected:
     const double             grid_res_;
     const size_t             download_pack_;
     const bool               is_future_;
+    const bool               ignore_errors_;
     static const size_t      PG_SIR_WGS84 = 4326;
     boost::posix_time::ptime predrun_;
 
@@ -73,8 +74,8 @@ private:
 class grib_grabber_gfs_past : public grib_grabber
 {
 public:
-    grib_grabber_gfs_past(size_t download_pack)
-        : grib_grabber("GFS", download_pack, false) { }
+    grib_grabber_gfs_past(size_t download_pack, bool ignore_errors)
+        : grib_grabber("GFS", download_pack, false, ignore_errors) { }
     virtual ~grib_grabber_gfs_past() { }
 
     virtual void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to);
@@ -85,7 +86,7 @@ class grib_grabber_gfs_future : public grib_grabber
 {
 public:
     grib_grabber_gfs_future(size_t download_pack)
-        : grib_grabber("GFS", download_pack, true) { }
+        : grib_grabber("GFS", download_pack, true, false) { }
     virtual ~grib_grabber_gfs_future() { }
 
     virtual void grab_grib(const boost::posix_time::time_duration &future_time);

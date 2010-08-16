@@ -37,7 +37,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
 {
     report(INFO) << "train_svm::train(" << site_name << ", " << bgreg::to_iso_extended_string(from)
                  << ", " << bgreg::to_iso_extended_string(to) <<  ")";
-    const std::set<boost::gregorian::date> ignored_days = solution_manager::get_ignored_days();
+    const std::set<boost::gregorian::date> ignored_days = solution_manager::get_ignored_days(true);
     features_weather weather(false);
 
     // get the id and geographic position of the prediction site

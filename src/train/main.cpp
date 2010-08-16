@@ -88,6 +88,7 @@ int main(int argc, char* argv[])
             ("get-future-weather", "get future weather prediction grib data for central europe (download-pack)")
             ("forecast",           "predict possible flights for the next few days")
             ("db-maintenance",     "delete old unused data, analyze indices...")
+            ("ignore-errors",      "flag to tell the program not to stop on errors, but instead report and continue.")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
             ("position",      po::value<string>(&position)->default_value("N 0 E 0"), "geographic position")
             ("area-radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training [m]")
@@ -166,7 +167,7 @@ int main(int argc, char* argv[])
         {
             if(pred_model == "GFS")
             {
-                grib_grabber_gfs_past gr(download_pack);
+                grib_grabber_gfs_past gr(download_pack, vm.count("ignore-errors"));
                 gr.grab_grib(dtstart, dtend);
             }
             else
