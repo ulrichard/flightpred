@@ -136,6 +136,7 @@ CREATE TABLE pred_ignore
 	pred_day    date 		  NOT NULL,
 	CONSTRAINT FK_model_id FOREIGN KEY(model_id) REFERENCES weather_models(model_id) ON DELETE CASCADE
 );
+CREATE UNIQUE INDEX ignoreByModelDate ON pred_ignore (pred_ignore_id);
 
 CREATE TABLE flight_pred
 (
