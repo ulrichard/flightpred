@@ -100,7 +100,6 @@ BOOST_AUTO_TEST_CASE(SolutionSerialize)
         ia.register_type<lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > > >();
         ia.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
 
-/* // tries to write to the db internally...
         solution_config *sol = 0;
         ia >> sol;
 
@@ -108,7 +107,7 @@ BOOST_AUTO_TEST_CASE(SolutionSerialize)
         BOOST_CHECK_EQUAL(solconf.get_generation(), sol->get_generation());
         BOOST_CHECK_EQUAL(solconf.get_site_name(), sol->get_site_name());
         BOOST_CHECK_EQUAL(solconf.get_description(), sol->get_description());
-*/
+
 
 //        solconf.get_decision_function("num_flight");
 

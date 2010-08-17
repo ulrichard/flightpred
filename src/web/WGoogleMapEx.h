@@ -28,8 +28,18 @@ public:
     void addArrow(const Coordinate &pos, const double rotationDeg,
         const WColor &color, const float opacity, const std::string &tooltip);
 
-private:
+    /*! \brief Add an wind indicator overlay to the map.
+    */
+    void addWindIndicator(const Coordinate &pos, const double rotationDeg, const double speed,
+        const WColor &color, const float opacity, const std::string &tooltip);
 
+    /*! \brief Add some text overlay to the map.
+    */
+    void addText(const Coordinate &pos, const std::string &text, const WColor &color, const float opacity);
+
+
+private:
+    static const double average_earth_radius = 6372795.0;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace Wt

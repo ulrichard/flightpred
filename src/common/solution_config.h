@@ -2,8 +2,9 @@
 #define SOLUTION_CONFIG_H_INCLUDED
 
 // flightpred
-#include <common/learning_machine.h>
-#include <common/features_weather.h>
+#include "common/learning_machine.h"
+#include "common/features_weather.h"
+#include "common/flightpred_globals.h"
 //boost
 #include <boost/shared_ptr.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -69,8 +70,10 @@ private:
         if(Archive::is_loading::value)
 		{
 		     decode();
+
 		     // insert or overwrite
-		     write_to_db();
+		     if(flightpred_db::connected())
+                write_to_db();
 		}
 
 	}

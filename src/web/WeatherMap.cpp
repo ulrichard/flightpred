@@ -164,11 +164,11 @@ void WeatherMap::loadWeatherMap(const bool resize)
 
         if(parameters_->currentText() == "Wind")
         {
-            const double angle  = atan(it->second["UGRD"] / it->second["VGRD"]);
+            const double angle  = atan(it->second["VGRD"] ? it->second["UGRD"] / it->second["VGRD"] : it->second["VGRD"] ? 0 : M_PI);
             const double length = sqrt(it->second["UGRD"] * it->second["UGRD"] + it->second["VGRD"] * it->second["VGRD"]);
 
 
-            gmap_->addArrow(gmCoord, angle / 2 / M_PI * 360, Wt::WColor("#FF0000"), 0.9, "");
+            gmap_->addWindIndicator(gmCoord, angle / 2 / M_PI * 360, length, Wt::WColor("#FF0000"), 0.9, "");
 
         }
         else

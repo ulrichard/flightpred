@@ -29,6 +29,8 @@ public:
     static pqxx::connection & get_conn()
     {   assert(inst_); return inst_->conn_;    }
 
+    static bool connected() { return inst_; }
+
 private:
     static flightpred_db *inst_;
     pqxx::connection conn_;

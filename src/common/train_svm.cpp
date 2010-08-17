@@ -33,7 +33,7 @@ using std::pair;
 using std::string;
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to)
+void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to, const double max_val_train_time)
 {
     report(INFO) << "train_svm::train(" << site_name << ", " << bgreg::to_iso_extended_string(from)
                  << ", " << bgreg::to_iso_extended_string(to) <<  ")";
@@ -85,7 +85,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
 
     //load the configuration with the best score
     solution_manager solmgr(site_name);
-    std::auto_ptr<solution_config> sol = solmgr.load_best_solution(false);
+    std::auto_ptr<solution_config> sol = solmgr.load_best_solution(false, max_val_train_time);
 
     // get the feature descriptions of the weather data
     const set<features_weather::feat_desc> &features = sol->get_weather_feature_desc();

@@ -1,3 +1,23 @@
+flightpred (0.0.9) lucid; urgency=low
+
+  * Added commandline argument max-eval-time to restrict solutions for production training
+  * Some work on the weather map  
+  * drawing arrows in the weather tab (although the data seems to be invalid)
+  * fade the color of older generations in the population tab 
+  * added an --ignore-errors commandline argument that writes to pred_ignore and continues instead of terminating when some grib data is missing or corrupt.
+  * using the faster comparable_distance from boost::geometry.
+  * more fault tolerant
+  * fixed a signed/unsigned bug in features_weatherget_locations_around_site()
+  * Added the --db-maintenance commandline option that deletes obsolete records and runs a vacuum analyze to analyze the indices.
+  * Ignoring days with incomplete grib data in training for production.
+  * Trying for better randomness in the mutation of breeding.
+  * Guard against container overflow in the random mutation.
+  * Some more reporting.
+  * added a table with dates to ignore in case the grib data is incomplete or corrupt.
+  * Switched the source of grib data for the past. Using now a high availability server with a 1 deg grid as advised by nooa staff.
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu,  05 Aug 2010 01:22:10 +0200
+
 flightpred (0.0.8) lucid; urgency=low
 
   * fixed the hanging debian/postinst that troubled a while. I found the solution in the postinst script of the gallery package of which I found a mailing list that indicated that they used to have the same problem.

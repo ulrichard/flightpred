@@ -84,6 +84,11 @@ void Populations::ShowPopulation()
         impl_->removeWidget(footertext_);
         footertext_ = 0;
     }
+    if(algo_legend_)
+    {
+        impl_->removeWidget(algo_legend_);
+        algo_legend_ = 0;
+    }
 
     pqxx::connection conn(db_conn_str_);
     pqxx::transaction<> trans(conn, "web population");
@@ -183,9 +188,23 @@ void Populations::ShowPopulation()
 
     sstr.str("");
     sstr << "Longest training time : " << max_train_time;
-
     footertext_ = new Wt::WText(sstr.str(), impl_);
     std::cout << sstr.str() << std::endl;
+
+    if(criteria_->currentText() == "Algorithm")
+    {
+        sstr.str("");
+        sstr << "<h3>Algorithm descriptions</h3><ul>"
+             << "<li><b>DLIB_KRLS:</b> <a href='http://dclib.sourceforge.net/ml.html#krls'>kernel recursive least squares</a>"
+             << " -> <a href='http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.2.9587&rep=rep1&type=pdf'>detailed paper</a></li>"
+             << "<li><b>DLIB_RVM:</b> <a href='http://dclib.sourceforge.net/ml.html#rvm_regression_trainer'>relevance vector machine</a></li>"
+             << "</ul><h3>Kernel descriptions</h3><ul>"
+             << "<li><b>RBF</b> <a href='http://dclib.sourceforge.net/ml.html#radial_basis_kernel'>radial basis function</a></li>"
+             << "<li><b>SIG</b> <a href='http://dclib.sourceforge.net/ml.html#sigmoid_kernel'>sigmoid</a></li>"
+             << "<li><b>POLY</b> <a href='http://dclib.sourceforge.net/ml.html#polynomial_kernel'>polynomial</a></li>"
+             << "</ul>";
+        algo_legend_ = new Wt::WText(sstr.str(), Wt::XHTMLUnsafeText, impl_);
+    }
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
