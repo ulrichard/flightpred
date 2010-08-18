@@ -1,3 +1,9 @@
+flightpred (0.0.10) lucid; urgency=low
+
+  * added the dependency to libboost-test-dev to the source package
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Wed,  18 Aug 2010 23:24:10 +0200
+
 flightpred (0.0.9) lucid; urgency=low
 
   * Added commandline argument max-eval-time to restrict solutions for production training

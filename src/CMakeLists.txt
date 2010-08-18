@@ -16,7 +16,6 @@ include_directories (${PROJECT_SOURCE_DIR}/../3rd-party/ggl)
 include_directories (${PROJECT_SOURCE_DIR}/../3rd-party/json_spirit/json_spirit)
 include_directories (${PROJECT_SOURCE_DIR}/../3rd-party/dclib)
 include_directories (${BOOST_INCLUDE_DIRS})
-include_directories (${Wt_INCLUDE_DIR})
 
 LINK_DIRECTORIES(${BOOST_LIB_DIRS})
 
