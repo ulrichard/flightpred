@@ -217,32 +217,31 @@ void WGoogleMapEx::addArrow(const Coordinate &pos, const double rotationDeg,
 void WGoogleMapEx::addWindIndicator(const Coordinate &pos, const double rotationDeg, const double speed,
     const WColor &color, const float opacity, const std::string &tooltip)
 {
-    addArrow(pos, rotationDeg, color, opacity, tooltip);
-    return;
+    const double polelength = 60000;
+    const double len10kn    = 10000;
+    const double dist10kn   = 10000;
 
     point_ll_deg posi(longitude<>(pos.longitude()), latitude<>(pos.latitude()));
- //   std::cout << "Arrow at " << boost::geometry::make_wkt(posi) << std::endl;
     std::vector<Coordinate> arrowpnts;
     // tip
     arrowpnts.push_back(Coordinate(posi.lat(), posi.lon()));
     // tail
     point_ll_deg pnt;
-    point_at_distance(posi, 20000,  2.0 * M_PI * rotationDeg / 360.0, average_earth_radius, pnt);
+    point_at_distance(posi, polelength,  2.0 * M_PI * rotationDeg / 360.0, average_earth_radius, pnt);
     arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
-/*
+
     for(size_t i=0; i<speed; i+=10)
     {
         const bool full = speed > (i + 5);
-        point_at_distance(posi, 20000 - i * 200,  2.0 * M_PI * rotationDeg / 360.0, average_earth_radius, pnt);
+        point_at_distance(posi, polelength - i * dist10kn / 10.0,  2.0 * M_PI * rotationDeg / 360.0, average_earth_radius, pnt);
         const point_ll_deg pnt1 = pnt;
         arrowpnts.push_back(Coordinate(pnt1.lat(), pnt1.lon()));
-        point_at_distance(pnt1, full ? 2000 : 1000,  2.0 * M_PI * (rotationDeg - 45) / 360.0, average_earth_radius, pnt);
+        point_at_distance(pnt1, full ? len10kn : len10kn / 2.0,  2.0 * M_PI * (rotationDeg - 45) / 360.0, average_earth_radius, pnt);
         arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
         arrowpnts.push_back(Coordinate(pnt1.lat(), pnt1.lon()));
     }
-*/
 
-//    addPolyline(arrowpnts, color, 2, opacity);
+    addPolyline(arrowpnts, color, 2, opacity);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void WGoogleMapEx::addText(const Coordinate &pos, const std::string &text, const WColor &color, const float opacity)

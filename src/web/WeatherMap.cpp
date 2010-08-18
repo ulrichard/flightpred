@@ -178,7 +178,12 @@ void WeatherMap::loadWeatherMap(const bool resize)
     }
 
     if(resize)
+    {
         gmap_->zoomWindow(bbox);
+            std::cout << "WGoogleMap::zoomWindow(" << bbox.first.longitude() << "," << bbox.second.latitude() << " / "
+                      << bbox.second.longitude() << "," << bbox.first.latitude() << ")" << std::endl;
+    }
+
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 
