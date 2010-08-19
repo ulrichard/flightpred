@@ -47,20 +47,8 @@ case "$1" in
 			su postgres   -c "psql -e -a -c \"ALTER ROLE flightpred NOSUPERUSER\"" 								 >> /dev/null
 		fi
 
-		# use the grib data from the production server
-		su flightpred -c "psql -e -a -c \"update weather_models set url_past='nomads.ncdc.noaa.gov/data/gfsanl/', grid_step=1.0 where model_name='GFS';\" "
-
-		# add the table with days to ignore due to missing or corrupt grib data
-		su flightpred -c "psql -e -a -c \"CREATE TABLE pred_ignore
-				(
-					pred_ignore_id SERIAL PRIMARY KEY,
-					model_id    int           NOT NULL,
-					pred_day    date 		  NOT NULL,
-					confirmed   boolean		  default false,
-					CONSTRAINT FK_model_id FOREIGN KEY(model_id) REFERENCES weather_models(model_id) ON DELETE CASCADE
-				);\""
-		su flightpred -c "psql -e -a -c \"CREATE UNIQUE INDEX ignoreByModelDate ON pred_ignore (pred_ignore_id);\""
-	
+		#update the db structure
+		su flightpred -c "psql -e -a -d flightpred -f /usr/share/flightpred/update_flightpred_db.sql" >> /dev/null
 
 		# set up the environment for the webapp
 		mkdir -p /usr/run/flightpred

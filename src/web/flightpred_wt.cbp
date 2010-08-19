@@ -46,7 +46,6 @@
 					<Add directory="../../3rd-party/ggl" />
 				</Compiler>
 				<Linker>
-					<Add option="-s" />
 					<Add library="wt" />
 					<Add library="wtext" />
 					<Add library="wtfcgi" />
