@@ -17,7 +17,6 @@ SET_TARGET_PROPERTIES(
   )
 
 
-INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/create_flightpred_db.sql DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
 INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/append_wt_config.pl DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
 INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/wt_config_merge.xml DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
 

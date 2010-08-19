@@ -1,0 +1,7 @@
+PROJECT(flightpred_scripts)
+SET(CMAKE_MODULE_PATH ${flightpred_scripts_SOURCE_DIR})
+
+INSTALL(FILES create_flightpred_db.sql DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
+INSTALL(FILES update_flightpred_db.sql DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
+
+

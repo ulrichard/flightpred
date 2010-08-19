@@ -6,7 +6,7 @@ SET(flightpred_MAIN_DIR ${flightpred_SOURCE_DIR})
 
 SET(VERSION_SERIES 0)
 SET(VERSION_MAJOR 0)
-SET(VERSION_MINOR 11)
+SET(VERSION_MINOR 12)
 
 SET(flightpred_common_SOVERSION 1)
 SET(flightpred_train_SOVERSION 1)
@@ -36,6 +36,7 @@ SET(CONFIGURATION "${CONFIGDIR}/wt_config.xml" CACHE PATH "Path to the wt config
 SET(WEBUSER www-data CACHE STRING "Webserver username (e.g. apache or www)")
 SET(WEBGROUP www-data CACHE STRING "Webserver groupname (e.g. apache or www or users)")
 
-SUBDIRS(3rd-party/json_spirit/json_spirit src)
+
+SUBDIRS(3rd-party/json_spirit/json_spirit src scripts)
 
 

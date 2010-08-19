@@ -1,3 +1,9 @@
+flightpred (0.0.12) lucid; urgency=low
+
+  * update_flightpred_db.sh was not copied, so the update didn't work.
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Fri,  20 Aug 2010 00:21:00 +0200
+
 flightpred (0.0.11) lucid; urgency=low
 
   * Changed upate of the database structure. Since postgresql doesn't know "CREATE TABLE IF NOT EXISTS" syntax (it will in v9), I had to make a stored procedure.
