@@ -123,7 +123,7 @@ void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
     // workaround as long as we have the problem with the loading order of the javascript -> works only for one map per page
     static const double average_earth_radius = 6372795.0;
     point_ll_deg posi(longitude<>(pos.longitude()), latitude<>(pos.latitude()));
-    std::cout << "Circle around " << boost::geometry::make_wkt(posi) << std::endl;
+    std::cout << "Circle around " << boost::geometry::make_wkt(posi) << " radius " << radiusKm << " km" << std::endl;
     std::vector<Coordinate> circlepnts;
     const size_t steps = 50;
     for(size_t i=0; i<steps; ++i)

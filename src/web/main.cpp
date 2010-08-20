@@ -54,11 +54,23 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
 
     try
     {
-        // get flight forecasts from the db
-//        const string db_conn_str = "host=localhost dbname=flightpred user=" + string(getenv("USER") ? getenv("USER") : "www-data");
-        const string db_conn_str = "host=localhost dbname=flightpred user=flightpred password=flightpred";
-//        const string db_conn_str = "host=localhost dbname=flightpred user=postgres password=postgres";
-//        const string db_conn_str = "host=192.168.2.160 port=5432 dbname=flightpred user=postgres password=postgres";
+        // assemble the database connection information
+        string db_host = "localhost";
+        Wt::WApplication::readConfigurationProperty("db-host", db_host);
+        string db_port = "5432";
+        Wt::WApplication::readConfigurationProperty("db-port", db_port);
+        string db_name = "flightpred";
+        Wt::WApplication::readConfigurationProperty("db-name", db_name);
+        string db_user = "flightpred";
+        Wt::WApplication::readConfigurationProperty("db-user", db_user);
+        string db_password = "flightpred";
+        Wt::WApplication::readConfigurationProperty("db-password", db_password);
+        std::stringstream sstr;
+        std::cout << "Connecting to the database:  host=" << db_host << " port=" << db_port
+                  << " dbname=" << db_name << " user=" << db_user << " password=********" << std::endl;
+        sstr << "host=" << db_host << " port=" << db_port << " dbname=" << db_name
+             << " user=" << db_user << " password=" << db_password;
+        const string db_conn_str = sstr.str();
 
         // first see if we can connect to the database, and if not put out a good errormessage
         try
@@ -86,7 +98,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
 
         Wt::WContainerWidget *docupanel = new Wt::WContainerWidget();
         tabw->addTab(docupanel, _("Documentation"));
-        std::stringstream sstr;
+        sstr.str("");
         sstr << "<iframe src=\"http://flightpred.svn.sourceforge.net/viewvc/flightpred/trunk/doc/index.html\" width=\"100%\" height=\"100%\"></iframe>";
         Wt::WText *txIFrame = new Wt::WText(sstr.str(), Wt::XHTMLUnsafeText);
         docupanel->addWidget(txIFrame);

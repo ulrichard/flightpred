@@ -76,111 +76,118 @@ FlightForecast::FlightForecast(const std::string &db_conn_str, const size_t fore
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *parentForTable, Wt::WContainerWidget *parentForMap, const bool showMap)
 {
-    // get flight forecasts from the db
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "web prediction");
-    const size_t num_fl_lbl = 5;
-    const array<string, num_fl_lbl> pred_names = {"num_flight", "max_dist", "avg_dist", "max_dur", "avg_dur"};
-
-    Wt::WStandardItemModel *model = new Wt::WStandardItemModel(sites_.size(), pred_names.size() + 1);
-    model->setHeaderData(0, Wt::Horizontal, any(string(_("flying site"))));
-    for(size_t i=0; i<pred_names.size(); ++i)
-        model->setHeaderData(i + 1, Wt::Horizontal, any(pred_names[i]));
-
-    for(vector<pair<size_t, string> >::iterator it = sites_.begin(); it != sites_.end(); ++it)
+    try
     {
-        const size_t row = std::distance(sites_.begin(), it);
-        model->setData(row, 0, any(it->second));
+        // get flight forecasts from the db
+        pqxx::connection conn(db_conn_str_);
+        pqxx::transaction<> trans(conn, "web prediction");
+        const size_t num_fl_lbl = 5;
+        const array<string, num_fl_lbl> pred_names = {"num_flight", "max_dist", "avg_dist", "max_dur", "avg_dur"};
 
-        std::stringstream sstr;
-        sstr << "SELECT ";
-        std::copy(pred_names.begin(), pred_names.end(), std::ostream_iterator<string>(sstr, ", "));
-        sstr << "train_sol_id FROM flight_pred WHERE pred_site_id=" << it->first << " "
-             << "AND pred_day='" << bgreg::to_iso_extended_string(day) << "' ORDER BY calculated DESC";
-        pqxx::result res = trans.exec(sstr.str());
+        Wt::WStandardItemModel *model = new Wt::WStandardItemModel(sites_.size(), pred_names.size() + 1);
+        model->setHeaderData(0, Wt::Horizontal, any(string(_("flying site"))));
+        for(size_t i=0; i<pred_names.size(); ++i)
+            model->setHeaderData(i + 1, Wt::Horizontal, any(pred_names[i]));
 
-        if(res.size())
+        for(vector<pair<size_t, string> >::iterator it = sites_.begin(); it != sites_.end(); ++it)
         {
-            for(size_t i=0; i<pred_names.size(); ++i)
-            {
-                double val;
-                res[0][pred_names[i]].to(val);
-                model->setData(row, i + 1, any(val));
-            }
-        }
-        else
-            for(size_t i=0; i<pred_names.size(); ++i)
-                model->setData(row, i + 1, any(-1.0));
-    }
-    model->sort(1, Wt::DescendingOrder);
-
-    std::stringstream sstr;
-    try_imbue(sstr, Wt::WApplication::instance()->locale());
-//    boost::date_time::date_facet *facet(new boost::date_time::date_facet("%A %x"));
-//    sstr.imbue(std::locale(sstr.getloc(), facet));
-    sstr << day;
-    static const bgreg::date today(boost::gregorian::day_clock::local_day());
-    if(day == today)
-        sstr << _(" (today)");
-    if(day == today + bgreg::days(1))
-        sstr << _(" (tomorrow)");
-    new Wt::WText(sstr.str(), parentForTable);
-
-    parentForTable->setStyleClass("forecastTableCell");
-    Wt::Ext::TableView *table = new Wt::Ext::TableView(parentForTable);
-    table->resize(352, 200);
-    table->setModel(model);
-    table->setColumnSortable(0, true);
-    table->setColumnWidth(0, 75);
-    for(size_t i=0; i<pred_names.size(); ++i)
-    {
-        table->setColumnSortable(i + 1, true);
-        table->setColumnWidth(i + 1, i ? 50 : 55);
-        table->setRenderer(i + 1, "function change(val) { return val.toFixed(2); }");
-    }
-
-    if(showMap)
-    {
-        parentForMap->setStyleClass("forecastTableCell");
-        Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parentForMap);
-        gmap->resize(352, 300);
-        gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
-        gmap->enableScrollWheelZoom();
-        gmap->enableDragging();
-
-        pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
-
-        for(size_t i=0; i<model->rowCount(); ++i)
-        {
-            const string site_name = boost::any_cast<string>(model->data(i, 0));
-            const double max_dist  = boost::any_cast<double>(model->data(i, 2));
-
-            if(max_dist < 0.0)
-                continue;
+            const size_t row = std::distance(sites_.begin(), it);
+            model->setData(row, 0, any(it->second));
 
             std::stringstream sstr;
-            sstr << "SELECT AsText(location) as loc from pred_sites WHERE site_name='" << site_name << "'";
+            sstr << "SELECT ";
+            std::copy(pred_names.begin(), pred_names.end(), std::ostream_iterator<string>(sstr, ", "));
+            sstr << "train_sol_id FROM flight_pred WHERE pred_site_id=" << it->first << " "
+                 << "AND pred_day='" << bgreg::to_iso_extended_string(day) << "' ORDER BY calculated DESC";
             pqxx::result res = trans.exec(sstr.str());
-            if(!res.size())
-                continue;
 
-            string dbloc;
-            res[0][0].to(dbloc);
-            boost::geometry::point_ll_deg dbpos;
-            boost::geometry::read_wkt(dbloc, dbpos);
-
-            const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
-//            gmap->addMarker(gmCoord, "/sigma16.gif");
-            gmap->addMarker(gmCoord, "/sigma.gif");
-            const double radiusKm = max_dist / 10.0;
-            gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9);
-
-            bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
-            bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
-            bbox.second.setLatitude( std::max(bbox.second.latitude(),  dbpos.lat()));
-            bbox.second.setLongitude(std::max(bbox.second.longitude(), dbpos.lon()));
+            if(res.size())
+            {
+                for(size_t i=0; i<pred_names.size(); ++i)
+                {
+                    double val;
+                    res[0][pred_names[i]].to(val);
+                    model->setData(row, i + 1, any(val));
+                }
+            }
+            else
+                for(size_t i=0; i<pred_names.size(); ++i)
+                    model->setData(row, i + 1, any(-1.0));
         }
-        gmap->zoomWindow(bbox);
+        model->sort(1, Wt::DescendingOrder);
+
+        std::stringstream sstr;
+        try_imbue(sstr, Wt::WApplication::instance()->locale());
+    //    boost::date_time::date_facet *facet(new boost::date_time::date_facet("%A %x"));
+    //    sstr.imbue(std::locale(sstr.getloc(), facet));
+        sstr << day;
+        static const bgreg::date today(boost::gregorian::day_clock::local_day());
+        if(day == today)
+            sstr << _(" (today)");
+        if(day == today + bgreg::days(1))
+            sstr << _(" (tomorrow)");
+        new Wt::WText(sstr.str(), parentForTable);
+
+        parentForTable->setStyleClass("forecastTableCell");
+        Wt::Ext::TableView *table = new Wt::Ext::TableView(parentForTable);
+        table->resize(352, 200);
+        table->setModel(model);
+        table->setColumnSortable(0, true);
+        table->setColumnWidth(0, 75);
+        for(size_t i=0; i<pred_names.size(); ++i)
+        {
+            table->setColumnSortable(i + 1, true);
+            table->setColumnWidth(i + 1, i ? 50 : 55);
+            table->setRenderer(i + 1, "function change(val) { return val.toFixed(2); }");
+        }
+
+        if(showMap)
+        {
+            parentForMap->setStyleClass("forecastTableCell");
+            Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parentForMap);
+            gmap->resize(352, 300);
+            gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
+            gmap->enableScrollWheelZoom();
+            gmap->enableDragging();
+
+            pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
+
+            for(size_t i=0; i<model->rowCount(); ++i)
+            {
+                const string site_name = boost::any_cast<string>(model->data(i, 0));
+                const double max_dist  = boost::any_cast<double>(model->data(i, 2));
+
+                if(max_dist < 0.0)
+                    continue;
+
+                std::stringstream sstr;
+                sstr << "SELECT AsText(location) as loc from pred_sites WHERE site_name='" << site_name << "'";
+                pqxx::result res = trans.exec(sstr.str());
+                if(!res.size())
+                    continue;
+
+                string dbloc;
+                res[0][0].to(dbloc);
+                boost::geometry::point_ll_deg dbpos;
+                boost::geometry::read_wkt(dbloc, dbpos);
+
+                const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
+    //            gmap->addMarker(gmCoord, "/sigma16.gif");
+                gmap->addMarker(gmCoord, "/sigma.gif");
+                const double radiusKm = max_dist / 10.0;
+                gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9);
+
+                bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
+                bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
+                bbox.second.setLatitude( std::max(bbox.second.latitude(),  dbpos.lat()));
+                bbox.second.setLongitude(std::max(bbox.second.longitude(), dbpos.lon()));
+            }
+            gmap->zoomWindow(bbox);
+        }
+    }
+    catch(std::exception& ex)
+    {
+        std::cout << "Exception in FlightForecast::makePredDay() : " << ex.what() << std::endl;
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

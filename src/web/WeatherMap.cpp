@@ -100,90 +100,96 @@ WeatherMap::WeatherMap(const std::string &db_conn_str, const std::string &model_
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void WeatherMap::loadWeatherMap(const bool resize)
 {
-    // get weather prediction data from the db
-    pqxx::connection conn(db_conn_str_);
-    pqxx::transaction<> trans(conn, "web prediction");
-
-    std::stringstream sstr;
-    sstr << "SELECT model_id from weather_models WHERE model_name='" << model_name_ << "'";
-    pqxx::result res = trans.exec(sstr.str());
-    if(!res.size())
-        throw std::runtime_error("model not found");
-    size_t model_id;
-    res[0][0].to(model_id);
-
-
-    const size_t level = atoi(levels_->currentText().narrow().c_str());
-    const int sliderhr = time_slider_->value() / 6 * 6;
-    const bpt::ptime when = bpt::ptime(bgreg::day_clock::local_day(), bpt::time_duration(sliderhr, 0, 0));
-
-    sstr.str("");
-    sstr << "SELECT AsText(location) as loc, value, parameter FROM weather_pred_future "
-         << "WHERE model_id=" << model_id << " ";
-    if(parameters_->currentText() == "Wind")
-        sstr << "AND parameter IN ('UGRD', 'VGRD') ";
-    else
-        sstr << "AND parameter='TMP' ";
-    sstr << "AND level="      << level << " "
-         << "AND pred_time='" << bgreg::to_iso_extended_string(when.date()) << " "
-         << std::setfill('0') << std::setw(2) << when.time_of_day().hours() << ":00:00' "
-         << "ORDER BY run_time ASC";
-    res = trans.exec(sstr.str());
-    std::cout << sstr.str() << "  returned  " << res.size() << " records" << std::endl;
-
-    boost::unordered_map<point_ll_deg, std::map<string, double> > grib_values;
-    for(size_t i=0; i<res.size(); ++i)
+    try
     {
-        string dbloc;
-        res[i]["loc"].to(dbloc);
-        point_ll_deg dbpos;
-        boost::geometry::read_wkt(dbloc, dbpos);
-        string param;
-        res[i]["parameter"].to(param);
-        double val;
-        res[i]["value"].to(val);
+        // get weather prediction data from the db
+        pqxx::connection conn(db_conn_str_);
+        pqxx::transaction<> trans(conn, "web prediction");
 
-        grib_values[dbpos][param] = val;
-    }
-
-
-    gmap_->clearOverlays();
-
-    pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
-
-    for(boost::unordered_map<point_ll_deg, std::map<string, double> >::iterator it = grib_values.begin(); it != grib_values.end(); ++it)
-    {
-        const Wt::WGoogleMap::Coordinate gmCoord(it->first.lat(), it->first.lon());
-
-        // bounding box
-        bbox.first.setLatitude(  std::min(bbox.first.latitude(),   it->first.lat()));
-        bbox.first.setLongitude( std::min(bbox.first.longitude(),  it->first.lon()));
-        bbox.second.setLatitude( std::max(bbox.second.latitude(),  it->first.lat()));
-        bbox.second.setLongitude(std::max(bbox.second.longitude(), it->first.lon()));
+        std::stringstream sstr;
+        sstr << "SELECT model_id from weather_models WHERE model_name='" << model_name_ << "'";
+        pqxx::result res = trans.exec(sstr.str());
+        if(!res.size())
+            throw std::runtime_error("model not found");
+        size_t model_id;
+        res[0][0].to(model_id);
 
 
+        const size_t level = atoi(levels_->currentText().narrow().c_str());
+        const int sliderhr = time_slider_->value() / 6 * 6;
+        const bpt::ptime when = bpt::ptime(bgreg::day_clock::local_day(), bpt::time_duration(sliderhr, 0, 0));
+
+        sstr.str("");
+        sstr << "SELECT AsText(location) as loc, value, parameter FROM weather_pred_future "
+             << "WHERE model_id=" << model_id << " ";
         if(parameters_->currentText() == "Wind")
-        {
-            const double angle  = atan(it->second["VGRD"] ? it->second["UGRD"] / it->second["VGRD"] : it->second["VGRD"] ? 0 : M_PI);
-            const double length = sqrt(it->second["UGRD"] * it->second["UGRD"] + it->second["VGRD"] * it->second["VGRD"]);
-
-
-            gmap_->addWindIndicator(gmCoord, angle / 2 / M_PI * 360, length, Wt::WColor("#FF0000"), 0.9, "");
-
-        }
+            sstr << "AND parameter IN ('UGRD', 'VGRD') ";
         else
+            sstr << "AND parameter='TMP' ";
+        sstr << "AND level="      << level << " "
+             << "AND pred_time='" << bgreg::to_iso_extended_string(when.date()) << " "
+             << std::setfill('0') << std::setw(2) << when.time_of_day().hours() << ":00:00' "
+             << "ORDER BY run_time ASC";
+        res = trans.exec(sstr.str());
+        std::cout << sstr.str() << "  returned  " << res.size() << " records" << std::endl;
+
+        boost::unordered_map<point_ll_deg, std::map<string, double> > grib_values;
+        for(size_t i=0; i<res.size(); ++i)
         {
-            gmap_->addMarker(gmCoord, "/sigma.gif");
+            string dbloc;
+            res[i]["loc"].to(dbloc);
+            point_ll_deg dbpos;
+            boost::geometry::read_wkt(dbloc, dbpos);
+            string param;
+            res[i]["parameter"].to(param);
+            double val;
+            res[i]["value"].to(val);
+
+            grib_values[dbpos][param] = val;
+        }
+
+
+        gmap_->clearOverlays();
+
+        pair<Wt::WGoogleMap::Coordinate, Wt::WGoogleMap::Coordinate> bbox = std::make_pair(Wt::WGoogleMap::Coordinate(90, 180), Wt::WGoogleMap::Coordinate(-90, -180));
+
+        for(boost::unordered_map<point_ll_deg, std::map<string, double> >::iterator it = grib_values.begin(); it != grib_values.end(); ++it)
+        {
+            const Wt::WGoogleMap::Coordinate gmCoord(it->first.lat(), it->first.lon());
+
+            // bounding box
+            bbox.first.setLatitude(  std::min(bbox.first.latitude(),   it->first.lat()));
+            bbox.first.setLongitude( std::min(bbox.first.longitude(),  it->first.lon()));
+            bbox.second.setLatitude( std::max(bbox.second.latitude(),  it->first.lat()));
+            bbox.second.setLongitude(std::max(bbox.second.longitude(), it->first.lon()));
+
+
+            if(parameters_->currentText() == "Wind")
+            {
+                const double angle  = atan(it->second["VGRD"] ? it->second["UGRD"] / it->second["VGRD"] : it->second["VGRD"] ? 0 : M_PI);
+                const double length = sqrt(it->second["UGRD"] * it->second["UGRD"] + it->second["VGRD"] * it->second["VGRD"]);
+
+
+                gmap_->addWindIndicator(gmCoord, angle / 2 / M_PI * 360, length, Wt::WColor("#FF0000"), 0.9, "");
+
+            }
+            else
+            {
+                gmap_->addMarker(gmCoord, "/sigma.gif");
+            }
+        }
+
+        if(resize)
+        {
+            gmap_->zoomWindow(bbox);
+                std::cout << "WGoogleMap::zoomWindow(" << bbox.first.longitude() << "," << bbox.second.latitude() << " / "
+                          << bbox.second.longitude() << "," << bbox.first.latitude() << ")" << std::endl;
         }
     }
-
-    if(resize)
+    catch(std::exception& ex)
     {
-        gmap_->zoomWindow(bbox);
-            std::cout << "WGoogleMap::zoomWindow(" << bbox.first.longitude() << "," << bbox.second.latitude() << " / "
-                      << bbox.second.longitude() << "," << bbox.first.latitude() << ")" << std::endl;
+        std::cout << "Exception in WeatherMap::loadWeatherMap(" << resize << ") : " << ex.what() << std::endl;
     }
-
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 
