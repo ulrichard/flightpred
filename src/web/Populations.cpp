@@ -9,6 +9,9 @@
 #include <Wt/WBrush>
 #include <Wt/Chart/WCartesianChart>
 #include <Wt/WStandardItemModel>
+#include <Wt/WApplication>
+#include <Wt/WLogger>
+#include <Wt/WTable>
 // boost
 #include <boost/any.hpp>
 #include <boost/regex.hpp>
@@ -75,6 +78,7 @@ void Populations::ShowPopulation()
     try
     {
         const Wt::WString &site_name = areas_->currentText();
+        Wt::WApplication::instance()->log("debug") <<  "Populations::ShowPopulation() for " << site_name;
 
         if(chart_)
         {
@@ -195,17 +199,21 @@ void Populations::ShowPopulation()
 
         if(criteria_->currentText() == "Algorithm")
         {
-            sstr.str("");
-            sstr << "<h3>Algorithm descriptions:</h3><ul>"
-                    << "<li><b>DLIB_KRLS:</b> <a href='http://dclib.sourceforge.net/ml.html#krls'>kernel recursive least squares</a>"
-                        << " -> <a href='http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.2.9587&rep=rep1&type=pdf'>detailed paper</a></li>"
-                    << "<li><b>DLIB_RVM:</b> <a href='http://dclib.sourceforge.net/ml.html#rvm_regression_trainer'>relevance vector machine</a></li>"
-                 << "</ul><h3>Kernel descriptions</h3><ul>"
-                    << "<li><b>RBF</b> <a href='http://dclib.sourceforge.net/ml.html#radial_basis_kernel'>radial basis function</a></li>"
-                    << "<li><b>SIG</b> <a href='http://dclib.sourceforge.net/ml.html#sigmoid_kernel'>sigmoid</a></li>"
-                    << "<li><b>POLY</b> <a href='http://dclib.sourceforge.net/ml.html#polynomial_kernel'>polynomial</a></li>"
-                 << "</ul>";
-            algo_legend_ = new Wt::WText(sstr.str(), Wt::XHTMLText, impl_);
+            Wt::WTable *algo_legend_ = new Wt::WTable(impl_);
+            new Wt::WText("<b>Algorithm descriptions:</b>", Wt::XHTMLText, algo_legend_->elementAt(0, 0));
+            new Wt::WText("<b>DLIB_KRLS:</b>", Wt::XHTMLText, algo_legend_->elementAt(1, 0));
+            new Wt::WText("<a href='http://dclib.sourceforge.net/ml.html#krls'>kernel recursive least squares</a>"
+                        " -> <a href='http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.2.9587&rep=rep1&type=pdf'>detailed paper</a>", Wt::XHTMLText, algo_legend_->elementAt(1, 1));
+            new Wt::WText("<b>DLIB_RVM:</b>", Wt::XHTMLText, algo_legend_->elementAt(2, 0));
+            new Wt::WText("<a href='http://dclib.sourceforge.net/ml.html#rvm_regression_trainer'>relevance vector machine</a>", Wt::XHTMLText, algo_legend_->elementAt(2, 1));
+            new Wt::WText("<b>Kernel descriptions:</b>", Wt::XHTMLText, algo_legend_->elementAt(3, 0));
+            new Wt::WText("<b>RBF:</b>", Wt::XHTMLText, algo_legend_->elementAt(4, 0));
+            new Wt::WText("<a href='http://dclib.sourceforge.net/ml.html#radial_basis_kernel'>radial basis function</a>", Wt::XHTMLText, algo_legend_->elementAt(4, 1));
+            new Wt::WText("<b>SIG:</b>", Wt::XHTMLText, algo_legend_->elementAt(5, 0));
+            new Wt::WText("<a href='http://dclib.sourceforge.net/ml.html#sigmoid_kernel'>sigmoid</a>", Wt::XHTMLText, algo_legend_->elementAt(5, 1));
+            new Wt::WText("<b>POLY:</b>", Wt::XHTMLText, algo_legend_->elementAt(6, 0));
+            new Wt::WText("<a href='http://dclib.sourceforge.net/ml.html#polynomial_kernel'>polynomial</a>", Wt::XHTMLText, algo_legend_->elementAt(6, 1));
+
         }
     }
     catch(std::exception& ex)

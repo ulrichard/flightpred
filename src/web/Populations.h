@@ -7,6 +7,7 @@ namespace Wt
 {
     class WComboBox;
     class WText;
+    class WTable;
     namespace Chart
     {
         class WCartesianChart;
@@ -31,7 +32,7 @@ private:
     Wt::WComboBox *criteria_;
     Wt::Chart::WCartesianChart *chart_;
     Wt::WText *footertext_;
-    Wt::WText *algo_legend_;
+    Wt::WTable *algo_legend_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred

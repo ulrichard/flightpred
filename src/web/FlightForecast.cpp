@@ -12,6 +12,7 @@
 #include <Wt/WStandardItemModel>
 #include <Wt/WDate>
 #include <Wt/WApplication>
+#include <Wt/WLogger>
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -67,10 +68,14 @@ FlightForecast::FlightForecast(const std::string &db_conn_str, const size_t fore
     }
     trans.commit();
 
+    string showGoogleMapsCount = "1";
+    Wt::WApplication::readConfigurationProperty("showGoogleMapsCount", showGoogleMapsCount);
+    const size_t gmcount = boost::lexical_cast<size_t>(showGoogleMapsCount);
+
     Wt::WTable *maintable = new Wt::WTable(impl_);
     maintable->setStyleClass("forecastTable");
     for(size_t j=0; j<forecast_days; ++j)
-        makePredDay(today + bgreg::days(j), maintable->elementAt(0, j), maintable->elementAt(1, j), !j);
+        makePredDay(today + bgreg::days(j), maintable->elementAt(0, j), maintable->elementAt(1, j), j < gmcount);
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -78,6 +83,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 {
     try
     {
+        Wt::WApplication::instance()->log("debug") <<  "FlightForecast::makePredDay(" << bgreg::to_iso_extended_string(day) << "...)";
         // get flight forecasts from the db
         pqxx::connection conn(db_conn_str_);
         pqxx::transaction<> trans(conn, "web prediction");

@@ -13,6 +13,8 @@
 #include <Wt/WDate>
 #include <Wt/WComboBox>
 #include <Wt/WSlider>
+#include <Wt/WApplication>
+#include <Wt/WLogger>
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -102,6 +104,7 @@ void WeatherMap::loadWeatherMap(const bool resize)
 {
     try
     {
+        Wt::WApplication::instance()->log("debug") <<  "WeatherMap::loadWeatherMap()";
         // get weather prediction data from the db
         pqxx::connection conn(db_conn_str_);
         pqxx::transaction<> trans(conn, "web prediction");
