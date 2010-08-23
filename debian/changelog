@@ -1,3 +1,13 @@
+flightpred (0.0.14) lenny; urgency=low
+
+  * removing database and user upon purge
+  * only include blobs for trained_solutions table on db backup
+  * uncommented dh_installcron in debian/rules. 
+  * added a property in wt_config.xml : showGoogleMapsCount to configure for how many of the prediction days to display google masp. Currenty the opverlay is problematis for more than one.
+  * added more debug logging
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Mon,  23 Aug 2010 23:58:00 +0200
+
 flightpred (0.0.13) lucid; urgency=low
 
   * More configuration and error reporting for the web app

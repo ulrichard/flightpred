@@ -6,11 +6,11 @@ SET(flightpred_MAIN_DIR ${flightpred_SOURCE_DIR})
 
 SET(VERSION_SERIES 0)
 SET(VERSION_MAJOR 0)
-SET(VERSION_MINOR 13)
+SET(VERSION_MINOR 14)
 
-SET(flightpred_common_SOVERSION 1)
-SET(flightpred_train_SOVERSION 1)
-SET(flightpred_web_SOVERSION 1)
+SET(flightpred_common_SOVERSION 2)
+SET(flightpred_train_SOVERSION 2)
+SET(flightpred_web_SOVERSION 2)
 
 
 SET(USERLIB_ROOT /usr CACHE PATH "Other installation prefix for dependent libraries")
