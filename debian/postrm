@@ -27,6 +27,15 @@ fi
 
 case "$1" in
     purge)
+
+	# Remove any old crontab entries if this account have had any before
+	su flightpred -c "crontab -r" 2> /dev/null || true
+
+	# clean up the database
+	su postgres   -c "psql -e -a -c \"DROP DATABASE IF EXISTS flightpred\""	 >> /dev/null
+	su postgres   -c "psql -e -a -c \"DROP USER IF EXISTS flightpred\""	 >> /dev/null
+	
+	# remove the user
 	rm -f /etc/flightpred.conf
 	deluser --remove-home flightpred >> /dev/null || true
 	delgroup --only-if-empty flightpred >> /dev/null || true
