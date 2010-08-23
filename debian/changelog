@@ -1,4 +1,4 @@
-flightpred (0.0.14) lenny; urgency=low
+flightpred (0.0.14) lucid; urgency=low
 
   * removing database and user upon purge
   * only include blobs for trained_solutions table on db backup
