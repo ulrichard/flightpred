@@ -83,7 +83,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 {
     try
     {
-        Wt::WApplication::instance()->log("debug") <<  "FlightForecast::makePredDay(" << bgreg::to_iso_extended_string(day) << "...)";
+        Wt::WApplication::instance()->log("notice") <<  "FlightForecast::makePredDay(" << bgreg::to_iso_extended_string(day) << "...)";
         // get flight forecasts from the db
         pqxx::connection conn(db_conn_str_);
         pqxx::transaction<> trans(conn, "web prediction");
@@ -193,7 +193,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
     }
     catch(std::exception& ex)
     {
-        std::cout << "Exception in FlightForecast::makePredDay() : " << ex.what() << std::endl;
+        Wt::WApplication::instance()->log("error") << "Exception in FlightForecast::makePredDay() : " << ex.what();
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -211,7 +211,7 @@ void FlightForecast::try_imbue(std::ostream &ostr, const string &localename)
         }
         catch(std::exception &)
         {
-            cout << "failed to create std::locale for : " << localename << endl;
+            Wt::WApplication::instance()->log("warn") << "failed to create std::locale for : " << localename;
         }
     }
 }

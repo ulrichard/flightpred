@@ -12,6 +12,8 @@
 #include <Wt/WTabWidget>
 // gnu gettext
 #include <libintl.h>
+//boost
+#include <boost/algorithm/string.hpp>
 // standard library
 #include <sstream>
 #include <iostream>
@@ -84,20 +86,27 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
             throw std::runtime_error(string("Failed to connect to the database. You may have to configure the database server, so that the webserver can access it. -> ") + ex.what());
         }
 
+        string lacyLoadTabs = "lacyLoadTabs";
+        Wt::WApplication::readConfigurationProperty("lacyLoadTabs", lacyLoadTabs);
+        const Wt::WTabWidget::LoadPolicy loadpoly = (lacyLoadTabs == "1" || boost::to_lower_copy(lacyLoadTabs) == "true"
+                        ? Wt::WTabWidget::LazyLoading : Wt::WTabWidget::PreLoading);
+
         Wt::WTabWidget *tabw = new Wt::WTabWidget(root());
 
-        const size_t forecast_days = 3;
+        string forecast_days_str = "3";
+        Wt::WApplication::readConfigurationProperty("forecast_days", forecast_days_str);
+        const size_t forecast_days = boost::lexical_cast<size_t>(forecast_days_str);
         FlightForecast *forecastpanel = new FlightForecast(db_conn_str, forecast_days);
-        tabw->addTab(forecastpanel, _("Flight Forecasts\n"));
+        tabw->addTab(forecastpanel, _("Flight Forecasts\n"), loadpoly);
 
         WeatherMap *weatherpanel = new WeatherMap(db_conn_str, "GFS");
-        tabw->addTab(weatherpanel, _("Weather data"));
+        tabw->addTab(weatherpanel, _("Weather data"), loadpoly);
 
         Populations *populations = new Populations(db_conn_str);
-        tabw->addTab(populations, _("Populations"));
+        tabw->addTab(populations, _("Populations"), loadpoly);
 
         Wt::WContainerWidget *docupanel = new Wt::WContainerWidget();
-        tabw->addTab(docupanel, _("Documentation"));
+        tabw->addTab(docupanel, _("Documentation"), loadpoly);
         sstr.str("");
         sstr << "<iframe src=\"http://flightpred.svn.sourceforge.net/viewvc/flightpred/trunk/doc/index.html\" width=\"100%\" height=\"100%\"></iframe>";
         Wt::WText *txIFrame = new Wt::WText(sstr.str(), Wt::XHTMLUnsafeText);

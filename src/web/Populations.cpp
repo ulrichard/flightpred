@@ -78,7 +78,7 @@ void Populations::ShowPopulation()
     try
     {
         const Wt::WString &site_name = areas_->currentText();
-        Wt::WApplication::instance()->log("debug") <<  "Populations::ShowPopulation() for " << site_name;
+        Wt::WApplication::instance()->log("notice") <<  "Populations::ShowPopulation() for " << site_name;
 
         if(chart_)
         {
@@ -107,7 +107,7 @@ void Populations::ShowPopulation()
         pqxx::result res = trans.exec(sstr.str());
         if(!res.size())
         {
-            std::cout << "critical error during session initialization : " << std::endl;
+            Wt::WApplication::instance()->log("warn") << "critical error during session initialization : ";
             footertext_ = new Wt::WText("no population found", impl_);
             return;
         }
@@ -195,11 +195,12 @@ void Populations::ShowPopulation()
         sstr.str("");
         sstr << "Longest training time : " << max_train_time;
         footertext_ = new Wt::WText(sstr.str(), impl_);
-        std::cout << sstr.str() << std::endl;
+        Wt::WApplication::instance()->log("notice") << sstr.str();
 
         if(criteria_->currentText() == "Algorithm")
         {
             Wt::WTable *algo_legend_ = new Wt::WTable(impl_);
+            algo_legend_->setStyleClass("algo_desc");
             new Wt::WText("<b>Algorithm descriptions:</b>", Wt::XHTMLText, algo_legend_->elementAt(0, 0));
             new Wt::WText("<b>DLIB_KRLS:</b>", Wt::XHTMLText, algo_legend_->elementAt(1, 0));
             new Wt::WText("<a href='http://dclib.sourceforge.net/ml.html#krls'>kernel recursive least squares</a>"
@@ -218,7 +219,7 @@ void Populations::ShowPopulation()
     }
     catch(std::exception& ex)
     {
-        std::cout << "Exception in Populations::ShowPopulation() : " << ex.what() << std::endl;
+        Wt::WApplication::instance()->log("error") << "Exception in Populations::ShowPopulation() : " << ex.what();
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

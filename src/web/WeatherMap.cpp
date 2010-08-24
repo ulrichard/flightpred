@@ -104,7 +104,7 @@ void WeatherMap::loadWeatherMap(const bool resize)
 {
     try
     {
-        Wt::WApplication::instance()->log("debug") <<  "WeatherMap::loadWeatherMap()";
+        Wt::WApplication::instance()->log("notice") <<  "WeatherMap::loadWeatherMap()";
         // get weather prediction data from the db
         pqxx::connection conn(db_conn_str_);
         pqxx::transaction<> trans(conn, "web prediction");
@@ -134,7 +134,7 @@ void WeatherMap::loadWeatherMap(const bool resize)
              << std::setfill('0') << std::setw(2) << when.time_of_day().hours() << ":00:00' "
              << "ORDER BY run_time ASC";
         res = trans.exec(sstr.str());
-        std::cout << sstr.str() << "  returned  " << res.size() << " records" << std::endl;
+        Wt::WApplication::instance()->log("notice") << sstr.str() << "  returned  " << res.size() << " records";
 
         boost::unordered_map<point_ll_deg, std::map<string, double> > grib_values;
         for(size_t i=0; i<res.size(); ++i)
@@ -185,13 +185,13 @@ void WeatherMap::loadWeatherMap(const bool resize)
         if(resize)
         {
             gmap_->zoomWindow(bbox);
-                std::cout << "WGoogleMap::zoomWindow(" << bbox.first.longitude() << "," << bbox.second.latitude() << " / "
-                          << bbox.second.longitude() << "," << bbox.first.latitude() << ")" << std::endl;
+                Wt::WApplication::instance()->log("notice") << "WGoogleMap::zoomWindow(" << bbox.first.longitude() << "," << bbox.second.latitude() << " / "
+                          << bbox.second.longitude() << "," << bbox.first.latitude() << ")";
         }
     }
     catch(std::exception& ex)
     {
-        std::cout << "Exception in WeatherMap::loadWeatherMap(" << resize << ") : " << ex.what() << std::endl;
+        Wt::WApplication::instance()->log("error") << "Exception in WeatherMap::loadWeatherMap(" << resize << ") : " << ex.what();
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
