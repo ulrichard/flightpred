@@ -20,6 +20,8 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/string.hpp>
 // std lib
 #include <iostream>
@@ -464,7 +466,7 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
 	bfs::ofstream ofs(outfile, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 	if(!ofs.good())
         throw std::runtime_error("could not write to " + outfile.string());
-	boost::archive::binary_oarchive oa(ofs);
+	boost::archive::text_oarchive oa(ofs);
 
     // information about the flying site
 	oa << site_name_;
@@ -509,7 +511,7 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
 	if(!ifs.good())
         throw std::runtime_error("file not found : " + infile.string());
 
-	boost::archive::binary_iarchive ia(ifs);
+	boost::archive::text_iarchive ia(ifs);
     // read class state from archive
     string site_name;
 	ia >> site_name;

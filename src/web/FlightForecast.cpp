@@ -13,6 +13,7 @@
 #include <Wt/WDate>
 #include <Wt/WApplication>
 #include <Wt/WLogger>
+#include <Wt/WText>
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -76,6 +77,11 @@ FlightForecast::FlightForecast(const std::string &db_conn_str, const size_t fore
     maintable->setStyleClass("forecastTable");
     for(size_t j=0; j<forecast_days; ++j)
         makePredDay(today + bgreg::days(j), maintable->elementAt(0, j), maintable->elementAt(1, j), j < gmcount);
+
+
+    string footertxt = "Powered by:   libwt / libboost / postgresql / dclib / libevocosm / Alix / GFS / xcontest / debian";
+    Wt::WApplication::readConfigurationProperty("footertxt", footertxt);
+    Wt::WText* footerlbl = new Wt::WText(footertxt, Wt::XHTMLUnsafeText, impl_);
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

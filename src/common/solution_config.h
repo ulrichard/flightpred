@@ -65,6 +65,12 @@ private:
 		ar & generation_;
 		ar & site_name_;
 		ar & solution_description_;
+		ar & validation_error_;
+		ar & train_time_;
+		ar & train_time_prod_;
+		ar & num_samples_;
+		ar & num_samples_prod_;
+		ar & num_features_;
 		ar & learning_machines_;
 
         if(Archive::is_loading::value)
@@ -81,13 +87,20 @@ private:
 protected:
     void decode();
 
+    static const std::string rgxreal_;
+
     size_t train_sol_id_;
     size_t generation_;
     std::string site_name_;
     std::string solution_description_;
+    double validation_error_;
+	double train_time_;
+	double train_time_prod_;
+	size_t num_samples_;
+	size_t num_samples_prod_;
+	size_t num_features_;
     std::set<features_weather::feat_desc> features_desc_;
     std::map<std::string, boost::shared_ptr<learning_machine> > learning_machines_;
-    static const std::string rgxreal_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /*

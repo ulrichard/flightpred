@@ -52,7 +52,8 @@ solution_config::solution_config(const size_t db_id)
     pqxx::transaction<> trans(flightpred_db::get_conn(), "load solution config");
 
     std::stringstream sstr;
-    sstr << "SELECT configuration, site_name, generation FROM trained_solutions INNER JOIN pred_sites "
+    sstr << "SELECT configuration, site_name, generation, validation_error, train_time, train_time_prod, generation, num_samples, num_samples_prod, num_features "
+         << "FROM trained_solutions INNER JOIN pred_sites "
          << "ON trained_solutions.pred_site_id = pred_sites.pred_site_id "
          << "WHERE train_sol_id=" << train_sol_id_;
     pqxx::result res = trans.exec(sstr.str());
@@ -62,6 +63,12 @@ solution_config::solution_config(const size_t db_id)
     res[0]["configuration"].to(solution_description_);
     res[0]["site_name"].to(site_name_);
     res[0]["generation"].to(generation_);
+    res[0]["validation_error"].to(validation_error_);
+    res[0]["train_time"].to(train_time_);
+    res[0]["train_time_prod"].to(train_time_prod_);
+    res[0]["num_samples"].to(num_samples_);
+    res[0]["num_samples_prod"].to(num_samples_prod_);
+    res[0]["num_features"].to(num_features_);
     trans.commit();
 
     decode();
@@ -263,7 +270,9 @@ void solution_config::write_to_db()
          << "AND   configuration='" << solution_description_ << "'";
     const string srch_conf_sql = sstr.str();
     pqxx::result res = trans.exec(srch_conf_sql);
-    if(!res.size())
+    if(res.size())
+        res[0]["train_sol_id"].to(train_sol_id_);
+    else
     {
         sstr.str("");
         sstr << "SELECT pred_site_id FROM pred_sites WHERE site_name='" << site_name_ << "'";
@@ -282,9 +291,20 @@ void solution_config::write_to_db()
         res = trans.exec(srch_conf_sql);
         if(!res.size())
             throw std::runtime_error("insert failed");
+        res[0]["train_sol_id"].to(train_sol_id_);
+
+        sstr.str("");
+        sstr << "UPDATE trained_solutions SET "
+             << "validation_error=" << validation_error_ << ", "
+             << "train_time=" << train_time_ << ", "
+             << "train_time_prod=" << train_time_prod_ << ", "
+             << "num_samples=" << num_samples_ << ", "
+             << "num_samples_prod=" << num_samples_prod_ << ", "
+             << "num_features=" << num_features_ << " "
+             << "WHERE train_sol_id=" << train_sol_id_;
+        trans.exec(sstr.str());
     }
 
-    res[0]["train_sol_id"].to(train_sol_id_);
     trans.commit();
 
     // write the learned machines to the database

@@ -29,7 +29,7 @@
 					<Add library="boost_system-mt" />
 					<Add library="boost_regex-mt" />
 					<Add library="boost_serialization-mt" />
-					<Add library="json_spirit" />
+					<Add library="jsonspirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
 					<Add library="evocosm" />
@@ -62,7 +62,7 @@
 					<Add library="boost_system-mt" />
 					<Add library="boost_regex-mt" />
 					<Add library="boost_serialization-mt" />
-					<Add library="json_spirit" />
+					<Add library="jsonspirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
 					<Add library="evocosm" />
@@ -92,7 +92,7 @@
 					<Add library="boost_system-mt" />
 					<Add library="boost_regex-mt" />
 					<Add library="boost_serialization-mt" />
-					<Add library="json_spirit" />
+					<Add library="jsonspirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
 					<Add library="evocosm" />

@@ -3,6 +3,7 @@
 #include "common/features_weather.h"
 #include "common/solution_manager.h"
 #include "common/flightpred_globals.h"
+#include "common/reporter.h"
 // postgre
 #include <pqxx/pqxx>
 //#include <pqxx/largeobject>
@@ -19,6 +20,7 @@
 #include <limits>
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 namespace bgreg = boost::gregorian;
 using boost::array;
 using std::vector;
@@ -32,6 +34,7 @@ using std::numeric_limits;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void forecast::prediction_run(const string &site_name, const size_t pred_days)
 {
+    report(INFO) << "Running forecast for : " << site_name;
     try
     {
         pqxx::transaction<> trans1(flightpred_db::get_conn(), "flight prediction");
@@ -99,7 +102,7 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
     }
     catch(std::exception &ex)
     {
-        std::cout << "critical error : " << ex.what() << std::endl;
+        report(ERROR) << "critical error : " << ex.what();
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
