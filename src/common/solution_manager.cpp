@@ -358,6 +358,12 @@ double solution_manager::test_fitness(const solution_config &sol)
                  << " total predicted km : " << sum_km_pred << std::endl
                  << " validated with " << validation_count << " days" << std::endl;
 
+    // increase the error number if certain unwanted conditions apply
+    if(sum_km_pred < sum_km / 10.0)
+        sum_err += 10 * sum_km;
+
+ //   if(traintime > 0.7 * )
+
     // todo : handle different generations
     pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::test_fitness");
     std::stringstream sstr;

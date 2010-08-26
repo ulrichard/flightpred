@@ -108,8 +108,8 @@ features_weather::feat_desc  features_weather::get_random_feature(const boost::g
     report(DEBUGING) << "features_weather::get_random_feature(" << boost::geometry::make_wkt(site_location) << ")";
     feat_desc fd;
 
-    const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  4, 1.0); // todo : get the resolution from the database
-    const vector<point_ll_deg> locations_far  = get_locations_around_site(site_location, 16, 1.0);
+    const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  6, 1.0); // todo : get the resolution from the database
+    const vector<point_ll_deg> locations_far  = get_locations_around_site(site_location, 18, 1.0);
     boost::unordered_set<point_ll_deg> locations;
     std::copy(locations_near.begin(), locations_near.end(), std::inserter(locations, locations.end()));
     std::copy(locations_far.begin(),  locations_far.end(),  std::inserter(locations, locations.end()));
