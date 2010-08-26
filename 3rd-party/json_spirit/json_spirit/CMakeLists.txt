@@ -11,5 +11,5 @@ ADD_LIBRARY(jsonspirit STATIC ${JSON_SPIRIT_SRCS})
 
 INSTALL(TARGETS jsonspirit ARCHIVE DESTINATION lib)
 
-INSTALL(FILES json_spirit.h json_spirit_reader.h json_spirit_utils.h json_spirit_value.h json_spirit_writer.h DESTINATION include/libjsonspirit)
+INSTALL(FILES json_spirit.h json_spirit_reader.h json_spirit_utils.h json_spirit_value.h json_spirit_writer.h DESTINATION include/json_spirit)
 
