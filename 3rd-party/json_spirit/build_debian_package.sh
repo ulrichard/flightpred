@@ -11,8 +11,8 @@ mkdir builddeb
 cd builddeb
 svn export https://flightpred.svn.sourceforge.net/svnroot/flightpred/trunk/3rd-party/json_spirit/ libjsonspirit-$JSONSPIRITVERSIONSTR
 cd libjsonspirit-$JSONSPIRITVERSIONSTR
-dpkg-buildpackage -rfakeroot #-S
+dpkg-buildpackage -rfakeroot -S
 cd ..
 rm -r libjsonspirit-$JSONSPIRITVERSIONSTR
-#dput ppa:richi-paraeasy/ppa ./libjsonspirit_${JSONSPIRITVERSIONSTR}_source.changes
+dput ppa:richi-paraeasy/ppa ./libjsonspirit_${JSONSPIRITVERSIONSTR}_source.changes
 killall -q gpg-agent
