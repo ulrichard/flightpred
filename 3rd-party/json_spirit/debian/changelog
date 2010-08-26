@@ -1,3 +1,9 @@
+libjsonspirit (4.02.01) lucid; urgency=low
+
+  * depend on cmake
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu, 26 Aug 2010 22:49:03 +0200
+
 libjsonspirit (4.02) lucid; urgency=low
 
   * initial package
