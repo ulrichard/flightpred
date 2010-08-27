@@ -1,4 +1,4 @@
-libjsonspirit (4.02.01) lucid; urgency=low
+libjsonspirit (4.2.1) lucid; urgency=low
 
   * depend on cmake
 
