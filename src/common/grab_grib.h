@@ -11,6 +11,8 @@
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/tuple/tuple.hpp>
 // standard library
 #include <string>
 #include <vector>
@@ -64,6 +66,9 @@ protected:
     static const size_t      PG_SIR_WGS84 = 4326;
     boost::posix_time::ptime predrun_;
 
+#ifdef _DEBUG
+    boost::unordered_map<boost::geometry::point_ll_deg, boost::tuple<size_t, size_t, size_t> > grid_point_stats_; // position / num_missing / num_skipped / num_selected
+#endif
 private:
     void read_grib_data(std::istream &istr, const request &req,
             const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_close,

@@ -325,59 +325,81 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req,
     double lat, lon, value;
     // Loop on all the lat/lon/values.
     while(grib_iterator_next(iter, &lat, &lon, &value))
-        if(value != missingValue)
+    {
+        const point_ll_deg location = point_ll_deg(boost::geometry::longitude<>(lon), boost::geometry::latitude<>(lat));
+
+        if(value = missingValue)
         {
-            const point_ll_deg location = point_ll_deg(boost::geometry::longitude<>(lon), boost::geometry::latitude<>(lat));
-            if(sel_locations_wide.find(location) == sel_locations_wide.end())
-                continue;
-
-            if(sel_locations_close.find(location) == sel_locations_close.end() &&
-                std::find_if(sel_levels.begin(), sel_levels.end(), bll::bind(&atoi, bll::bind(&string::c_str, bll::_1)) == req.level) == sel_levels.end())
-                continue;
-
-            std::stringstream sstr;
-            sstr << bgreg::to_iso_extended_string(req.pred_time.date()) << " " << std::setfill('0')
-                 << std::setw(2) << req.pred_time.time_of_day().hours() << ":00:00";
-            const string dati_pred(sstr.str());
-
-            sstr.str("");
-            sstr << bgreg::to_iso_extended_string(predrun_.date()) << " " << std::setfill('0')
-                 << std::setw(2) << predrun_.time_of_day().hours() << ":00:00";
-            const string dati_run(sstr.str());
-
-            const string table_name(is_future_ ? "weather_pred_future" : "weather_pred");
-
-            sstr.str("");
-            sstr << "SELECT weather_pred_id FROM "  << table_name << " "
-                 << "WHERE model_id=" << db_model_id_ << " "
-                 << "AND location = GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << ") "
-                 << "AND pred_time='" << dati_pred << "' "
-                 << "AND level=" << req.level
-                 << "AND parameter='" << req.param << "'";
-            if(is_future_)
-                sstr << " AND run_time='" << dati_run << "'";
-            pqxx::result res = trans.exec(sstr.str());
-            if(res.size()) // a record is already in the database
-                continue;
-
-            sstr.str("");
-            sstr << "INSERT INTO " << table_name << " (model_id, pred_time, level, parameter, location, value";
-            if(is_future_)
-                sstr << ", run_time";
-            sstr << ") values (" << db_model_id_ << ", '" << dati_pred << "', " << req.level << ", '" << req.param
-                 << "', GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << "), " << value;
-            if(is_future_)
-                sstr << ", '" << dati_run << "'";
-            sstr << ")";
-            res = trans.exec(sstr.str());
-            if(++count % 10 == 0)
-            {
-                cout << "|";
-                cout.flush();
-            }
+#ifdef _DEBUG
+            ++grid_point_stats_[location].get<0>();
+//            cout << " missing value : " << bgreg::to_iso_extended_string(req.pred_time.date()) << " " << req.level << " " << req.param << " (" << lat << " " << lon << ")" << std::endl;
+#endif
+            continue;
         }
-        else
-            cout << " missing value " << std::endl;
+
+        if(sel_locations_wide.find(location) == sel_locations_wide.end())
+        {
+#ifdef _DEBUG
+            ++grid_point_stats_[location].get<1>();
+#endif
+            continue;
+        }
+
+        if(sel_locations_close.find(location) == sel_locations_close.end() &&
+            std::find_if(sel_levels.begin(), sel_levels.end(), bll::bind(&atoi, bll::bind(&string::c_str, bll::_1)) == req.level) == sel_levels.end())
+        {
+#ifdef _DEBUG
+            ++grid_point_stats_[location].get<1>();
+#endif
+            continue;
+        }
+
+#ifdef _DEBUG
+        ++grid_point_stats_[location].get<2>();
+#endif
+
+        std::stringstream sstr;
+        sstr << bgreg::to_iso_extended_string(req.pred_time.date()) << " " << std::setfill('0')
+             << std::setw(2) << req.pred_time.time_of_day().hours() << ":00:00";
+        const string dati_pred(sstr.str());
+
+        sstr.str("");
+        sstr << bgreg::to_iso_extended_string(predrun_.date()) << " " << std::setfill('0')
+             << std::setw(2) << predrun_.time_of_day().hours() << ":00:00";
+        const string dati_run(sstr.str());
+
+        const string table_name(is_future_ ? "weather_pred_future" : "weather_pred");
+
+        sstr.str("");
+        sstr << "SELECT weather_pred_id FROM "  << table_name << " "
+             << "WHERE model_id=" << db_model_id_ << " "
+             << "AND location = GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << ") "
+             << "AND pred_time='" << dati_pred << "' "
+             << "AND level=" << req.level
+             << "AND parameter='" << req.param << "'";
+        if(is_future_)
+            sstr << " AND run_time='" << dati_run << "'";
+        pqxx::result res = trans.exec(sstr.str());
+        if(res.size()) // a record is already in the database
+            continue;
+
+        sstr.str("");
+        sstr << "INSERT INTO " << table_name << " (model_id, pred_time, level, parameter, location, value";
+        if(is_future_)
+            sstr << ", run_time";
+        sstr << ") values (" << db_model_id_ << ", '" << dati_pred << "', " << req.level << ", '" << req.param
+             << "', GeomFromText('POINT(" << lon << " " << lat << ")', " << PG_SIR_WGS84 << "), " << value;
+        if(is_future_)
+            sstr << ", '" << dati_run << "'";
+        sstr << ")";
+        res = trans.exec(sstr.str());
+        if(++count % 10 == 0)
+        {
+            cout << "|";
+            cout.flush();
+        }
+
+    }
 
     trans.commit();
 
@@ -557,6 +579,13 @@ void grib_grabber_gfs_past::grab_grib(const bgreg::date &from, const bgreg::date
                 throw;
         }
     } // for day
+
+#ifdef _DEBUG
+    std::ofstream ofs("/tmp/flightpred_grid_points.txt");
+    ofs << "num_missing / num_skipped / num_selected / position" << std::endl;
+    for(boost::unordered_map<point_ll_deg, boost::tuple<size_t, size_t, size_t> >::iterator it = grid_point_stats_.begin(); it != grid_point_stats_.end(); ++it)
+        ofs << it->second.get<0>() << "  " << it->second.get<1>() << " " << it->second.get<2>() << " " << boost::geometry::make_wkt(it->first) << std::endl;
+#endif
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -669,6 +698,13 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
                 cout << req.param << " " << req.level << " " << req.range_start << " " << req.range_end << endl;
         }
     } // for day
+
+#ifdef _DEBUG
+    std::ofstream ofs("/tmp/flightpred_grid_points.txt");
+    ofs << "num_missing / num_skipped / num_selected / position" << std::endl;
+    for(boost::unordered_map<point_ll_deg, boost::tuple<size_t, size_t, size_t> >::iterator it = grid_point_stats_.begin(); it != grid_point_stats_.end(); ++it)
+        ofs << it->second.get<0>() << "  " << it->second.get<1>() << " " << it->second.get<2>() << " " << boost::geometry::make_wkt(it->first) << std::endl;
+#endif
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

@@ -123,25 +123,35 @@ int main(int argc, char* argv[])
         {
             try
             {
-                if(db_password != "postgres")
-                    throw;
-
-                cout << "Database password for user " << db_user << ":";
-                std::cin >> db_password;
-
                 const string db_conn_str = "host=" + db_host + " port=" + lexical_cast<string>(db_port)
-                                 + " dbname=" + db_name + " user=" + db_user + " password=" + db_password;
+                                     + " dbname=" + db_name + " user=flightpred password=flightpred";
 
                 flightpred_db::init(db_conn_str);
             }
-            catch(std::exception &ex)
+            catch(std::exception &ex0)
             {
-                std::stringstream sstr;
-                sstr << desc << std::endl << std::endl
-                     << "Failed to connect to the database " << db_conn_str << std::endl
-                     << "For further help see : https://help.ubuntu.com/community/PostgreSQL" << std::endl
-                     << "Error: " << ex.what();
-                throw std::runtime_error(sstr.str());
+                try
+                {
+                    if(db_password != "")
+                        throw;
+
+                    cout << "Database password for user " << db_user << ":";
+                    std::cin >> db_password;
+
+                    const string db_conn_str = "host=" + db_host + " port=" + lexical_cast<string>(db_port)
+                                     + " dbname=" + db_name + " user=" + db_user + " password=" + db_password;
+
+                    flightpred_db::init(db_conn_str);
+                }
+                catch(std::exception &ex)
+                {
+                    std::stringstream sstr;
+                    sstr << desc << std::endl << std::endl
+                         << "Failed to connect to the database " << db_conn_str << std::endl
+                         << "For further help see : https://help.ubuntu.com/community/PostgreSQL" << std::endl
+                         << "Error: " << ex.what();
+                    throw std::runtime_error(sstr.str());
+                }
             }
         }
         const boost::geometry::point_ll_deg pos = parse_position(position);

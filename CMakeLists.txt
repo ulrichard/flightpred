@@ -37,6 +37,6 @@ SET(WEBUSER www-data CACHE STRING "Webserver username (e.g. apache or www)")
 SET(WEBGROUP www-data CACHE STRING "Webserver groupname (e.g. apache or www or users)")
 
 
-SUBDIRS(3rd-party/json_spirit/json_spirit src scripts)
+SUBDIRS(src scripts)
 
 
