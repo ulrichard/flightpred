@@ -1,5 +1,7 @@
 Alias /flightpred /usr/share/flightpred/www_docroot
 
+setenv WT_CONFIG_XML "/etc/flightpred/wt_config_flightpred.xml"
+
 <Directory /usr/share/flightpred/www_docroot>
         Allow from all
         Options ExecCGI FollowSymLinks MultiViews Indexes

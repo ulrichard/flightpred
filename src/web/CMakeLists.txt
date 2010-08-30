@@ -17,10 +17,8 @@ SET_TARGET_PROPERTIES(
   )
 
 
-INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/append_wt_config.pl DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
-INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/wt_config_merge.xml DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred)
-
-INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/flightpred.conf DESTINATION /etc/apache2/sites-available)
+INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/wt_config_flightpred.xml DESTINATION /etc/flightpred)
+INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/flightpred.local DESTINATION /etc/apache2/sites-available)
 
 INSTALL(DIRECTORY ${flightpred_MAIN_DIR}/www_docroot DESTINATION
     ${CMAKE_INSTALL_PREFIX}/share/flightpred/)

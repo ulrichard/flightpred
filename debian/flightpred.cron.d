@@ -1,5 +1,7 @@
+# /etc/cron.d/flightpred: crontab entries for the flightpred package
+
 SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
 
-
-0 6 * * * flightpred /usr/bin/flightpred-train --db-user flightpred --db-password flightpred --get-future-weather --forecast --db-maintenance
-
+0 4 * * * flightpred flightpred-train --get-future-weather --forecast --db-maintenance
