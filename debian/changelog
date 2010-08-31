@@ -1,3 +1,9 @@
+flightpred (0.0.16) lucid; urgency=low
+
+  * added the dependency to the oursourced new package libjsonspirit
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue,  31 Aug 2010 20:53:00 +0200
+
 flightpred (0.0.15) lucid; urgency=low
 
   * Using envvar in apache site def for the wt_config.xml to use. That way we no longer have to merge the xml in the config file that's maintained by wt.
