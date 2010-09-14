@@ -194,6 +194,30 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
                 bbox.second.setLatitude( std::max(bbox.second.latitude(),  dbpos.lat()));
                 bbox.second.setLongitude(std::max(bbox.second.longitude(), dbpos.lon()));
             }
+
+
+            string mapInitialBox = "";
+            Wt::WApplication::readConfigurationProperty("mapInitialBox", mapInitialBox);
+            if(!mapInitialBox.empty())
+            {
+                size_t pos = mapInitialBox.find(')');
+                if(pos != string::npos)
+                {
+                    const string spnt1 = mapInitialBox.substr(0, pos + 1);
+                    const string spnt2 = mapInitialBox.substr(pos + 2);
+                    boost::geometry::point_ll_deg loc1, loc2;
+                    boost::geometry::read_wkt(spnt1, loc1);
+                    boost::geometry::read_wkt(spnt2, loc2);
+                    bbox = std::make_pair(Wt::WGoogleMap::Coordinate(loc1.lat(), loc1.lon()), Wt::WGoogleMap::Coordinate(loc2.lat(), loc2.lon()));
+                    Wt::WApplication::instance()->log("notice") <<  "setting map bounding box from configuration : " << mapInitialBox;
+                }
+                else
+                    Wt::WApplication::instance()->log("notice") <<  "initial google maps bounding box configuration error: ')' not found";
+            }
+            else
+                Wt::WApplication::instance()->log("notice") <<  "no initial google maps bounding box configured";
+
+
             gmap->zoomWindow(bbox);
         }
     }

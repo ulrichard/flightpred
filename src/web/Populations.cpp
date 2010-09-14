@@ -80,21 +80,12 @@ void Populations::ShowPopulation()
         const Wt::WString &site_name = areas_->currentText();
         Wt::WApplication::instance()->log("notice") <<  "Populations::ShowPopulation() for " << site_name;
 
-        if(chart_)
-        {
-            impl_->removeWidget(chart_);
-            chart_ = 0;
-        }
-        if(footertext_)
-        {
-            impl_->removeWidget(footertext_);
-            footertext_ = 0;
-        }
-        if(algo_legend_)
-        {
-            impl_->removeWidget(algo_legend_);
-            algo_legend_ = 0;
-        }
+        delete chart_;
+        chart_ = 0;
+        delete footertext_;
+        footertext_ = 0;
+        delete algo_legend_;
+        algo_legend_ = 0;
 
         pqxx::connection conn(db_conn_str_);
         pqxx::transaction<> trans(conn, "web population");
