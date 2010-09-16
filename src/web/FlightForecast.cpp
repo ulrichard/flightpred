@@ -130,8 +130,6 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 
         std::stringstream sstr;
         try_imbue(sstr, Wt::WApplication::instance()->locale());
-    //    boost::date_time::date_facet *facet(new boost::date_time::date_facet("%A %x"));
-    //    sstr.imbue(std::locale(sstr.getloc(), facet));
         sstr << day;
         static const bgreg::date today(boost::gregorian::day_clock::local_day());
         if(day == today)
@@ -229,19 +227,30 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void FlightForecast::try_imbue(std::ostream &ostr, const string &localename)
 {
+    boost::date_time::date_facet<bgreg::date, char>* datefacet(new boost::date_time::date_facet<bgreg::date, char>("%a %x"));
+
     try
     {
-        ostr.imbue(std::locale(localename.c_str()));
+        ostr.imbue(std::locale(std::locale(localename.c_str()), datefacet));
     }
     catch(std::exception &)
     {
         try
         {
-            ostr.imbue(std::locale(localename.substr(0, 2).c_str()));
+            ostr.imbue(std::locale(std::locale(localename.substr(0, 2).c_str()), datefacet));
         }
         catch(std::exception &)
         {
             Wt::WApplication::instance()->log("warn") << "failed to create std::locale for : " << localename;
+
+            try
+            {
+                ostr.imbue(std::locale(ostr.getloc(), datefacet));
+            }
+            catch(std::exception &)
+            {
+                Wt::WApplication::instance()->log("warn") << "failed to create std::locale";
+            }
         }
     }
 }
