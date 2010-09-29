@@ -3,5 +3,6 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=richi@paraeasy.ch
+HOME=/tmp
 
-0 4,15 * * * root /usr/bin/flightpred_train --db-user flightpred --db-password flightpred --get-future-weather --forecast --db-maintenance
+0 3,15 * * * root /usr/bin/flightpred_train --db-user flightpred --db-password flightpred --get-future-weather --forecast --db-maintenance
