@@ -59,7 +59,8 @@ int main(int argc, char* argv[])
 {
     try
     {
-        string name, position, start_date, end_date, pred_model, backup_directory = getenv("HOME");
+        const string processowner(getenv("USER") ? getenv("USER") : "root");
+        string name, position, start_date, end_date, pred_model, backup_directory(getenv("HOME") ? getenv("HOME") : "/tmp");
         double area_radius = 5000.0, mutation_rate, max_eval_time = 50.0;
         size_t download_pack = 100, iterations;
         string db_host, db_name, db_user, db_password;
@@ -103,7 +104,7 @@ int main(int argc, char* argv[])
             ("db-host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
             ("db-port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
             ("db-name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
-            ("db-user",       po::value<string>(&db_user)->default_value(getenv("USER")), "name of the database user")
+            ("db-user",       po::value<string>(&db_user)->default_value(processowner),   "name of the database user")
             ("db-password",   po::value<string>(&db_password)->default_value(""),         "password of the database user")
             ;
         po::variables_map vm;
