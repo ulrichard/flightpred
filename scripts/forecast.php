@@ -7,7 +7,7 @@ $dbconn = pg_connect("host=localhost dbname=flightpred user=flightpred password=
     or die('Could not connect: ' . pg_last_error());
 
 
-$query = "select distinct pred_day from flight_pred where pred_day >= now()";
+$query = "select distinct pred_day from flight_pred where pred_day >= date_trunc('day', now())";
 $days = pg_query($query) or die('Query failed: ' . pg_last_error());
 
 echo "<flightpred>\n";
