@@ -21,7 +21,7 @@ configure-stamp:
 build: build-stamp
 
 build-stamp: configure-stamp  
-	dh_testdir
+	dh_testdir	
 
 	# Add here commands to compile the package.
 	mkdir -p $(CURDIR)/build-debian
@@ -88,13 +88,25 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 #	dh_perl
-	dh_makeshlibs -pflightpred -V'flightpred (>= 0.0.1)'
+	dh_makeshlibs -pflightpred -V'flightpred (>= 0.0.15)'
 	dh_shlibdeps -a
 	dh_fixperms
 	dh_installdeb
-	dh_gencontrol
+
+	debian/rules override_dh_gencontrol
+
 	dh_md5sums
 	dh_builddeb
+
+override_dh_gencontrol:
+	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
+			BUILDDEP=libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev, libboost-test-dev, postgresql-contrib-8.4 
+			DEPENDS=postgresql-contrib-8.4, postgresql-8.4-postgis
+		else
+			 BUILDDEP=libboost-regex1.42-dev, libboost-program-options1.42-dev, libboost-date-time1.42-dev, libboost-signals1.42-dev, libboost-thread1.42-dev, libboost-system1.42-dev, libboost-filesystem1.42-dev, libboost-serialization1.42-dev, libboost-test1.42-dev, postgresql-contrib-8.3
+	 		DEPENDS=postgresql-contrib-8.3, postgresql-8.3-postgis
+		endif
+	dh_gencontrol -- -Vdist:Build-Depends='$(DEPENDS)' -Vdist:Depends='$(BUILDDEP)'
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure
