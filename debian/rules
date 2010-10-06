@@ -10,6 +10,8 @@
 #export DH_VERBOSE=1
 
 
+
+
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
@@ -40,6 +42,13 @@ clean:
 	rm -rf $(CURDIR)/build-debian
 	rm -rf $(CURDIR)/debian/tmp
 	rm -rf $(CURDIR)/debian/flightpred
+
+	# this is an attempt to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
+	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
+		sed -i 's/\$\x7Bdist\x3ABuild-Depends\x7D/libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev, libboost-test-dev, postgresql-contrib-8.4/' $(CURDIR)/debian/control
+	else
+		sed -i 's/\$\x7Bdist\x3ABuild-Depends\x7D/libboost-regex1.42-dev, libboost-program-options1.42-dev, libboost-date-time1.42-dev, libboost-signals1.42-dev, libboost-thread1.42-dev, libboost-system1.42-dev, libboost-filesystem1.42-dev, libboost-serialization1.42-dev, libboost-test1.42-dev, postgresql-contrib-8.3/' $(CURDIR)/debian/control
+	endif
 
 	dh_clean 
 
@@ -92,21 +101,15 @@ binary-arch: build install
 	dh_shlibdeps -a
 	dh_fixperms
 	dh_installdeb
-
-	debian/rules override_dh_gencontrol
-
+	# this is an attempt to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
+	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
+		DEPENDS=postgresql-contrib-8.4, postgresql-8.4-postgis
+	else
+		DEPENDS=postgresql-contrib-8.3, postgresql-8.3-postgis
+	endif
+	dh_gencontrol -- -Vdist:Depends='$(BUILDDEP)'
 	dh_md5sums
 	dh_builddeb
-
-override_dh_gencontrol:
-	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
-			BUILDDEP=libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev, libboost-test-dev, postgresql-contrib-8.4 
-			DEPENDS=postgresql-contrib-8.4, postgresql-8.4-postgis
-		else
-			 BUILDDEP=libboost-regex1.42-dev, libboost-program-options1.42-dev, libboost-date-time1.42-dev, libboost-signals1.42-dev, libboost-thread1.42-dev, libboost-system1.42-dev, libboost-filesystem1.42-dev, libboost-serialization1.42-dev, libboost-test1.42-dev, postgresql-contrib-8.3
-	 		DEPENDS=postgresql-contrib-8.3, postgresql-8.3-postgis
-		endif
-	dh_gencontrol -- -Vdist:Build-Depends='$(DEPENDS)' -Vdist:Depends='$(BUILDDEP)'
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure
