@@ -33,6 +33,14 @@ build-stamp: configure-stamp
 	touch $@
 
 clean: 
+
+# this is an attempt to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
+	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
+		sed -i 's/\$\x7Bdist\x3ABuild-Depends\x7D/libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev, libboost-test-dev, postgresql-contrib-8.4/' $(CURDIR)/debian/control
+	else
+		sed -i 's/\$\x7Bdist\x3ABuild-Depends\x7D/libboost-regex1.42-dev, libboost-program-options1.42-dev, libboost-date-time1.42-dev, libboost-signals1.42-dev, libboost-thread1.42-dev, libboost-system1.42-dev, libboost-filesystem1.42-dev, libboost-serialization1.42-dev, libboost-test1.42-dev, postgresql-contrib-8.3/' $(CURDIR)/debian/control
+	endif
+
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
@@ -41,14 +49,7 @@ clean:
 	# $(MAKE) clean
 	rm -rf $(CURDIR)/build-debian
 	rm -rf $(CURDIR)/debian/tmp
-	rm -rf $(CURDIR)/debian/flightpred
-
-	# this is an attempt to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
-	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
-		sed -i 's/\$\x7Bdist\x3ABuild-Depends\x7D/libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev, libboost-test-dev, postgresql-contrib-8.4/' $(CURDIR)/debian/control
-	else
-		sed -i 's/\$\x7Bdist\x3ABuild-Depends\x7D/libboost-regex1.42-dev, libboost-program-options1.42-dev, libboost-date-time1.42-dev, libboost-signals1.42-dev, libboost-thread1.42-dev, libboost-system1.42-dev, libboost-filesystem1.42-dev, libboost-serialization1.42-dev, libboost-test1.42-dev, postgresql-contrib-8.3/' $(CURDIR)/debian/control
-	endif
+	rm -rf $(CURDIR)/debian/flightpred	
 
 	dh_clean 
 
