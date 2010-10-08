@@ -40,16 +40,18 @@ public class XmlHandler {
 				
 				NodeList predvalues = site.getChildNodes();
 				for(int j=0; j<predvalues.getLength(); j++) {
-					Node nodval = predvalues.item(j);
-					String nam = nodval.getNodeName();
+					Node nodval = predvalues.item(j);									
 					
-					TextView txv = new TextView(table.getContext());
-					txv.setText(nodval.getNodeValue());
-					
-					if(nam.equalsIgnoreCase("num_flight"))
+					if(nodval.getNodeName().equalsIgnoreCase("num_flight")) {
+						TextView txv = new TextView(table.getContext());
+						txv.setText(nodval.getFirstChild().getNodeValue());
 						row.addView(txv, 1);
-					else if(nam.equalsIgnoreCase("max_dist"))
+					}
+					else if(nodval.getNodeName().equalsIgnoreCase("max_dist")) {
+						TextView txv = new TextView(table.getContext());
+						txv.setText(nodval.getFirstChild().getNodeValue());
 						row.addView(txv, 2);
+					}
 				} // for predvalues
 					  
 				table.addView(row);
