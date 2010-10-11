@@ -41,6 +41,8 @@ public class XmlHandler {
 				NodeList predvalues = site.getChildNodes();
 				for(int j=0; j<predvalues.getLength(); j++) {
 					Node nodval = predvalues.item(j);									
+					if(nodval.getFirstChild() == null)
+						continue;
 					
 					if(nodval.getNodeName().equalsIgnoreCase("num_flight")) {
 						TextView txv = new TextView(table.getContext());

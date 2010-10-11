@@ -15,6 +15,7 @@ public class sitetable extends Activity {
         
         try {
         	loadPredDay();
+        	Log.i("flightpred", "sucesfully loaded initial table");
         } catch (RuntimeException e) {
         	String msg = e.getLocalizedMessage();
         	Log.i("flightpred", msg);
@@ -22,8 +23,8 @@ public class sitetable extends Activity {
     }
     
     public void loadPredDay() {
-    	XmlHandler xmlh = new XmlHandler("http://192.168.2.5/flightpred/forecast.php");
-//    	XmlHandler xmlh = new XmlHandler("http://flightpred.homelinux.org/forecast.php");
+//    	XmlHandler xmlh = new XmlHandler("http://192.168.2.5/flightpred/forecast.php");
+    	XmlHandler xmlh = new XmlHandler("http://flightpred.homelinux.org/forecast.php");
     	TableLayout table = (TableLayout)findViewById(R.id.TableLayout01);
     	xmlh.update(table);
     }
