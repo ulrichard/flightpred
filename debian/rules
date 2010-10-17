@@ -35,10 +35,20 @@ build-stamp: configure-stamp
 clean: 
 
 # this is an attempt to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
-	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
-		sed -i 's/\$\x7Bdist\x3ABuild-Depends\x7D/libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev, libboost-test-dev, postgresql-contrib-8.4/' $(CURDIR)/debian/control
-	else
-		sed -i 's/\$\x7Bdist\x3ABuild-Depends\x7D/libboost-regex1.42-dev, libboost-program-options1.42-dev, libboost-date-time1.42-dev, libboost-signals1.42-dev, libboost-thread1.42-dev, libboost-system1.42-dev, libboost-filesystem1.42-dev, libboost-serialization1.42-dev, libboost-test1.42-dev, postgresql-contrib-8.3/' $(CURDIR)/debian/control
+	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),no)
+
+		sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
+				-e 's/libboost-program-options-dev/libboost-program-options1.42-dev/' \
+				-e 's/libboost-date-time-dev/libboost-date-time1.42-dev/' \
+				-e 's/libboost-signals-dev/libboost-signals1.42-dev/' \
+				-e 's/libboost-thread-dev/libboost-thread1.42-dev/' \
+				-e 's/libboost-system-dev/libboost-system1.42-dev/' \
+				-e 's/libboost-filesystem-dev/libboost-filesystem1.42-dev/' \
+				-e 's/libboost-serialization-dev/libboost-serialization1.42-dev/' \
+				-e 's/libboost-test-dev/libboost-test1.42-dev/' \
+				-e 's/postgresql-contrib-8.4/postgresql-contrib-8.3/' \
+			$(CURDIR)/debian/control
+
 	endif
 
 	dh_testdir

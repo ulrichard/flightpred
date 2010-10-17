@@ -1,3 +1,9 @@
+flightpred (0.0.16~maverick) maverick; urgency=low
+
+  * first build for maverick
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue,  31 Aug 2010 20:53:00 +0200
+
 flightpred (0.0.16) lucid; urgency=low
 
   * added the dependency to the oursourced new package libjsonspirit
