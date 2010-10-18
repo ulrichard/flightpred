@@ -56,14 +56,14 @@ public class XmlHandler {
 					if(nodval.getNodeName().equalsIgnoreCase("num_flight")) {
 						String valstr = nodval.getFirstChild().getNodeValue();
 						TextView txv = new TextView(table.getContext());
-						txv.setText(valstr.subSequence(0, Math.max(valstr.length(), 4)));
+						txv.setText(valstr.subSequence(0, Math.min(valstr.length(), 4)));
 						txv.setPadding(3, 3, 3, 3);
 						row.addView(txv, 1);
 					}
 					else if(nodval.getNodeName().equalsIgnoreCase("max_dist")) {
 						String valstr = nodval.getFirstChild().getNodeValue();
 						TextView txv = new TextView(table.getContext());
-						txv.setText(valstr.substring(0, Math.max(valstr.length(), 4)));
+						txv.setText(valstr.substring(0, Math.min(valstr.length(), 4)));
 						txv.setPadding(3, 3, 3, 3);
 						row.addView(txv, 2);
 					}
