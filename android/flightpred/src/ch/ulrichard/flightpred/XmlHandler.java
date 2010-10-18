@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Vector;
 import java.lang.Float;
+import java.lang.Math;
 import org.w3c.dom.*;
 import java.net.*;
 import android.widget.*;
@@ -43,6 +44,7 @@ public class XmlHandler {
 				String name = site.getAttribute("name");
 				TextView txname = new TextView(table.getContext());
 				txname.setText(name);
+				txname.setPadding(3, 3, 3, 3);
 				row.addView(txname);
 				
 				NodeList predvalues = site.getChildNodes();
@@ -52,13 +54,17 @@ public class XmlHandler {
 						continue;
 					
 					if(nodval.getNodeName().equalsIgnoreCase("num_flight")) {
+						String valstr = nodval.getFirstChild().getNodeValue();
 						TextView txv = new TextView(table.getContext());
-						txv.setText(nodval.getFirstChild().getNodeValue());
+						txv.setText(valstr.subSequence(0, Math.max(valstr.length(), 4)));
+						txv.setPadding(3, 3, 3, 3);
 						row.addView(txv, 1);
 					}
 					else if(nodval.getNodeName().equalsIgnoreCase("max_dist")) {
+						String valstr = nodval.getFirstChild().getNodeValue();
 						TextView txv = new TextView(table.getContext());
-						txv.setText(nodval.getFirstChild().getNodeValue());
+						txv.setText(valstr.substring(0, Math.max(valstr.length(), 4)));
+						txv.setPadding(3, 3, 3, 3);
 						row.addView(txv, 2);
 					}
 				} // for predvalues
