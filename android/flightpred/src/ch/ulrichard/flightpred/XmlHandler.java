@@ -1,14 +1,14 @@
 package ch.ulrichard.flightpred;
 
 import javax.xml.parsers.*;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Vector;
+import java.util.*;
+import java.text.*;
 import java.lang.Float;
 import java.lang.Math;
 import org.w3c.dom.*;
 import java.net.*;
 import android.widget.*;
+
 
 public class XmlHandler {
 	
@@ -29,59 +29,52 @@ public class XmlHandler {
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			Document dom = builder.parse(xmlurl_.openConnection().getInputStream());
 			Element root = dom.getDocumentElement();
+			TreeMap<String, TreeMap<Date, Float>> siteinfos = new TreeMap<String, TreeMap<Date, Float>>(); 
+			
 			NodeList daytags = root.getElementsByTagName("day");
-			Node today = daytags.item(0);
-			NodeList sites = today.getChildNodes();
-			
-			Vector<TableRow> tmprows = new Vector<TableRow>();
-			
-			for(int i=0; i<sites.getLength(); ++i) {
-				TableRow row = new TableRow(table.getContext());
-				if(!(sites.item(i) instanceof Element))
+			for(int i=0; i<daytags.getLength(); ++i) {
+				if(!(daytags.item(i) instanceof Element))
 					continue;
-				Element site = (Element)sites.item(i);
+				Element dayn = (Element)daytags.item(i);
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+				Date day = sdf.parse(dayn.getAttribute("val"));
+				NodeList sites = dayn.getChildNodes();
 				
-				String name = site.getAttribute("name");
-				TextView txname = new TextView(table.getContext());
-				txname.setText(name);
-				txname.setPadding(3, 3, 3, 3);
-				row.addView(txname);
-				
-				NodeList predvalues = site.getChildNodes();
-				for(int j=0; j<predvalues.getLength(); j++) {
-					Node nodval = predvalues.item(j);									
-					if(nodval.getFirstChild() == null)
+				for(int j=0; j<sites.getLength(); ++j) {
+					if(!(sites.item(j) instanceof Element))
 						continue;
+					Element site = (Element)sites.item(j);
 					
-					if(nodval.getNodeName().equalsIgnoreCase("num_flight")) {
-						String valstr = nodval.getFirstChild().getNodeValue();
-						TextView txv = new TextView(table.getContext());
-						txv.setText(valstr.subSequence(0, Math.min(valstr.length(), 4)));
-						txv.setPadding(3, 3, 3, 3);
-						row.addView(txv, 1);
-					}
-					else if(nodval.getNodeName().equalsIgnoreCase("max_dist")) {
-						String valstr = nodval.getFirstChild().getNodeValue();
-						TextView txv = new TextView(table.getContext());
-						txv.setText(valstr.substring(0, Math.min(valstr.length(), 4)));
-						txv.setPadding(3, 3, 3, 3);
-						row.addView(txv, 2);
-					}
-				} // for predvalues
-					  
-				try {
-					TextView tv = (TextView)(row.getVirtualChildAt(2));
-					if(tv.getText().length() > 0)
-					{
-						float dist = Float.parseFloat(tv.getText().toString());
-						if(dist > 0.0)
-							tmprows.add(row);
-					}
-				} catch(Exception e) {
+					String name = site.getAttribute("name");
+					TreeMap<Date, Float> siteinf;
+					if(siteinfos.keySet().contains(name))
+						siteinf = siteinfos.get(name);
+					else 
+						siteinf = new TreeMap<Date, Float>();
 					
-				}
-			} // for sites
-			
+					NodeList predvalues = site.getChildNodes();
+					for(int k=0; k<predvalues.getLength(); k++) {
+						Node nodval = predvalues.item(k);									
+						if(nodval.getFirstChild() == null)
+							continue;
+						
+						if(nodval.getNodeName().equalsIgnoreCase("max_dist")) {
+							String valstr = nodval.getFirstChild().getNodeValue();
+							if(valstr.length() == 0)
+								continue;
+							try{
+								float dist = Float.parseFloat(valstr);
+								if(dist <= 0.0)
+									continue;
+								siteinf.put(day, dist);
+							} catch(Exception e) {
+								
+							}
+						}
+					} // for predvalues
+				} // for sites
+			} // for days
+/*
 			Collections.sort(tmprows, new Comparator<TableRow>(){
 				public int compare(TableRow lhs, TableRow rhs){
 					TextView tvl = (TextView)lhs.getVirtualChildAt(2);
@@ -91,9 +84,50 @@ public class XmlHandler {
 					return Float.compare(flr, fll);
 				}
 			});
+*/
 			
-			for(int i=0; i<tmprows.size(); i++)
-				table.addView(tmprows.get(i));
+			Vector<Date> preddates = new Vector<Date>();
+			Date day = new Date();
+			preddates.add(day);
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(day);
+			cal.add(Calendar.DATE, 1);
+			preddates.add(cal.getTime());
+			cal.add(Calendar.DATE, 1);
+			preddates.add(cal.getTime());
+			
+			TableRow row = (TableRow)table.getChildAt(0);
+			SimpleDateFormat sdf = new SimpleDateFormat("dd.MMM");
+			for(int i=0; i<preddates.size(); i++) {
+				day = preddates.get(i);
+				TextView txv = new TextView(table.getContext());
+				String valstr = sdf.format(day);
+				txv.setText(valstr);
+				txv.setPadding(3, 3, 3, 3);
+				row.addView(txv, i + 1);
+			}
+			
+			for(Map.Entry<String, TreeMap<Date, Float>> ent : siteinfos.entrySet()) {
+				row = new TableRow(table.getContext());
+				
+				TextView txname = new TextView(table.getContext());
+				txname.setText(ent.getKey());
+				txname.setPadding(3, 3, 3, 3);
+				row.addView(txname);
+				
+				for(int i=0; i<preddates.size(); i++) {
+					day = preddates.get(i);
+					if(ent.getValue().keySet().contains(day)) {
+						TextView txv = new TextView(table.getContext());
+						String valstr = String.format("%.2f", ent.getValue().get(day));
+						txv.setText(valstr);
+						txv.setPadding(3, 3, 3, 3);
+						row.addView(txv, i + 1);
+					}
+				}
+				
+				table.addView(row);
+			}
 			
 		} catch(Exception e) {
 			throw new RuntimeException(e);		
