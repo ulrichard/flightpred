@@ -1,6 +1,6 @@
 #!/bin/sh
 # build a debian sourcepackage and upload it to the launchpad ppa
-JSONSPIRITVERSIONSTR=4.2.1
+JSONSPIRITVERSIONSTR=4.2.1~maverick
 export GPGKEY=DA94BB53
 export DEBEMAIL="richi@paraeasy.ch"
 export DEBFULLNAME="Richard Ulrich"

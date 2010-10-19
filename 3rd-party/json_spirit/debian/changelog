@@ -1,3 +1,9 @@
+libjsonspirit (4.2.1~maverick) maverick; urgency=low
+
+  * maverick
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue, 19 Oct 2010 22:03:03 +0200
+
 libjsonspirit (4.2.1) lucid; urgency=low
 
   * depend on cmake
