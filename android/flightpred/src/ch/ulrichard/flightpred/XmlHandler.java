@@ -29,14 +29,14 @@ public class XmlHandler {
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			Document dom = builder.parse(xmlurl_.openConnection().getInputStream());
 			Element root = dom.getDocumentElement();
-			TreeMap<String, TreeMap<Date, Float>> siteinfos = new TreeMap<String, TreeMap<Date, Float>>(); 
+			TreeMap<String, TreeMap<Date, Float>> siteinfos = new TreeMap<String, TreeMap<Date, Float>>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			
 			NodeList daytags = root.getElementsByTagName("day");
 			for(int i=0; i<daytags.getLength(); ++i) {
 				if(!(daytags.item(i) instanceof Element))
 					continue;
 				Element dayn = (Element)daytags.item(i);
-				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 				Date day = sdf.parse(dayn.getAttribute("val"));
 				NodeList sites = dayn.getChildNodes();
 				
@@ -44,13 +44,7 @@ public class XmlHandler {
 					if(!(sites.item(j) instanceof Element))
 						continue;
 					Element site = (Element)sites.item(j);
-					
 					String name = site.getAttribute("name");
-					TreeMap<Date, Float> siteinf;
-					if(siteinfos.keySet().contains(name))
-						siteinf = siteinfos.get(name);
-					else 
-						siteinf = new TreeMap<Date, Float>();
 					
 					NodeList predvalues = site.getChildNodes();
 					for(int k=0; k<predvalues.getLength(); k++) {
@@ -66,7 +60,11 @@ public class XmlHandler {
 								float dist = Float.parseFloat(valstr);
 								if(dist <= 0.0)
 									continue;
-								siteinf.put(day, dist);
+								
+								if(!siteinfos.keySet().contains(name))
+									siteinfos.put(name, new TreeMap<Date, Float>());
+								
+								siteinfos.get(name).put(day, dist);
 							} catch(Exception e) {
 								
 							}
@@ -88,6 +86,8 @@ public class XmlHandler {
 			
 			Vector<Date> preddates = new Vector<Date>();
 			Date day = new Date();
+			String todaysdtr = sdf.format(day);
+			day = sdf.parse(todaysdtr);
 			preddates.add(day);
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(day);
@@ -97,11 +97,11 @@ public class XmlHandler {
 			preddates.add(cal.getTime());
 			
 			TableRow row = (TableRow)table.getChildAt(0);
-			SimpleDateFormat sdf = new SimpleDateFormat("dd.MMM");
+			SimpleDateFormat sdfs = new SimpleDateFormat("dd.MMM");
 			for(int i=0; i<preddates.size(); i++) {
 				day = preddates.get(i);
 				TextView txv = new TextView(table.getContext());
-				String valstr = sdf.format(day);
+				String valstr = sdfs.format(day);
 				txv.setText(valstr);
 				txv.setPadding(3, 3, 3, 3);
 				row.addView(txv, i + 1);
@@ -117,7 +117,8 @@ public class XmlHandler {
 				
 				for(int i=0; i<preddates.size(); i++) {
 					day = preddates.get(i);
-					if(ent.getValue().keySet().contains(day)) {
+					Set<Date> days = ent.getValue().keySet();
+					if(days.contains(day)) {
 						TextView txv = new TextView(table.getContext());
 						String valstr = String.format("%.2f", ent.getValue().get(day));
 						txv.setText(valstr);
