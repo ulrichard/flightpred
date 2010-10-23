@@ -1,21 +1,26 @@
 package ch.ulrichard.flightpred;
 
-import javax.xml.parsers.*;
-import java.util.*;
-import java.text.*;
-import java.lang.Float;
-import org.w3c.dom.*;
-import java.net.*;
-import android.widget.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.Vector;
+import org.json.*;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
+//import org.apache.commons.io.*
 
-
-public class XmlHandler {
+public class JsonHandler {
+final URL   fileurl_;
 	
-	final URL   xmlurl_;
-	
-	public XmlHandler(String xmlUrl) {
+	public JsonHandler(String fileurl) {
 		try{
-			this.xmlurl_ = new URL(xmlUrl);
+			this.fileurl_ = new URL(fileurl);
 		}
 		catch(MalformedURLException e) {
 			throw new RuntimeException(e);
@@ -24,13 +29,13 @@ public class XmlHandler {
 
 	public void update(TableLayout table) {
 		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document dom = builder.parse(xmlurl_.openConnection().getInputStream());
-			Element root = dom.getDocumentElement();
+//			String jsontext = IOUtils.toString(fileurl_.openConnection().getInputStream());
+//			JSONObject jsonobj = new JSONObject.(jsontext);
+					
 			TreeMap<String, TreeMap<Date, Float>> siteinfos = new TreeMap<String, TreeMap<Date, Float>>();
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			
+/*			
 			NodeList daytags = root.getElementsByTagName("day");
 			for(int i=0; i<daytags.getLength(); ++i) {
 				if(!(daytags.item(i) instanceof Element))
@@ -71,17 +76,7 @@ public class XmlHandler {
 					} // for predvalues
 				} // for sites
 			} // for days
-/*
-			Collections.sort(tmprows, new Comparator<TableRow>(){
-				public int compare(TableRow lhs, TableRow rhs){
-					TextView tvl = (TextView)lhs.getVirtualChildAt(2);
-					TextView tvr = (TextView)rhs.getVirtualChildAt(2);
-					float fll = Float.parseFloat(tvl.getText().toString());
-					float flr = Float.parseFloat(tvr.getText().toString());
-					return Float.compare(flr, fll);
-				}
-			});
-*/
+
 			
 			Vector<Date> preddates = new Vector<Date>();
 			Date day = new Date();
@@ -119,7 +114,7 @@ public class XmlHandler {
 					Set<Date> days = ent.getValue().keySet();
 					TextView txv = new TextView(table.getContext());
 					if(days.contains(day)) {
-						String valstr = String.format("%.2f km", ent.getValue().get(day));
+						String valstr = String.format("%.2f", ent.getValue().get(day));
 						txv.setText(valstr);
 						txv.setPadding(3, 3, 3, 3);
 					}
@@ -128,7 +123,7 @@ public class XmlHandler {
 				
 				table.addView(row);
 			}
-			
+*/	
 		} catch(Exception e) {
 			throw new RuntimeException(e);		
 		}
