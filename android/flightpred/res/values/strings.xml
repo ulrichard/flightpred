@@ -2,4 +2,5 @@
 <resources>
     <string name="hello">flightpred.homelinux.org</string>
     <string name="app_name">flightpred</string>
+    <string name="mapview_name">flightpred</string>
 </resources>
