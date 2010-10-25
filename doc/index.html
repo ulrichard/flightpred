@@ -1,6 +1,8 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
   <title>FreeFlightPrediction</title>
   <meta content="Richard Ulrich [richi@paraeasy.ch]" name="author">
   <meta content="Description of the flightpred project"
@@ -16,6 +18,13 @@ prediction data and flights
 from online xc competitions. With current weather prediction data it
 can then make predictoins about possible flights in areas it is trained
 for.<br>
+<br>
+Flightpred in opesource software licensed under the GPL v 3. The
+development files are on on <a
+ href="http://sourceforge.net/projects/flightpred">http://sourceforge.net/projects/flightpred</a>.
+The
+autohro reserves the righ to make it available under a dual license
+for commercial use at a later time.<br>
 <h4>Short description</h4>
 To do so, we collect weather prediction data from the past, and match
 them with the flights that were uploaded to online competitions. Using
@@ -30,17 +39,18 @@ upcoming days. <br>
 Numerical weather prediction systems calculate various physical
 parameters for a
 vast number of points on a
-longitude / latitude grid (2.5 deg for GFS) at various pressure levels
+longitude / latitude grid at various pressure levels
 (altitudes). They do so by modeling certain physical
-rules on the parameters of the adjacent grid points. These values can
+rules (gas equations) on the parameters of the adjacent grid points.
+These values can
 be <a
  href="http://www.cpc.noaa.gov/products/wesley/fast_downloading_grib.html">downloaded</a>
 as <a
  href="http://weather.mailasail.com/Franks-Weather/Grib-Files-Explained">grib
-files</a>. At the beginning we will use data from the <a
+files</a>. At the moment, we use data from the <a
  href="http://en.wikipedia.org/wiki/Global_Forecast_System">GFS model</a>
 run by the <a href="http://www.noaa.gov/">noaa</a>, as it is easily
-accessible. Once we have some results, we might also want to look for
+accessible. In the future, we might also want to look for
 data from a high quality meso scale model.<br>
 To train our system, we have to extract some meaningful features at
 some grid positions that are sensible for the flight area for which we
@@ -72,7 +82,7 @@ flight (e.g. 1500 - 3500m)</li>
   </ul>
   <li>Preprocessed features could be of value:</li>
   <ul>
-    <li>isobars are convex or concave.<br>
+    <li>if isobars are convex or concave.<br>
     </li>
   </ul>
 </ul>
@@ -86,7 +96,8 @@ provided us with all the data required.<br>
 The measures will be calculated (for the past) and predicted (for the
 future) per flight area and could include:<br>
 <ul>
-  <li>maximum distance</li>
+  <li>maximum distance<br>
+  </li>
   <li>average distance</li>
   <li>maximum duration</li>
   <li>average duration<br>
@@ -95,20 +106,25 @@ future) per flight area and could include:<br>
   <li>number of pilots having the best flight of the season.</li>
 </ul>
 <h4>The self learning system</h4>
-At first, we will use a <a
- href="http://en.wikipedia.org/wiki/Support_vector_machine">support
-vector machine</a><a href="http://www.torch.ch"></a>
+We use a <a href="http://en.wikipedia.org/wiki/Support_vector_machine">support
+vector
+machine</a>
 but may later also experiment with <a
- href="http://en.wikipedia.org/wiki/Neural_network">neural networks</a>
-or with voting of both systems. The engine shall be pluggable to easily
+ href="http://en.wikipedia.org/wiki/Neural_network">neural networks</a>,
+other
+machine
+learning
+algorithms
+or with voting of multiple systems. The engines have to be pluggable to
+easily
 experiment with different systems.<br>
 To evaluate good features sets (grid point
 location, altitude, parameters, svm config) and optimize the parametes
-of the algorithm and its kernel, we will use a <a
+of the algorithm and its kernel, we use <a
  href="http://en.wikipedia.org/wiki/Genetic_algorithms">genetic/evolutionary
 algorithms</a>.&nbsp; <br>
-Depending if the machine can handle multiple outputs, we willl generate
-one training sample per day or as many as we have figures to predict.
+We generate one training sample per day for each value that we seek to
+predict.
 Each training sample consists of all the extracted features from the
 weather predictions and the desired result.<br>
 <h4>Platform</h4>
@@ -116,14 +132,22 @@ The main development is in C++ on linux, specifically debian based
 systems such as <a href="http://www.ubuntu.com">ubuntu</a> or <a
  href="http://linux.voyage.hk/">voyage.</a> The code is open so it
 should be easy
-to port to other platforms such as mac os x or Windows, but the actual
-porting will come later, if at all. Especially potring to Windows might
+to port to other platforms such as mac os x or Windows, but as the
+system runs on a server and can be accessed from a browser from any
+platform, there's not much point in porting the system. Especially
+porting to Windows might
 prove difficult, as some of the used libraries are not tested on that
 operating system.<br>
 <h4>Output</h4>
-A possible output could look like this at the beginning, with some
-graphical enhancements later:<br>
-<table style="text-align: left;" border="1" cellpadding="2"
+<h5>Website</h5>
+The primary location to see the results is
+<a href="http://flightpred.homelinux.org">http://flightpred.homelinux.org</a>&nbsp;
+The
+website displays the
+calculated predictions as well as some internal infornmations and the
+documentation you're reading. <br>
+The table wit the forecasts looks something like this:<br>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2"
  cellspacing="2">
   <tbody>
     <tr>
@@ -137,10 +161,22 @@ graphical enhancements later:<br>
       </td>
       <td style="vertical-align: top;">pers best<br>
       </td>
+      <td style="vertical-align: top;">max km </td>
+      <td style="vertical-align: top;">avg km </td>
+      <td style="vertical-align: top;">flights </td>
+      <td style="vertical-align: top;">pers best </td>
+      <td style="vertical-align: top;">max km </td>
+      <td style="vertical-align: top;">avg km </td>
+      <td style="vertical-align: top;">flights </td>
+      <td style="vertical-align: top;">pers best </td>
     </tr>
     <tr style="font-weight: bold;">
-      <td colspan="5" rowspan="1" style="vertical-align: top;">Predictions
-for 31. July 2009</td>
+      <td style="vertical-align: top;">Predictions for </td>
+      <td colspan="4" rowspan="1" style="vertical-align: top;">31. July
+2009 </td>
+      <td colspan="4" rowspan="1" style="vertical-align: top;">1. Aug
+2009 </td>
+      <td colspan="4" style="vertical-align: top;">2. Aug 2009 </td>
     </tr>
     <tr>
       <td style="vertical-align: top;">Fiesch<br>
@@ -153,6 +189,22 @@ for 31. July 2009</td>
       </td>
       <td style="vertical-align: top;">10<br>
       </td>
+      <td style="vertical-align: top;">120<br>
+      </td>
+      <td style="vertical-align: top;">72<br>
+      </td>
+      <td style="vertical-align: top;">5<br>
+      </td>
+      <td style="vertical-align: top;">1<br>
+      </td>
+      <td style="vertical-align: top;">88<br>
+      </td>
+      <td style="vertical-align: top;">48<br>
+      </td>
+      <td style="vertical-align: top;">21<br>
+      </td>
+      <td style="vertical-align: top;">5<br>
+      </td>
     </tr>
     <tr>
       <td style="vertical-align: top;">Scuol<br>
@@ -160,6 +212,22 @@ for 31. July 2009</td>
       <td style="vertical-align: top;">163<br>
       </td>
       <td style="vertical-align: top;">60<br>
+      </td>
+      <td style="vertical-align: top;">9<br>
+      </td>
+      <td style="vertical-align: top;">1<br>
+      </td>
+      <td style="vertical-align: top;">135<br>
+      </td>
+      <td style="vertical-align: top;">52<br>
+      </td>
+      <td style="vertical-align: top;">34<br>
+      </td>
+      <td style="vertical-align: top;">6<br>
+      </td>
+      <td style="vertical-align: top;">79<br>
+      </td>
+      <td style="vertical-align: top;">21<br>
       </td>
       <td style="vertical-align: top;">9<br>
       </td>
@@ -177,38 +245,6 @@ for 31. July 2009</td>
       </td>
       <td style="vertical-align: top;">0<br>
       </td>
-    </tr>
-    <tr style="font-weight: bold;">
-      <td colspan="5" rowspan="1" style="vertical-align: top;">Predictions
-for 1. Aug 2009</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">Gana<br>
-      </td>
-      <td style="vertical-align: top;">120<br>
-      </td>
-      <td style="vertical-align: top;">72<br>
-      </td>
-      <td style="vertical-align: top;">5<br>
-      </td>
-      <td style="vertical-align: top;">1<br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">Bassano<br>
-      </td>
-      <td style="vertical-align: top;">135<br>
-      </td>
-      <td style="vertical-align: top;">52<br>
-      </td>
-      <td style="vertical-align: top;">34<br>
-      </td>
-      <td style="vertical-align: top;">6<br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">Fanas<br>
-      </td>
       <td style="vertical-align: top;">63<br>
       </td>
       <td style="vertical-align: top;">32<br>
@@ -216,38 +252,6 @@ for 1. Aug 2009</td>
       <td style="vertical-align: top;">23<br>
       </td>
       <td style="vertical-align: top;">2<br>
-      </td>
-    </tr>
-    <tr style="font-weight: bold;">
-      <td colspan="5" rowspan="1" style="vertical-align: top;">Predictions
-for 2. Aug 2009</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">Haldigrat<br>
-      </td>
-      <td style="vertical-align: top;">88<br>
-      </td>
-      <td style="vertical-align: top;">48<br>
-      </td>
-      <td style="vertical-align: top;">21<br>
-      </td>
-      <td style="vertical-align: top;">5<br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">Rothenflue<br>
-      </td>
-      <td style="vertical-align: top;">79<br>
-      </td>
-      <td style="vertical-align: top;">21<br>
-      </td>
-      <td style="vertical-align: top;">9<br>
-      </td>
-      <td style="vertical-align: top;">1<br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">Weissenstein<br>
       </td>
       <td style="vertical-align: top;">52<br>
       </td>
@@ -260,11 +264,27 @@ for 2. Aug 2009</td>
     </tr>
   </tbody>
 </table>
-Once the results have a certain quality, it would be nice if email or
-sms alerts could be configured for good xc days in areas of interest.<br>
-Also, an rss feed that updates after every forecast run has completed, and a SOAP interface could be realized.<br>
 <br>
-<h3>Current Status (pre alpha)</h3>
+<h5><a name="data_interface">Data interface</a></h5>
+There is also a small flightpred Android app in the market. It gets the
+data form the server by means of the data interface. The desired format
+can be encoded directly in the URL. Currently these formats are
+supported:<br>
+<ul>
+  <li><a href="http://flightpred.homelinux.org/forecast.php?format=xml">http://flightpred.homelinux.org/forecast.php?format=xml</a></li>
+  <li><a href="http://flightpred.homelinux.org/forecast.php?format=json">http://flightpred.homelinux.org/forecast.php?format=json</a></li>
+</ul>
+You can use this data as well in your application or to display on your
+website as long as you mention the source : <a
+ href="http://flightpred.homelinux.org">http://flightpred.homelinux.org</a><br>
+You are not allowed to charge for that data unless with agreement of
+the flightpred author.<br>
+<h5>Feeds</h5>
+In the future, it would be nice if email or
+sms alerts could be configured for good xc days in areas of interest.<br>
+Also, an rss feed that updates after every forecast run has completed.<br>
+<br>
+<h3>Current Status (alpha)</h3>
 <ul>
   <li>Got flight data for the past three years from http://xcontest.org
 bundled as json files. (thanks)</li>
@@ -294,7 +314,8 @@ disapointing. Better alternatives seem to be <a
  href="http://dclib.sourceforge.net/ml.html">dlib</a> and <a
  href="http://www.terborg.net/research/kml/">kml</a>.</li>
   <li>Integrated the <a href="http://dclib.sourceforge.net/ml.html">SVM
-from dlib</a> in a modular fashion, so that plugging other ml
+from
+dlib</a> in a modular fashion, so that plugging other ml
 algorithms should be relatively easy.</li>
   <li>Defined a representatoin for feature sets, and defined an initial
 default feature set per flying site.</li>
@@ -313,13 +334,23 @@ for the best solutions in other flying sites.</li>
   <li>Basic import/export of trained solutions for backup and transfer
 between machines.<br>
   </li>
-  <li>Started packaging. An alpha version is available in my  ppa:richi-paraeasy/ppa<br>
+  <li>Started packaging. An alpha version is available in my
+ppa:richi-paraeasy/ppa</li>
+  <li>Mutation on the features for the evolutionary algorithm.</li>
+  <li>Website with table and maps display as well as evolution
+generations.<br>
+  </li>
+  <li>Created a command to clean the database from obsolete stuff.</li>
+  <li>Created a data interface for use in mobile apps or other websites.</li>
+  <li>Created an android app that only downloads the predicted values
+and display the max_km.<br>
   </li>
 </ul>
 <h3>Next steps:</h3>
 <ul>
-  <li>Mutation on the features for the evolutionary algorithm.</li>
-  <li>Save and load trained solutions for use on other systems and
+  <li>Complete save and load for trained solutions including the
+individual solutions from the evolutionary runs, for use on other
+systems and
 backup.</li>
   <li>Calculate pre-processed features, especially the temperature
 gradient values.<br>
@@ -327,18 +358,15 @@ gradient values.<br>
   <li>Download strategy for grib forecast data: Try most recent run, if
 not awailable try older one, until successfull.<br>
   </li>
-  <li>Evaluate better feature sets using genetic algorithms.</li>
   <li>Evaluate different sources of grib data with a finer grid.</li>
-  <li>Experiment with different numbers of features and training
-partition sizes.<br>
-  </li>
-  <li>Make a nice web frontend to present the calculated predictions.
-Including sortable tables, graphics on a map...<br>
-  </li>
   <li>Re evaluate usage of wdb.</li>
-  <li>Make a command to clean the database from obsolete stuff.<br>
+  <li>Make sure, the debian package works correctly for
+uninstall/upgrade.</li>
+  <li>Display a map for each day and synchronize the zoom and pan
+(problem with google maps and overlays) on the website.<br>
   </li>
-  <li>Make sure, the debian package works correctly for uninstall/upgrade.<br>
+  <li>Display a map on the android app with the circles of the days in
+different colors.<br>
   </li>
 </ul>
 <h3>Problems faced:</h3>
@@ -380,8 +408,9 @@ circle. This solution worked well if there was only on map on the page,
 but as soon as there were multiple, te overlay disapeared.<br>
     </li>
   </ul>
-  <li>Debianizing a non trivial web application is harder than I thought. I faces lots of small problems for which it was difficult to find a good solution.
-  </li>
+  <li>Debianizing a non trivial web application is harder than I
+thought. I faces lots of small problems for which it was difficult to
+find a good solution. </li>
 </ul>
 <h3>3rd party libraries and products used:</h3>
 <ul>
@@ -437,8 +466,16 @@ evocosm is in the debian repository.</li>
 </ul>
 <h2>Usage of the flightpred system</h2>
 <h3>Installation</h3>
-At this time there is no installation procedure. It is planned to
-create debian packages in the future. <br>
+If you only want to see the flight predictions, you don't need to
+install anything, just browse to <a
+ href="http://flightpred.homelinux.org">http://flightpred.homelinux.org</a><br>
+You can install the flightpred system if you want to contribute to the
+project or run your own server.<br>
+On ubuntu it's as easy as this:<br>
+<span style="font-weight: bold;">sudo apt-add-repository
+ppa:richi-paraeasy/ppa</span><br style="font-weight: bold;">
+<span style="font-weight: bold;">sudo apt-get install flightpred</span><br>
+Packages for debian lenny are available upon request.<br>
 You can download the code from subversion at sourceforge.net. <br>
 To compile a release build, you need CMake. Development is done wih
 CodeBlocks.<br>
@@ -453,34 +490,63 @@ use it as follows. You will have to proceed step by step as they rely
 on the data from the previous steps.<br>
 <ul>
   <li><span style="font-weight: bold;">flightpred_train --get-flights</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
--&gt; Reads the json files from the flights/xcontest_org directory. In
+-&gt;
+Reads
+the
+json
+files from the flights/xcontest_org directory. In
 the future it shall download the flight data directly from the
 competition server. But for now I was provided with some files. I shall
 not distribute them. So if you want them, we can ask the people from
 xcontest.org.</li>
   <li><span style="font-weight: bold;">flightpred_train --register-area
 --name Fiesch --position "N47.5 E8.75" --area-radius 5000&nbsp;&nbsp; </span>-&gt;&nbsp;
-Registers the flight area Fiesch at the given position, and assigns all
+Registers
+the
+flight
+area
+Fiesch at the given position, and assigns all
 flights that started within the selected radius to it.</li>
   <li><span style="font-weight: bold;">flightpred_train --get-weather
 --start-date "2009-01-01" --end-date "2009-09-30"&nbsp;&nbsp; </span>-&gt;
-Downloads selected grib data from the GFS model for central europe in
-the given date period. At the moment we only download the data from the
-following pressure levels : surface / 850hP / 700hP / 500hP. In the
-future we want more data at the closest grid points around the flying
-areas.</li>
+Downloads
+selected
+grib
+data
+from the GFS model around the registered flying sites. Downloading mor
+data for the grid points closest to the sites and a bit less data for
+grid points farther away.</li>
+  <li><span style="font-weight: bold;">flightpred_train
+--evolove-population </span><span style="font-weight: bold;">--name
+Fiesch </span><span style="font-weight: bold;">--start_date
+"2009-08-01" --end_date "2009-08-31" --generations 50
+--max-validation-time 10 </span><span style="font-weight: bold;"> </span>-&gt;
+Explores the solution space for good a good algorithm with good
+parameters and features. <br>
+  </li>
   <li><span style="font-weight: bold;">flightpred_train --train --name
 Fiesch </span><span style="font-weight: bold;">--start_date
 "2009-08-01" --end_date "2009-08-31"&nbsp; </span>-&gt; Trains the
-system for the given parameters. Training is very simple and not
-optimized at the moment. <br>
+system for the given site using the best solution from the previous
+evolutionary runs.<br>
+  </li>
+  <li><span style="font-weight: bold;">flightpred_train
+--get-future-weather --forecast --db-maintenance </span><span
+ style="font-weight: bold;"></span>-&gt; Downloads the weather
+predictions for the upcoming days. Generates predictions results for
+the upcoming days. Cleans the database from obsolete stuff.&nbsp; <br>
   </li>
 </ul>
 <h3>The web client</h3>
 The second program of the system is the web application flightpred_wt.
-It is a web application server. If you connect to it with a browser.
-You can see the actual predictions. It is very sparse at the moment.
-For more details see the witty documentation for the moment.<br>
+It is a web application server. If you connect to it with a browser at <a
+ href="http://flightpred.homelinux.org">http://flightpred.homelinux.org</a>
+.
+You can see the actual predictions. For more details see the witty
+documentation for the moment.<br>
+The live system runs on an alix embedded board, so be patient. Twice a
+day it downloads the weather forecast data and calculates flight
+predictions. <br>
 <br>
 <br>
 </body>
