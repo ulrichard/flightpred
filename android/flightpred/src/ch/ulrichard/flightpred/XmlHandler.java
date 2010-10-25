@@ -6,29 +6,47 @@ import java.text.*;
 import java.lang.Float;
 import org.w3c.dom.*;
 import java.net.*;
-import android.widget.*;
+import com.google.android.maps.GeoPoint;
 
 
 public class XmlHandler {
-	
+	static private XmlHandler inst_ = null;
 	final URL   xmlurl_;
+	private TreeMap<String, TreeMap<Date, Float>> preddata_;
+	private TreeMap<String, GeoPoint>             locations_;
 	
-	public XmlHandler(String xmlUrl) {
+	private XmlHandler(String xmlUrl) {
 		try{
-			this.xmlurl_ = new URL(xmlUrl);
+			this.xmlurl_    = new URL(xmlUrl);
+			this.preddata_  = new TreeMap<String, TreeMap<Date, Float>>();
+			this.locations_ = new TreeMap<String, GeoPoint>();
 		}
 		catch(MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	static public XmlHandler inst(String xmlUrl) {
+		if(inst_ == null)
+			inst_ = new XmlHandler(xmlUrl);
+		return inst_;
+	}
+	
+	final TreeMap<String, TreeMap<Date, Float>> getPredData() {
+		return preddata_;
+	}
+	
+	GeoPoint getLocation(String sitename) {
+		return locations_.get(sitename);
+	}
 
-	public void update(TableLayout table) {
+	public void load() {
 		try {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			Document dom = builder.parse(xmlurl_.openConnection().getInputStream());
 			Element root = dom.getDocumentElement();
-			TreeMap<String, TreeMap<Date, Float>> siteinfos = new TreeMap<String, TreeMap<Date, Float>>();
+			
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			
 			NodeList daytags = root.getElementsByTagName("day");
@@ -44,6 +62,18 @@ public class XmlHandler {
 						continue;
 					Element site = (Element)sites.item(j);
 					String name = site.getAttribute("name");
+					String spos = site.getAttribute("location"); // something like "POINT(8.11453333324856 46.411933333079)"
+					spos = spos.substring(6, spos.length() - 1); // something like "8.11453333324856 46.411933333079"
+					
+					// there seems to be no WKT parser in android, so I do it the ugly way
+					double lat = 0.0, lon = 0.0;
+					StringTokenizer stok = new StringTokenizer(spos);
+					if(stok.hasMoreTokens())
+						lon = Double.parseDouble(stok.nextToken());
+					if(stok.hasMoreTokens())
+						lat = Double.parseDouble(stok.nextToken());					
+					GeoPoint point = new GeoPoint((int)(lat * 1E6), (int)(lon * 1E6));
+					locations_.put(name, point);
 					
 					NodeList predvalues = site.getChildNodes();
 					for(int k=0; k<predvalues.getLength(); k++) {
@@ -60,10 +90,10 @@ public class XmlHandler {
 								if(dist <= 0.0)
 									continue;
 								
-								if(!siteinfos.keySet().contains(name))
-									siteinfos.put(name, new TreeMap<Date, Float>());
+								if(!preddata_.keySet().contains(name))
+									preddata_.put(name, new TreeMap<Date, Float>());
 								
-								siteinfos.get(name).put(day, dist);
+								preddata_.get(name).put(day, dist);
 							} catch(Exception e) {
 								
 							}
@@ -71,64 +101,7 @@ public class XmlHandler {
 					} // for predvalues
 				} // for sites
 			} // for days
-/*
-			Collections.sort(tmprows, new Comparator<TableRow>(){
-				public int compare(TableRow lhs, TableRow rhs){
-					TextView tvl = (TextView)lhs.getVirtualChildAt(2);
-					TextView tvr = (TextView)rhs.getVirtualChildAt(2);
-					float fll = Float.parseFloat(tvl.getText().toString());
-					float flr = Float.parseFloat(tvr.getText().toString());
-					return Float.compare(flr, fll);
-				}
-			});
-*/
-			
-			Vector<Date> preddates = new Vector<Date>();
-			Date day = new Date();
-			String todaysdtr = sdf.format(day);
-			day = sdf.parse(todaysdtr);
-			preddates.add(day);
-			Calendar cal = Calendar.getInstance();
-			cal.setTime(day);
-			cal.add(Calendar.DATE, 1);
-			preddates.add(cal.getTime());
-			cal.add(Calendar.DATE, 1);
-			preddates.add(cal.getTime());
-			
-			TableRow row = (TableRow)table.getChildAt(0);
-			SimpleDateFormat sdfs = new SimpleDateFormat("dd.MMM");
-			for(int i=0; i<preddates.size(); i++) {
-				day = preddates.get(i);
-				TextView txv = new TextView(table.getContext());
-				String valstr = sdfs.format(day);
-				txv.setText(valstr);
-				txv.setPadding(3, 3, 3, 3);
-				row.addView(txv, i + 1);
-			}
-			
-			for(Map.Entry<String, TreeMap<Date, Float>> ent : siteinfos.entrySet()) {
-				row = new TableRow(table.getContext());
-				
-				TextView txname = new TextView(table.getContext());
-				txname.setText(ent.getKey());
-				txname.setPadding(3, 3, 3, 3);
-				row.addView(txname);
-				
-				for(int i=0; i<preddates.size(); i++) {
-					day = preddates.get(i);
-					Set<Date> days = ent.getValue().keySet();
-					TextView txv = new TextView(table.getContext());
-					if(days.contains(day)) {
-						String valstr = String.format("%.2f km", ent.getValue().get(day));
-						txv.setText(valstr);
-						txv.setPadding(3, 3, 3, 3);
-					}
-					row.addView(txv, i + 1);
-				}
-				
-				table.addView(row);
-			}
-			
+
 		} catch(Exception e) {
 			throw new RuntimeException(e);		
 		}
