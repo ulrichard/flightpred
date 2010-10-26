@@ -29,6 +29,7 @@ public class MapTabView extends MapActivity {
 	protected void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		setContentView(R.layout.maptabview);
+		GeoPoint mapcenter = new GeoPoint(46362093, 9036255);
 		
 		MapView mapv = (MapView) findViewById(R.id.mapview);
 		mapv.setBuiltInZoomControls(true);
@@ -38,15 +39,13 @@ public class MapTabView extends MapActivity {
 		myLocation.enableMyLocation();
 		myLocation.runOnFirstFix(new Runnable() {
 		    public void run() {
-		        GeoPoint pt = myLocation.getMyLocation();
+		        mapcenter = myLocation.getMyLocation();
 		    }
 		});
 		
 		MapController mc = mapv.getController();
-		mc.animateTo(new GeoPoint(46362093, 9036255));
+		mc.animateTo(mapcenter);
 		mc.setZoom(8);
-		//mc.zoomToSpan((p.getLatitudeE6()-c.getLatitudeE6())+1000000,( p.getLongitudeE6()-c.getLongitudeE6())+1000000);
-
 		
 		loadPredData();
 	 }
@@ -99,6 +98,7 @@ public class MapTabView extends MapActivity {
 					day = ent2.getKey();
 					if(days.contains(day)) {
 						CircleOverlay circov = new CircleOverlay(location, ent.getValue().get(day), ent2.getValue());
+						mapOverlays.add(circov);
 					}
 				}
 			}
