@@ -9,9 +9,11 @@
 		android:layout_width="fill_parent" 
 		android:layout_height="fill_parent"
 		android:clickable="true"
-		android:apiKey="0prxkbv9ciR2GlcvH7H_b87Xu9P__ztJsfiXmwA"
+		android:apiKey="0prxkbv9ciR0kT9jOf7AUFcQrNH0n4OKzLsxSZA"
 		android:id="@+id/mapview"/>
 					
+	<!-- debug key   : android:apiKey="0prxkbv9ciR2GlcvH7H_b87Xu9P__ztJsfiXmwA"
+	 -->
 	<!-- release key : android:apiKey="0prxkbv9ciR0kT9jOf7AUFcQrNH0n4OKzLsxSZA"
 	 -->
 </RelativeLayout>
