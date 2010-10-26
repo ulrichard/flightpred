@@ -39,7 +39,7 @@ public class MapTabView extends MapActivity {
 		myLocation.enableMyLocation();
 		myLocation.runOnFirstFix(new Runnable() {
 		    public void run() {
-		        mapcenter = myLocation.getMyLocation();
+		    	GeoPoint mapcent = myLocation.getMyLocation();
 		    }
 		});
 		
@@ -65,11 +65,15 @@ public class MapTabView extends MapActivity {
 	    	
 	    	TreeMap<Date, Paint> preddates = new TreeMap<Date, Paint>();
 	    	Paint pntRed = new Paint();
-			pntRed.setARGB(255, 255, 0, 0);
+	    	int alpha = 100;
+			pntRed.setARGB(alpha, 255, 0, 0);
+			pntRed.setStrokeWidth(3);
 			Paint pntGreen = new Paint();
-			pntGreen.setARGB(255, 0, 255, 0);
+			pntGreen.setARGB(alpha, 0, 255, 0);
+			pntGreen.setStrokeWidth(3);
 			Paint pntBlue = new Paint();
-			pntBlue.setARGB(255, 0, 0, 255);
+			pntBlue.setARGB(alpha, 0, 0, 255);
+			pntBlue.setStrokeWidth(3);
 			Date day = new Date();
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			String todaysdtr = sdf.format(day);
