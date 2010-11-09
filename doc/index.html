@@ -351,7 +351,7 @@ and display the max_km.<br>
   <li>Complete save and load for trained solutions including the
 individual solutions from the evolutionary runs, for use on other
 systems and
-backup.</li>
+backup. Has to work across 32 and 64 bit mmachines.</li>
   <li>Calculate pre-processed features, especially the temperature
 gradient values.<br>
   </li>
@@ -361,13 +361,14 @@ not awailable try older one, until successfull.<br>
   <li>Evaluate different sources of grib data with a finer grid.</li>
   <li>Re evaluate usage of wdb.</li>
   <li>Make sure, the debian package works correctly for
-uninstall/upgrade.</li>
+uninstall/upgrade. Currently there is an issue with the wt configuration.</li>
   <li>Display a map for each day and synchronize the zoom and pan
 (problem with google maps and overlays) on the website.<br>
   </li>
   <li>Display a map on the android app with the circles of the days in
-different colors.<br>
-  </li>
+different colors.</li>
+  <li>Implement the json interface in the Android client to reduce data transmission. Or implement a YAML interface on both the server and the client.</li>
+  <li>Somebody wants to make clients for iOS, Meego, Symbian or JavaME?</li>
 </ul>
 <h3>Problems faced:</h3>
 <ul>
