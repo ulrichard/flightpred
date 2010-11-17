@@ -1,5 +1,9 @@
 package ch.ulrichard.flightpred;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -7,125 +11,149 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.Vector;
 import org.json.*;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.apache.http.*;
+import org.apache.http.client.*;
+import org.apache.http.impl.client.*;
+import org.apache.http.client.methods.*;
+
+import com.google.android.maps.GeoPoint;
+
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 //import org.apache.commons.io.*
 
 public class JsonHandler {
-final URL   fileurl_;
+	static private JsonHandler inst_ = null;
+	final URL   fileurl_;
+	private TreeMap<String, TreeMap<Date, Float>> preddata_;
+	private TreeMap<String, GeoPoint>             locations_;
 	
-	public JsonHandler(String fileurl) {
+	private JsonHandler(String fileurl) {
 		try{
 			this.fileurl_ = new URL(fileurl);
-		}
-		catch(MalformedURLException e) {
+			this.preddata_  = new TreeMap<String, TreeMap<Date, Float>>();
+			this.locations_ = new TreeMap<String, GeoPoint>();
+		}catch(MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	static public JsonHandler inst(String xmlUrl) {
+		if(inst_ == null)
+			inst_ = new JsonHandler(xmlUrl);
+		return inst_;
+	}
+	
+	final TreeMap<String, TreeMap<Date, Float>> getPredData() {
+		return preddata_;
+	}
+	
+	GeoPoint getLocation(String sitename) {
+		return locations_.get(sitename);
+	}
 
-	public void update(TableLayout table) {
+	public void load() {
 		try {
-//			String jsontext = IOUtils.toString(fileurl_.openConnection().getInputStream());
-//			JSONObject jsonobj = new JSONObject.(jsontext);
+			JSONObject json = getJSONObject(fileurl_.toString());		
 					
 			TreeMap<String, TreeMap<Date, Float>> siteinfos = new TreeMap<String, TreeMap<Date, Float>>();
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			
-/*			
-			NodeList daytags = root.getElementsByTagName("day");
-			for(int i=0; i<daytags.getLength(); ++i) {
-				if(!(daytags.item(i) instanceof Element))
-					continue;
-				Element dayn = (Element)daytags.item(i);
-				Date day = sdf.parse(dayn.getAttribute("val"));
-				NodeList sites = dayn.getChildNodes();
-				
-				for(int j=0; j<sites.getLength(); ++j) {
-					if(!(sites.item(j) instanceof Element))
-						continue;
-					Element site = (Element)sites.item(j);
-					String name = site.getAttribute("name");
+			JSONArray days = json.getJSONArray("days");
+			for(int i=0; i<days.length(); i++) {
+				JSONObject dayn = days.getJSONObject(i);
+				Date day = sdf.parse(dayn.getString("day"));
+				JSONArray sites = dayn.getJSONArray("sites");
+				for(int j=0; j<sites.length(); j++) {
+					JSONObject site = sites.getJSONObject(j);
+					String name = site.getString("site");
+					String spos = site.getString("location"); // something like "POINT(8.11453333324856 46.411933333079)"
+					spos = spos.substring(6, spos.length() - 1); // something like "8.11453333324856 46.411933333079"
 					
-					NodeList predvalues = site.getChildNodes();
-					for(int k=0; k<predvalues.getLength(); k++) {
-						Node nodval = predvalues.item(k);									
-						if(nodval.getFirstChild() == null)
-							continue;
-						
-						if(nodval.getNodeName().equalsIgnoreCase("max_dist")) {
-							String valstr = nodval.getFirstChild().getNodeValue();
-							if(valstr.length() == 0)
-								continue;
-							try{
-								float dist = Float.parseFloat(valstr);
-								if(dist <= 0.0)
-									continue;
-								
-								if(!siteinfos.keySet().contains(name))
-									siteinfos.put(name, new TreeMap<Date, Float>());
-								
-								siteinfos.get(name).put(day, dist);
-							} catch(Exception e) {
-								
-							}
-						}
-					} // for predvalues
-				} // for sites
-			} // for days
-
-			
-			Vector<Date> preddates = new Vector<Date>();
-			Date day = new Date();
-			String todaysdtr = sdf.format(day);
-			day = sdf.parse(todaysdtr);
-			preddates.add(day);
-			Calendar cal = Calendar.getInstance();
-			cal.setTime(day);
-			cal.add(Calendar.DATE, 1);
-			preddates.add(cal.getTime());
-			cal.add(Calendar.DATE, 1);
-			preddates.add(cal.getTime());
-			
-			TableRow row = (TableRow)table.getChildAt(0);
-			SimpleDateFormat sdfs = new SimpleDateFormat("dd.MMM");
-			for(int i=0; i<preddates.size(); i++) {
-				day = preddates.get(i);
-				TextView txv = new TextView(table.getContext());
-				String valstr = sdfs.format(day);
-				txv.setText(valstr);
-				txv.setPadding(3, 3, 3, 3);
-				row.addView(txv, i + 1);
-			}
-			
-			for(Map.Entry<String, TreeMap<Date, Float>> ent : siteinfos.entrySet()) {
-				row = new TableRow(table.getContext());
-				
-				TextView txname = new TextView(table.getContext());
-				txname.setText(ent.getKey());
-				txname.setPadding(3, 3, 3, 3);
-				row.addView(txname);
-				
-				for(int i=0; i<preddates.size(); i++) {
-					day = preddates.get(i);
-					Set<Date> days = ent.getValue().keySet();
-					TextView txv = new TextView(table.getContext());
-					if(days.contains(day)) {
-						String valstr = String.format("%.2f", ent.getValue().get(day));
-						txv.setText(valstr);
-						txv.setPadding(3, 3, 3, 3);
-					}
-					row.addView(txv, i + 1);
+					// there seems to be no WKT parser in android, so I do it the ugly way
+					double lat = 0.0, lon = 0.0;
+					StringTokenizer stok = new StringTokenizer(spos);
+					if(stok.hasMoreTokens())
+						lon = Double.parseDouble(stok.nextToken());
+					if(stok.hasMoreTokens())
+						lat = Double.parseDouble(stok.nextToken());					
+					GeoPoint point = new GeoPoint((int)(lat * 1E6), (int)(lon * 1E6));
+					locations_.put(name, point);
+					
+					if(!site.has("max_dist"))
+						continue;
+					float dist = (float)site.getDouble("max_dist");
+					if(dist <= 0.0)
+						continue;
+					
+					if(!preddata_.keySet().contains(name))
+						preddata_.put(name, new TreeMap<Date, Float>());
+					
+					preddata_.get(name).put(day, dist);
 				}
-				
-				table.addView(row);
 			}
-*/	
 		} catch(Exception e) {
 			throw new RuntimeException(e);		
 		}
+	}
+	
+	public JSONObject getJSONObject(String url)
+	{
+		HttpClient httpClient = new DefaultHttpClient();
+		HttpGet httpGet = new HttpGet(url);
+	
+		try {
+			HttpResponse response = httpClient.execute(httpGet);
+	
+			// TODO: HTTP-Status (z.B. 404) in eigener Anwendung verarbeiten.
+		
+	//		Log.i(TAG,response.getStatusLine().toString());
+		
+			HttpEntity entity = response.getEntity();
+		
+			if(entity != null) {
+		
+				InputStream instream = entity.getContent();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
+				StringBuilder sb = new StringBuilder();
+			
+				String line = null;
+				while ((line = reader.readLine()) != null)
+					sb.append(line + "\n");
+			
+				String result = sb.toString();
+			
+	//			Log.i(TAG,result);
+			
+				instream.close();
+			
+				JSONObject json = new JSONObject(result);
+				return json;
+			}
+		}
+		catch (ClientProtocolException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		} catch (JSONException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		} catch (Exception e){
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}finally{
+			httpGet.abort();
+		}
+		
+		throw new RuntimeException("Could not download the json data file.");
 	}
 }

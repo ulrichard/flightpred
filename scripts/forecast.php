@@ -27,18 +27,25 @@ if($format == "json")
 else
 	echo "<flightpred>\n";
 
+$first_day = true;
 while($day = pg_fetch_assoc($days)) 
 {
 	if($format == "json")
+	{
+		if($first_day == false)
+			echo ",";
     	echo "\t{\"day\":\"{$day['pred_day']}\",\"sites\":[\n";
+	}
 	else
     	echo "\t<day val='{$day['pred_day']}'>\n";
 
+	$first_day = false;
 
 	// Performing SQL query
 	$query = 'select pred_site_id, site_name, country, astext(location) as loc from pred_sites;';
 	$sites = pg_query($query) or die('Query failed: ' . pg_last_error());
 
+	$first_site = true;
 	while($site = pg_fetch_assoc($sites)) 
 	{	 
 		$query = "select num_flight, max_dist, avg_dist, max_dur, avg_dur  from flight_pred where pred_day='{$day['pred_day']}' and pred_site_id={$site['pred_site_id']} order by calculated desc limit 1;";
@@ -49,6 +56,10 @@ while($day = pg_fetch_assoc($days))
 		{
 			if($results['num_flight'] || $results['max_dist'] || $results['max_dur'])
 			{
+				if($first_site == true)
+					$first_site = false;
+				else
+					echo ",";
 				echo "\t\t{\"site\":\"{$site['site_name']}\"";
 				echo ",\"location\":\"{$site['loc']}\"";
 				if($results['num_flight'])
@@ -74,6 +85,7 @@ while($day = pg_fetch_assoc($days))
 			echo "\t\t\t<avg_dur>{$results['avg_dur']}</avg_dur>\n";
 			echo "\t\t</site>\n";
 		}
+		
 
 		pg_free_result($result);
 	}

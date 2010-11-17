@@ -55,8 +55,8 @@ public class sitetable extends TabActivity {
     
     public void loadPredData() {
     	try {    	
-//	    	XmlHandler xmlh = XmlHandler.inst("http://192.168.2.5/flightpred/forecast.php");
-	    	XmlHandler xmlh = XmlHandler.inst("http://flightpred.homelinux.org/forecast.php");
+//	    	JsonHandler xmlh = JsonHandler.inst("http://192.168.2.5/flightpred/forecast.php?format=json");
+	    	JsonHandler xmlh = JsonHandler.inst("http://flightpred.homelinux.org/forecast.php?format=json");
 	    	xmlh.load();
 	    	TreeMap<String, TreeMap<Date, Float>> preddatea = xmlh.getPredData();
 	    	TableLayout table = (TableLayout)findViewById(R.id.TableLayout01);
@@ -87,6 +87,7 @@ public class sitetable extends TabActivity {
 				day = ent2.getKey();
 				TextView txv = new TextView(table.getContext());
 				txv.setPaintFlags(ent2.getValue().getFlags());
+				txv.setTextColor(ent2.getValue().getColor());
 				String valstr = sdfs.format(day);
 				txv.setText(valstr);
 				txv.setPadding(5, 3, 5, 3);

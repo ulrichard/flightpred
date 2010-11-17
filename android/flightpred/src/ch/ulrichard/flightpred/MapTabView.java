@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Vector;
 
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
