@@ -56,7 +56,8 @@ public class MapTabView extends MapActivity {
 	
 	private void loadPredData() {
 		try {
-			XmlHandler xmlh = XmlHandler.inst("");
+//			XmlHandler xmlh = XmlHandler.inst("");
+			JsonHandler xmlh = JsonHandler.inst("");
 	    	xmlh.load();
 	    	TreeMap<String, TreeMap<Date, Float>> preddata = xmlh.getPredData();
 	    	MapView mapv = (MapView)findViewById(R.id.mapview);
