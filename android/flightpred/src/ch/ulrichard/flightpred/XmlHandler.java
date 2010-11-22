@@ -5,46 +5,20 @@ import java.util.*;
 import java.text.*;
 import java.lang.Float;
 import org.w3c.dom.*;
-import java.net.*;
 import com.google.android.maps.GeoPoint;
 
 
-public class XmlHandler {
-	static private XmlHandler inst_ = null;
-	final URL   xmlurl_;
-	private TreeMap<String, TreeMap<Date, Float>> preddata_;
-	private TreeMap<String, GeoPoint>             locations_;
+public class XmlHandler extends DataHandlerBase {
 	
-	private XmlHandler(String xmlUrl) {
-		try{
-			this.xmlurl_    = new URL(xmlUrl);
-			this.preddata_  = new TreeMap<String, TreeMap<Date, Float>>();
-			this.locations_ = new TreeMap<String, GeoPoint>();
-		}
-		catch(MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
+	protected XmlHandler(String fileurl) {
+		super(fileurl);
 	}
 	
-	static public XmlHandler inst(String xmlUrl) {
-		if(inst_ == null)
-			inst_ = new XmlHandler(xmlUrl);
-		return inst_;
-	}
-	
-	final TreeMap<String, TreeMap<Date, Float>> getPredData() {
-		return preddata_;
-	}
-	
-	GeoPoint getLocation(String sitename) {
-		return locations_.get(sitename);
-	}
-
-	public void load() {
+	protected void load() {
 		try {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document dom = builder.parse(xmlurl_.openConnection().getInputStream());
+			Document dom = builder.parse(fileurl_.openConnection().getInputStream());
 			Element root = dom.getDocumentElement();
 			
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

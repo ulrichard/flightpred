@@ -4,66 +4,28 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-import java.util.Vector;
 import org.json.*;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.apache.http.*;
 import org.apache.http.client.*;
 import org.apache.http.impl.client.*;
 import org.apache.http.client.methods.*;
-
 import com.google.android.maps.GeoPoint;
 
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
-//import org.apache.commons.io.*
 
-public class JsonHandler {
-	static private JsonHandler inst_ = null;
-	final URL   fileurl_;
-	private TreeMap<String, TreeMap<Date, Float>> preddata_;
-	private TreeMap<String, GeoPoint>             locations_;
+public class JsonHandler extends DataHandlerBase {
 	
-	private JsonHandler(String fileurl) {
-		try{
-			this.fileurl_ = new URL(fileurl);
-			this.preddata_  = new TreeMap<String, TreeMap<Date, Float>>();
-			this.locations_ = new TreeMap<String, GeoPoint>();
-		}catch(MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-	}
 	
-	static public JsonHandler inst(String xmlUrl) {
-		if(inst_ == null)
-			inst_ = new JsonHandler(xmlUrl);
-		return inst_;
-	}
-	
-	final TreeMap<String, TreeMap<Date, Float>> getPredData() {
-		return preddata_;
-	}
-	
-	GeoPoint getLocation(String sitename) {
-		return locations_.get(sitename);
+	protected JsonHandler(String fileurl) {
+		super(fileurl);
 	}
 
-	public void load() {
+	protected void load() {
 		try {
 			JSONObject json = getJSONObject(fileurl_.toString());		
-					
-			TreeMap<String, TreeMap<Date, Float>> siteinfos = new TreeMap<String, TreeMap<Date, Float>>();
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			
 			JSONArray days = json.getJSONArray("days");
@@ -104,22 +66,17 @@ public class JsonHandler {
 		}
 	}
 	
-	public JSONObject getJSONObject(String url)
+	private JSONObject getJSONObject(String url)
 	{
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpGet httpGet = new HttpGet(url);
 	
 		try {
 			HttpResponse response = httpClient.execute(httpGet);
-	
 			// TODO: HTTP-Status (z.B. 404) in eigener Anwendung verarbeiten.
-		
-	//		Log.i(TAG,response.getStatusLine().toString());
-		
+				
 			HttpEntity entity = response.getEntity();
-		
 			if(entity != null) {
-		
 				InputStream instream = entity.getContent();
 				BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
 				StringBuilder sb = new StringBuilder();
@@ -129,8 +86,6 @@ public class JsonHandler {
 					sb.append(line + "\n");
 			
 				String result = sb.toString();
-			
-	//			Log.i(TAG,result);
 			
 				instream.close();
 			

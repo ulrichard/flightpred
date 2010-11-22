@@ -56,10 +56,7 @@ public class MapTabView extends MapActivity {
 	
 	private void loadPredData() {
 		try {
-//			XmlHandler xmlh = XmlHandler.inst("");
-			JsonHandler xmlh = JsonHandler.inst("");
-	    	xmlh.load();
-	    	TreeMap<String, TreeMap<Date, Float>> preddata = xmlh.getPredData();
+	    	TreeMap<String, TreeMap<Date, Float>> preddata = DataHandlerBase.inst().getPredData();
 	    	MapView mapv = (MapView)findViewById(R.id.mapview);
 	    	List<Overlay> mapOverlays = mapv.getOverlays();
 	    	
@@ -87,12 +84,12 @@ public class MapTabView extends MapActivity {
 			preddates.put(cal.getTime(), pntBlue);
 			
 			Drawable sigma = this.getResources().getDrawable(R.drawable.sigma);
-			MapCircleOverlay itemizedoverlay = new MapCircleOverlay(sigma);
+			MapCircleOverlay itemizedoverlay = new MapCircleOverlay(sigma, this);
 			
 			for(Map.Entry<String, TreeMap<Date, Float>> ent : preddata.entrySet()) {
 				String sitename = ent.getKey();
 				Set<Date> days = ent.getValue().keySet();
-				GeoPoint location = xmlh.getLocation(sitename);
+				GeoPoint location = DataHandlerBase.inst().getLocation(sitename);
 				
 				OverlayItem overlayitem = new OverlayItem(location, sitename, sitename);
 				itemizedoverlay.addOverlay(overlayitem);

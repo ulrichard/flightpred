@@ -2,25 +2,22 @@ package ch.ulrichard.flightpred;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Vector;
 
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.*;
 import android.widget.TabHost.TabSpec;
-import com.google.android.maps.MapView;
-import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
 
 public class sitetable extends TabActivity {
 	TabHost 	TabHost_;
@@ -54,13 +51,11 @@ public class sitetable extends TabActivity {
     }
     
     public void loadPredData() {
-    	try {    	
-//	    	JsonHandler xmlh = JsonHandler.inst("http://192.168.2.5/flightpred/forecast.php?format=json");
-	    	JsonHandler xmlh = JsonHandler.inst("http://flightpred.homelinux.org/forecast.php?format=json");
-	    	xmlh.load();
-	    	TreeMap<String, TreeMap<Date, Float>> preddatea = xmlh.getPredData();
+    	try {   
+    		DataHandlerBase datahandler = DataHandlerBase.inst();
 	    	TableLayout table = (TableLayout)findViewById(R.id.TableLayout01);
 	    	
+	    	// prediction dates and colors for the days
 	    	TreeMap<Date, Paint> preddates = new TreeMap<Date, Paint>();
 	    	Paint pntRed = new Paint();
 			pntRed.setARGB(255, 255, 0, 0);
@@ -80,6 +75,7 @@ public class sitetable extends TabActivity {
 			cal.add(Calendar.DATE, 1);
 			preddates.put(cal.getTime(), pntBlue);
 			
+			// table header
 			TableRow row = (TableRow)table.getChildAt(0);
 			SimpleDateFormat sdfs = new SimpleDateFormat("dd.MMM");
 			int i=0;
@@ -95,12 +91,36 @@ public class sitetable extends TabActivity {
 				row.addView(txv, i);
 			}
 			
-			for(Map.Entry<String, TreeMap<Date, Float>> ent : preddatea.entrySet()) {
+			// sort the flying sites by total possible flying distance (in C++ I would know how to do it properly ;-)
+			TreeMap<String, TreeMap<Date, Float>> preddata = datahandler.getPredData();
+			Vector<String> sites = new Vector<String>();
+			for(Map.Entry<String, TreeMap<Date, Float>> ent : preddata.entrySet()) {
+				sites.add(ent.getKey());
+			}
+			Collections.sort(sites, new Comparator<String>(){
+				public int compare(String lhs, String rhs){
+					TreeMap<String, TreeMap<Date, Float>> preddata = DataHandlerBase.inst().getPredData();
+					TreeMap<Date, Float> tml = preddata.get(lhs);
+					TreeMap<Date, Float> tmr = preddata.get(rhs);
+					
+					float fll = 0;
+					for(Float ent : tml.values()) 
+						fll += ent;
+					
+					float flr = 0;
+					for(Float ent : tmr.values()) 
+						flr += ent;
+					
+					return Float.compare(flr, fll);
+				}
+			});
+			
+			for(String site : sites) {
 				row = new TableRow(table.getContext());
-				Set<Date> days = ent.getValue().keySet();
+				Set<Date> days = preddata.get(site).keySet();
 				
 				TextView txname = new TextView(table.getContext());
-				txname.setText(ent.getKey());
+				txname.setText(site);
 				txname.setPadding(3, 3, 5, 3);
 				row.addView(txname);
 				
@@ -109,7 +129,7 @@ public class sitetable extends TabActivity {
 					day = ent2.getKey();
 					TextView txv = new TextView(table.getContext());
 					if(days.contains(day)) {
-						String valstr = String.format("%.2f km", ent.getValue().get(day));
+						String valstr = String.format("%.2f km", preddata.get(site).get(day));
 						txv.setText(valstr);
 						txv.setPadding(5, 3, 5, 3);
 					}
@@ -121,20 +141,5 @@ public class sitetable extends TabActivity {
     	} catch(Exception e) {
 			throw new RuntimeException(e);		
 		}
-    }
-    
-    public void sortRows() {
-    	/*
-		Collections.sort(tmprows, new Comparator<TableRow>(){
-			public int compare(TableRow lhs, TableRow rhs){
-				TextView tvl = (TextView)lhs.getVirtualChildAt(2);
-				TextView tvr = (TextView)rhs.getVirtualChildAt(2);
-				float fll = Float.parseFloat(tvl.getText().toString());
-				float flr = Float.parseFloat(tvr.getText().toString());
-				return Float.compare(flr, fll);
-			}
-		});
-*/
-    }
-    
+    }    
 }
