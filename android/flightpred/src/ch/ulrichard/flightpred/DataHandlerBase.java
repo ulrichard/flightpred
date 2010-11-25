@@ -23,10 +23,10 @@ public abstract class DataHandlerBase {
 	}
 	
 	static public DataHandlerBase inst() {
-		if(inst_ == null)
+		if(inst_ == null) {
 			inst_ = new JsonHandler("http://flightpred.homelinux.org/forecast.php?format=json");
-//			inst_ = new JsonHandler("http://192.168.2.5/flightpred/forecast.php?format=json");
-		inst_.load();
+			inst_.load();
+		}
 		return inst_;
 	}
 	

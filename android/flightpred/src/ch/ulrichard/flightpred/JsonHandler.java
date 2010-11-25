@@ -25,7 +25,16 @@ public class JsonHandler extends DataHandlerBase {
 
 	protected void load() {
 		try {
-			JSONObject json = getJSONObject(fileurl_.toString());		
+			JSONObject json;
+			try {
+				json = getJSONObject(fileurl_.toString());
+			} catch(Exception e1) {
+				try {
+					json = getJSONObject("http://192.168.2.5/flightpred/forecast.php?format=json");
+				} catch(Exception e2) {
+					throw new RuntimeException(e1);		
+				}
+			}
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			
 			JSONArray days = json.getJSONArray("days");
