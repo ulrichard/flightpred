@@ -604,7 +604,7 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
     const bpt::ptime lastmidnight(now.date(), bpt::hours(0));
     const bpt::ptime yesterday(now.date() - bgreg::days(1), bpt::hours(0));
 
-    // download the grib files
+    // download the data from d-1@12h to now + future_time (usually 4 days)
     for(bpt::ptime preddt = lastmidnight - bpt::hours(12); preddt < bpt::second_clock::universal_time() + future_time; preddt += bpt::hours(6))
     {
         predrun_ = lastpredrun;
@@ -709,7 +709,10 @@ void grib_grabber_gfs_future::grab_grib(const bpt::time_duration &future_time)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-/*
+const std::string grib_grabber_gfs_OPeNDAP::FMT_ASCII = "ascii"; // textual representation structured by whitespace
+const std::string grib_grabber_gfs_OPeNDAP::FMT_INFO  = "info";  // formated textual description of the dataset
+const std::string grib_grabber_gfs_OPeNDAP::FMT_DDS   = "dds";   // dataset descriptor structure looks similar to json
+
 template<bool islat>
 struct get_pnt_latlon
 {
@@ -753,8 +756,12 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
     set<string> req_fields;
     req_fields.insert("tmpsfc");
 
+    BOOST_FOREACH(string spar, sel_param)
+        BOOST_FOREACH(string lvl, sel_levels)
+            req_fields.insert(spar + lvl);
 
-    for(set<string>::const_iterator itfld = req_fields.begin(); itfld != req_fields.end(); ++itfld)
+
+    BOOST_FOREACH(string fld, req_fields)
     {
         bpt::ptime predrun = lastpredrun;
 
@@ -765,7 +772,8 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
               << std::setw(2) << static_cast<int>(predrun.date().month())
               << std::setw(2) << static_cast<int>(predrun.date().day())
               << "/gfs_"   << std::setw(2) << static_cast<int>(predrun.time_of_day().hours())
-              << "z.ascii" << "?tmpsfc[0:30]"
+              << "z." << FMT_ASCII << "?" << fld
+              << "[0:" << future_time.hours() / 3 << "]"  // 3h time intervals
               << "[" << static_cast<int>(bboxmin.lat() + 90) << ":1:" << static_cast<int>(bboxmax.lat() + 90) << "]"
               << "[" << static_cast<int>(bboxmin.lon())      << ":1:" << static_cast<int>(bboxmax.lon())      << "]";
               //tmpsfc[0:30][130:1:145][0:1:20]
@@ -776,44 +784,6 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
         read_ascii_data(buf_response);
     }
 
-    // download the grib files
-    for(bpt::ptime preddt = lastmidnight; preddt < bpt::second_clock::universal_time() + future_time; preddt += bpt::hours(6))
-    {
-        bpt::ptime predrun = lastpredrun;
-
-        if(preddt >= lastpredrun)
-            predrun = lastpredrun;
-        else if(preddt >= lastmidnight)
-            predrun = lastmidnight;
-        else if(preddt >= yesterday)
-            predrun = yesterday;
-        else
-            assert(!"wtf?");
-
-        const size_t futurehours = (preddt - predrun).hours();
-
-
-        // first, get the inventory
-        std::stringstream ssurl;
-        ssurl << baseurl_ << "gfs" << std::setfill('0')
-              << std::setw(4) << static_cast<int>(predrun.date().year())
-              << std::setw(2) << static_cast<int>(predrun.date().month())
-              << std::setw(2) << static_cast<int>(predrun.date().day())
-              << "/gfs_"   << std::setw(2) << static_cast<int>(predrun.time_of_day().hours())
-              << "z.ascii" << "?tmpsfc[0:30]"
-              << "[" << static_cast<int>(bboxmin.lat() + 90) << ":1:" << static_cast<int>(bboxmax.lat() + 90) << "]"
-              << "[" << static_cast<int>(bboxmin.lon())      << ":1:" << static_cast<int>(bboxmax.lon())      << "]";
-              //tmpsfc[0:30][130:1:145][0:1:20]
-
-        std::stringstream buf_inv;
-        download_data(ssurl.str(), buf_inv, list<request>());
-
-        read_ascii_data(buf_inv);
-
-
-
-
-    } // for day
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -834,6 +804,5 @@ void grib_grabber_gfs_OPeNDAP::read_ascii_data(std::istream &istr)
 
     } // while getline
 }
-*/
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

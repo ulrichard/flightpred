@@ -96,9 +96,11 @@ CREATE TABLE weather_models
 	url_past   VARCHAR(512)  NOT NULL,
 	url_future VARCHAR(512)  NOT NULL	
 );
-
+CREATE UNIQUE INDEX weatherModelName ON weather_models(model_name);
 INSERT INTO weather_models (model_name, grid_step, url_past, url_future) values 
 ('GFS', 1, 'nomads.ncdc.noaa.gov/data/gfsanl/', 'nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/');
+INSERT INTO weather_models (model_name, grid_step, url_past, url_future) values 
+('GFS_NDAP', 1, '', 'nomads.ncep.noaa.gov:9090/dods/gfs/');
               
 CREATE TABLE weather_pred
 (

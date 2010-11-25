@@ -98,19 +98,21 @@ public:
 
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-/*
 class grib_grabber_gfs_OPeNDAP : public grib_grabber
 {
 public:
-    grib_grabber_gfs_OPeNDAP(const std::string &db_conn_str)
-        : grib_grabber("GFS", 1, true) { db_conn_str; } // "nomads.ncep.noaa.gov:9090/dods/gfs/"
+    grib_grabber_gfs_OPeNDAP()
+        : grib_grabber("GFS_NDAP", 1, true, false) { } // "nomads.ncep.noaa.gov:9090/dods/gfs/"
     virtual ~grib_grabber_gfs_OPeNDAP() { }
 
     virtual void grab_grib(const boost::posix_time::time_duration &future_time);
 protected:
     void read_ascii_data(std::istream &istr);
+private:
+    static const std::string FMT_ASCII; // textual representation structured by whitespace
+    static const std::string FMT_INFO;  // formated textual description of the dataset
+    static const std::string FMT_DDS;   // dataset descriptor structure looks similar to json
 };
-*/
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

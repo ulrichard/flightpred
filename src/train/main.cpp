@@ -259,6 +259,11 @@ int main(int argc, char* argv[])
                 grib_grabber_gfs_future gr(download_pack);
                 gr.grab_grib(boost::posix_time::hours(24 * 4));
             }
+            else if(pred_model == "GFS_NDAP")
+            {
+                grib_grabber_gfs_OPeNDAP gr;
+                gr.grab_grib(boost::posix_time::hours(24 * 4));
+            }
             else
                 throw std::invalid_argument("unknown model: " + pred_model);
             show_help_msg = false;

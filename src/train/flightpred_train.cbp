@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--db-user flightpred --db-password flightpred --import-solution --name Fiesch --backup-dir ../../backup" />
+				<Option parameters="--get-future-weather" />
 				<Compiler>
 					<Add option="-march=pentium3" />
 					<Add option="-Wmain" />
@@ -42,7 +42,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--db-user flightpred --db-password flightpred --import-solution --backup-dir /home/richi/sourcecode/flightpred/backup" />
+				<Option parameters="--get-future-weather --pred-model GFS_NDAP" />
 				<Compiler>
 					<Add option="-march=athlon64" />
 					<Add option="-Wmain" />
@@ -50,6 +50,7 @@
 					<Add option="-W" />
 					<Add option="-g" />
 					<Add option="-D__DEBUG" />
+					<Add option="-D_DEBUG" />
 					<Add directory=".." />
 					<Add directory="../../3rd-party/json_spirit/json_spirit" />
 					<Add directory="../../3rd-party/ggl/" />
