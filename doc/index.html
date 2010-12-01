@@ -19,11 +19,12 @@ from online xc competitions. With current weather prediction data it
 can then make predictoins about possible flights in areas it is trained
 for.<br>
 <br>
-Flightpred in opesource software licensed under the GPL v 3. The
+Flightpred is opesource software licensed under the GPL v 3. The
 development files are on on <a
  href="http://sourceforge.net/projects/flightpred">http://sourceforge.net/projects/flightpred</a>.
 The
-autohro reserves the righ to make it available under a dual license
+author
+reserves the right to make it available under a dual license
 for commercial use at a later time.<br>
 <h4>Short description</h4>
 To do so, we collect weather prediction data from the past, and match
@@ -115,7 +116,8 @@ other
 machine
 learning
 algorithms
-or with voting of multiple systems. The engines have to be pluggable to
+or
+with voting of multiple systems. The engines have to be pluggable to
 easily
 experiment with different systems.<br>
 To evaluate good features sets (grid point
@@ -143,7 +145,8 @@ operating system.<br>
 The primary location to see the results is
 <a href="http://flightpred.homelinux.org">http://flightpred.homelinux.org</a>&nbsp;
 The
-website displays the
+website
+displays the
 calculated predictions as well as some internal infornmations and the
 documentation you're reading. <br>
 The table wit the forecasts looks something like this:<br>
@@ -351,12 +354,21 @@ and display the max_km.<br>
   <li>Complete save and load for trained solutions including the
 individual solutions from the evolutionary runs, for use on other
 systems and
-backup. Has to work across 32 and 64 bit mmachines.</li>
-  <li>Calculate pre-processed features, especially the temperature
-gradient values.<br>
+backup. Has to work across different cpu architectures, so the boost
+binary serialization format is problematic text or compressed text
+might be better.</li>
+  <li>Download the data through the dynamic interface where the desired
+data can be restricted geographically. It uses xml instead of grib, but
+the the reduced amount of data might outweight the overhead. At the
+moment we download the data for the whole world, and filter locally.<br>
   </li>
   <li>Download strategy for grib forecast data: Try most recent run, if
-not awailable try older one, until successfull.<br>
+not awailable try older one, until successfull. Not all NOAA servers
+update at the same rate. Some have a long delay for data to become
+available.<br>
+  </li>
+  <li>Calculate pre-processed features, especially the temperature
+gradient values.<br>
   </li>
   <li>Evaluate different sources of grib data with a finer grid.</li>
   <li>Re evaluate usage of wdb.</li>
@@ -495,7 +507,8 @@ on the data from the previous steps.<br>
 Reads
 the
 json
-files from the flights/xcontest_org directory. In
+files
+from the flights/xcontest_org directory. In
 the future it shall download the flight data directly from the
 competition server. But for now I was provided with some files. I shall
 not distribute them. So if you want them, we can ask the people from
@@ -506,7 +519,8 @@ Registers
 the
 flight
 area
-Fiesch at the given position, and assigns all
+Fiesch
+at the given position, and assigns all
 flights that started within the selected radius to it.</li>
   <li><span style="font-weight: bold;">flightpred_train --get-weather
 --start-date "2009-01-01" --end-date "2009-09-30"&nbsp;&nbsp; </span>-&gt;
@@ -514,7 +528,8 @@ Downloads
 selected
 grib
 data
-from the GFS model around the registered flying sites. Downloading mor
+from
+the GFS model around the registered flying sites. Downloading mor
 data for the grid points closest to the sites and a bit less data for
 grid points farther away.</li>
   <li><span style="font-weight: bold;">flightpred_train
@@ -522,7 +537,8 @@ grid points farther away.</li>
 Fiesch </span><span style="font-weight: bold;">--start_date
 "2009-08-01" --end_date "2009-08-31" --generations 50
 --max-validation-time 10 </span><span style="font-weight: bold;"> </span>-&gt;
-Explores the solution space for good a good algorithm with good
+Explores
+the solution space for good a good algorithm with good
 parameters and features. <br>
   </li>
   <li><span style="font-weight: bold;">flightpred_train --train --name
