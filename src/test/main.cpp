@@ -16,6 +16,10 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/string.hpp>
+
+#include <boost/lambda/bind.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+
 // std lib
 #include <iostream>
 #include <sstream>
@@ -29,6 +33,20 @@ using boost::geometry::longitude;
 using std::string;
 using std::vector;
 
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+class Fruit
+{
+public:
+    Fruit(const std::string& nam) : name_(nam) {}
+    const std::string& name() { return name_; }
+private:
+    std::string name_;
+};
+
+BOOST_AUTO_TEST_CASE(multi_index_tst)
+{
+
+}
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 BOOST_AUTO_TEST_CASE(SolutionParser_DLIB_KRLS)
 {

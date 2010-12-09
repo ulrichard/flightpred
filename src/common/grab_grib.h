@@ -4,7 +4,7 @@
 // flightpred
 #include "grib_pred_model.h"
 // ggl (boost sandbox)
-#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
+#include <boost/geometry/extensions/gis/latlong/point_ll.hpp>
 // boost
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
@@ -30,6 +30,8 @@ namespace flightpred
 class grib_grabber : public boost::noncopyable
 {
 public:
+    typedef boost::geometry::model::ll::point<> point_ll_deg;
+
     ~grib_grabber() { }
 
 //    virtual void grab_grib(const boost::gregorian::date &from, const boost::gregorian::date &to) = 0;
@@ -48,13 +50,13 @@ protected:
     grib_grabber(const std::string &modelname, size_t download_pack, const bool is_future, const bool ignore_errors);
     void download_data(const std::string &url, std::ostream &ostr, const std::list<request> &requests);
     void dispatch_grib_data(std::istream &istr, std::list<request> &requests,
-            const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_close,
-            const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_wide);
+            const boost::unordered_set<point_ll_deg> &sel_locations_close,
+            const boost::unordered_set<point_ll_deg> &sel_locations_wide);
 
     static std::string get_base_url(const std::string &model, bool future);
     static size_t      get_model_id(const std::string &model);
     static double      get_grid_res(const std::string &model);
-    boost::unordered_set<boost::geometry::point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
+    boost::unordered_set<point_ll_deg> get_locations_around_sites(const double gridres, const size_t pnts_per_site) const;
 
     const std::string        baseurl_;
     const std::string        modelname_;
@@ -67,12 +69,12 @@ protected:
     boost::posix_time::ptime predrun_;
 
 #ifdef _DEBUG
-    boost::unordered_map<boost::geometry::point_ll_deg, boost::tuple<size_t, size_t, size_t> > grid_point_stats_; // position / num_missing / num_skipped / num_selected
+    boost::unordered_map<point_ll_deg, boost::tuple<size_t, size_t, size_t> > grid_point_stats_; // position / num_missing / num_skipped / num_selected
 #endif
 private:
     void read_grib_data(std::istream &istr, const request &req,
-            const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_close,
-            const boost::unordered_set<boost::geometry::point_ll_deg> &sel_locations_wide);
+            const boost::unordered_set<point_ll_deg> &sel_locations_close,
+            const boost::unordered_set<point_ll_deg> &sel_locations_wide);
     size_t read_until(std::istream &istr, const std::string &srchstr);
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

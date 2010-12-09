@@ -22,6 +22,7 @@ namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 class solution_config
 {
+    typedef boost::geometry::model::ll::point<> point_ll_deg;
     friend class boost::serialization::access;
 public:
     solution_config(const std::string &site_name, const std::string &solution_description, size_t generation)

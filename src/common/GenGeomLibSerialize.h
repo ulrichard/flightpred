@@ -13,8 +13,10 @@ namespace boost
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 namespace serialization
 {
+    typedef geometry::model::ll::point<> point_ll_deg;
+
     template <class Archive>
-    void save(Archive &ar, const geometry::point_ll_deg &pos, const unsigned int version)
+    void save(Archive &ar, const point_ll_deg &pos, const unsigned int version)
     {
 		double lat(pos.lat()), lon(pos.lon());
 		ar & BOOST_SERIALIZATION_NVP(lat);
@@ -22,18 +24,20 @@ namespace serialization
     }
 
     template <class Archive>
-    void load(Archive &ar, geometry::point_ll_deg &pos, const unsigned int version)
+    void load(Archive &ar, point_ll_deg &pos, const unsigned int version)
     {
 		double lat, lon;
 		ar & BOOST_SERIALIZATION_NVP(lat);
 		ar & BOOST_SERIALIZATION_NVP(lon);
-		pos = geometry::point_ll_deg(geometry::latitude<>(lat), geometry::longitude<>(lon));
+		pos = point_ll_deg(geometry::latitude<>(lat), geometry::longitude<>(lon));
     }
 
 } // namespace serialization
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 namespace geometry
 {
+    typedef model::ll::point<> point_ll_deg;
+
     inline size_t hash_value(const point_ll_deg &pnt)
     {
         return boost::hash_value(pnt.lat()) + boost::hash_value(pnt.lon());
@@ -46,7 +50,7 @@ namespace geometry
 } // namespace geometry
 
 } // namespace boost
-BOOST_SERIALIZATION_SPLIT_FREE(geometry::point_ll_deg)
+BOOST_SERIALIZATION_SPLIT_FREE(point_ll_deg)
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

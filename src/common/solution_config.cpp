@@ -30,7 +30,6 @@
 
 using namespace flightpred;
 using namespace flightpred::reporting;
-using boost::geometry::point_ll_deg;
 using boost::shared_ptr;
 using boost::bind;
 using boost::ref;

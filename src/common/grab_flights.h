@@ -15,6 +15,7 @@
 
 namespace flightpred
 {
+typedef boost::geometry::model::ll::point<> point_ll_deg;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct flight
 {
@@ -23,7 +24,7 @@ struct flight
     std::string                     pilot_country;
     std::string                     takeoff_name;
     std::string                     takeoff_country;
-    boost::geometry::point_ll_deg   pos;
+    point_ll_deg                    pos;
     double                          distance;
     double                          score;
     boost::gregorian::date          day;

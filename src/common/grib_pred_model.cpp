@@ -13,7 +13,6 @@
 #include <algorithm>
 
 using namespace flightpred;
-using boost::geometry::point_ll_deg;
 namespace bgreg = boost::gregorian;
 namespace bpt = boost::posix_time;
 using boost::posix_time::ptime;

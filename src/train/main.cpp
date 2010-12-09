@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
                 }
             }
         }
-        const boost::geometry::point_ll_deg pos = parse_position(position);
+        const boost::geometry::model::ll::point<> pos = parse_position(position);
 
         const vector<string> site_names = get_site_names();
 

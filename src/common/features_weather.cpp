@@ -37,7 +37,6 @@
 
 using namespace flightpred;
 using namespace flightpred::reporting;
-using boost::geometry::point_ll_deg;
 namespace bgreg = boost::gregorian;
 namespace bpt   = boost::posix_time;
 using boost::lexical_cast;
@@ -52,7 +51,7 @@ using std::string;
 void features_weather::generate_features(features_weather::feat_desc feat, const vector<point_ll_deg> &locations,
     const bpt::time_duration &from, const bpt::time_duration &to, set<feat_desc> &features) const
 {
-    for(vector<boost::geometry::point_ll_deg>::const_iterator itl = locations.begin(); itl != locations.end(); ++itl)
+    for(vector<point_ll_deg>::const_iterator itl = locations.begin(); itl != locations.end(); ++itl)
     {
         feat.location = *itl;
         for(bpt::time_duration tdur = from; tdur <= to; tdur += bpt::hours(6))
@@ -65,20 +64,20 @@ void features_weather::generate_features(features_weather::feat_desc feat, const
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct pnt_ll_deg_dist_sorter
 {
-    pnt_ll_deg_dist_sorter(const point_ll_deg &srch_pnt)
+    pnt_ll_deg_dist_sorter(const features_weather::point_ll_deg &srch_pnt)
         : srch_pnt_(srch_pnt) { }
 
-    bool operator()(const point_ll_deg &lhs, const point_ll_deg &rhs)
+    bool operator()(const features_weather::point_ll_deg &lhs, const features_weather::point_ll_deg &rhs)
     {
         const double dist1 = boost::geometry::comparable_distance(lhs, srch_pnt_);
         const double dist2 = boost::geometry::comparable_distance(rhs, srch_pnt_);
         return dist1 < dist2;
     }
 
-    const point_ll_deg srch_pnt_;
+    const features_weather::point_ll_deg srch_pnt_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_deg &site_location, const size_t pnts_per_site, const double gridres)
+vector<features_weather::point_ll_deg> features_weather::get_locations_around_site(const features_weather::point_ll_deg &site_location, const size_t pnts_per_site, const double gridres)
 {
     static boost::unordered_map<point_ll_deg, std::map<double, std::map<size_t, vector<point_ll_deg> > > > cache;
     if(!cache[site_location][gridres][pnts_per_site].empty())
@@ -103,7 +102,7 @@ vector<point_ll_deg> features_weather::get_locations_around_site(const point_ll_
     return tmploc;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-features_weather::feat_desc  features_weather::get_random_feature(const boost::geometry::point_ll_deg &site_location)
+features_weather::feat_desc  features_weather::get_random_feature(const point_ll_deg &site_location)
 {
     report(DEBUGING) << "features_weather::get_random_feature(" << boost::geometry::make_wkt(site_location) << ")";
     feat_desc fd;
@@ -230,7 +229,7 @@ set<features_weather::feat_desc> features_weather::get_standard_features(const p
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct point_ll_deg_sorter
 {
-    bool operator()(const point_ll_deg &lhs, const point_ll_deg &rhs)
+    bool operator()(const features_weather::point_ll_deg &lhs, const features_weather::point_ll_deg &rhs)
     {
         if(fabs(lhs.lon()- rhs.lon()) > 0.00001)
         {

@@ -13,7 +13,7 @@ namespace flightpred
 {
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 
-boost::geometry::point_ll_deg parse_position(const std::string &pos);
+boost::geometry::model::ll::point<> parse_position(const std::string &pos);
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 }

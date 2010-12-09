@@ -42,7 +42,6 @@
 
 using namespace flightpred;
 using namespace flightpred::reporting;
-using boost::geometry::point_ll_deg;
 namespace bfs = boost::filesystem;
 namespace bgreg = boost::gregorian;
 namespace bpt = boost::posix_time;
@@ -326,6 +325,8 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req,
     // Loop on all the lat/lon/values.
     while(grib_iterator_next(iter, &lat, &lon, &value))
     {
+        if(lon > 180.0)
+            lon -= 360.0;
         const point_ll_deg location = point_ll_deg(boost::geometry::longitude<>(lon), boost::geometry::latitude<>(lat));
 
         if(value = missingValue)
@@ -446,7 +447,7 @@ set<string> grib_grabber::get_std_params()
     return sel_params;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-boost::unordered_set<point_ll_deg> grib_grabber::get_locations_around_sites(const double gridres, const size_t pnts_per_site) const
+boost::unordered_set<grib_grabber::point_ll_deg> grib_grabber::get_locations_around_sites(const double gridres, const size_t pnts_per_site) const
 {
     pqxx::transaction<> trans(flightpred_db::get_conn(), "get training locations");
 
@@ -716,7 +717,7 @@ const std::string grib_grabber_gfs_OPeNDAP::FMT_DDS   = "dds";   // dataset desc
 template<bool islat>
 struct get_pnt_latlon
 {
-    double operator()(const point_ll_deg &pnt) const
+    double operator()(const grib_grabber::point_ll_deg &pnt) const
     {
         if(islat)
             return pnt.lat();
@@ -773,7 +774,8 @@ void grib_grabber_gfs_OPeNDAP::grab_grib(const bpt::time_duration &future_time)
               << std::setw(2) << static_cast<int>(predrun.date().day())
               << "/gfs_"   << std::setw(2) << static_cast<int>(predrun.time_of_day().hours())
               << "z." << FMT_ASCII << "?" << fld
-              << "[0:" << future_time.hours() / 3 << "]"  // 3h time intervals
+              << "[0:2:" << future_time.hours() / 3 << "]"  // ":2:" means we want only every 2nd 3h interval wich equates to 6h intervals
+              << "[0:12]"                                   // the first 12 pressure levels are : 1000.0, 975.0, 950.0, 925.0, 900.0, 850.0, 800.0, 750.0, 700.0, 650.0, 600.0, 550.0, 500.0
               << "[" << static_cast<int>(bboxmin.lat() + 90) << ":1:" << static_cast<int>(bboxmax.lat() + 90) << "]"
               << "[" << static_cast<int>(bboxmin.lon())      << ":1:" << static_cast<int>(bboxmax.lon())      << "]";
               //tmpsfc[0:30][130:1:145][0:1:20]

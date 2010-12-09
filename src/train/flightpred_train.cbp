@@ -42,7 +42,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--get-future-weather --pred-model GFS_NDAP" />
+				<Option parameters="--get-future-weather" />
 				<Compiler>
 					<Add option="-march=athlon64" />
 					<Add option="-Wmain" />

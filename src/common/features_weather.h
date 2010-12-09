@@ -2,7 +2,7 @@
 #define FEATURES_WEATHER_H_INCLUDED
 
 // ggl (boost sandbox)
-#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
+#include <boost/geometry/extensions/gis/latlong/point_ll.hpp>
 //boost
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -21,6 +21,8 @@ namespace flightpred
 class features_weather : public boost::noncopyable
 {
 public:
+    typedef boost::geometry::model::ll::point<> point_ll_deg;
+
     features_weather(bool cached) : cached_(cached) {}
     virtual ~features_weather() {}
 
@@ -29,29 +31,29 @@ public:
         feat_desc() : model("GFS") { }
         feat_desc(const feat_desc &org)
             : model(org.model), reltime(org.reltime), location(org.location), level(org.level), param(org.param) { }
-        feat_desc(const std::string mod, const boost::posix_time::time_duration &relt, const boost::geometry::point_ll_deg &loc, size_t lvl, const std::string &prm)
+        feat_desc(const std::string mod, const boost::posix_time::time_duration &relt, const point_ll_deg &loc, size_t lvl, const std::string &prm)
             : model(mod), reltime(relt), location(loc), level(lvl), param(prm) { }
         bool operator==(const feat_desc &rhs) const;
         bool operator<(const feat_desc &rhs) const;
 
         std::string                      model;
         boost::posix_time::time_duration reltime;
-        boost::geometry::point_ll_deg    location;
+        point_ll_deg                     location;
         size_t                           level;
         std::string                      param;
     };
 
-    static std::vector<boost::geometry::point_ll_deg> get_locations_around_site(const boost::geometry::point_ll_deg &site_location, const size_t pnts_per_site, const double gridres);
-    static feat_desc    get_random_feature(const boost::geometry::point_ll_deg &site_location);
+    static std::vector<point_ll_deg> get_locations_around_site(const point_ll_deg &site_location, const size_t pnts_per_site, const double gridres);
+    static feat_desc    get_random_feature(const point_ll_deg &site_location);
     static feat_desc    mutate_feature(feat_desc feat);
-    std::set<feat_desc> get_standard_features(const boost::geometry::point_ll_deg &site_location) const;
+    std::set<feat_desc> get_standard_features(const point_ll_deg &site_location) const;
 
     std::vector<double> get_features(const std::set<feat_desc> &descriptions, const boost::gregorian::date &day, const bool future) const;
 
     boost::gregorian::date_period get_feature_date_period(const bool future_table) const;
 
 private:
-    void generate_features(feat_desc feat, const std::vector<boost::geometry::point_ll_deg> &locations,
+    void generate_features(feat_desc feat, const std::vector<point_ll_deg> &locations,
         const boost::posix_time::time_duration &from, const boost::posix_time::time_duration &to, std::set<feat_desc> &features) const;
 
     const bool cached_;

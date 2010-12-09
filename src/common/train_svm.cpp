@@ -24,7 +24,6 @@ using namespace flightpred;
 using namespace flightpred::reporting;
 namespace bgreg = boost::gregorian;
 namespace bpt   = boost::posix_time;
-using boost::geometry::point_ll_deg;
 using boost::array;
 using std::vector;
 using std::set;
@@ -32,6 +31,7 @@ using std::map;
 using std::pair;
 using std::string;
 
+typedef boost::geometry::model::ll::point<> point_ll_deg;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to, const double max_val_train_time)
 {

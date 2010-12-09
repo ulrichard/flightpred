@@ -24,7 +24,6 @@
 #include <iostream>
 
 using namespace flightpred;
-using boost::geometry::point_ll_deg;
 using boost::lexical_cast;
 using boost::tuple;
 using boost::make_tuple;
@@ -101,7 +100,7 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
         res[0]["site_name"].to(site_name);
         string dbloc;
         res[0]["loc"].to(dbloc);
-        boost::geometry::point_ll_deg dbpos;
+        point_ll_deg dbpos;
         boost::geometry::read_wkt(dbloc, dbpos);
         pred_sites.push_back(make_tuple(pred_site_id, site_name, dbpos));
     }
@@ -119,7 +118,7 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
             res[i]["site_name"].to(site_name);
             string dbloc;
             res[i]["loc"].to(dbloc);
-            boost::geometry::point_ll_deg dbpos;
+            point_ll_deg dbpos;
             boost::geometry::read_wkt(dbloc, dbpos);
             pred_sites.push_back(make_tuple(pred_site_id, site_name, dbpos));
         }
@@ -129,7 +128,7 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
     for(vector<tuple<size_t, string, point_ll_deg> >::iterator it = pred_sites.begin(); it != pred_sites.end(); ++it)
     {
         static const double average_earth_radius = 6372795.0;
-        boost::geometry::point_ll_deg bbox1, bbox2;
+        point_ll_deg bbox1, bbox2;
         point_at_distance(it->get<2>(), area_radius * 2.0,  45 * boost::geometry::math::d2r, average_earth_radius, bbox1);
         point_at_distance(it->get<2>(), area_radius * 2.0, 235 * boost::geometry::math::d2r, average_earth_radius, bbox2);
 
