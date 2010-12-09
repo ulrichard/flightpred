@@ -329,7 +329,7 @@ void grib_grabber::read_grib_data(std::istream &istr, const request &req,
             lon -= 360.0;
         const point_ll_deg location = point_ll_deg(boost::geometry::longitude<>(lon), boost::geometry::latitude<>(lat));
 
-        if(value = missingValue)
+        if(value == missingValue)
         {
 #ifdef _DEBUG
             ++grid_point_stats_[location].get<0>();
