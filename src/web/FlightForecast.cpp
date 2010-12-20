@@ -45,6 +45,8 @@ using std::endl;
 
 #define _(STRING) gettext(STRING)
 
+typedef boost::geometry::model::ll::point<> point_ll_deg;
+
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 FlightForecast::FlightForecast(const std::string &db_conn_str, const size_t forecast_days, Wt::WContainerWidget *parent)
  : Wt::WCompositeWidget(parent), impl_(new Wt::WContainerWidget()), db_conn_str_(db_conn_str)
@@ -178,7 +180,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 
                 string dbloc;
                 res[0][0].to(dbloc);
-                boost::geometry::point_ll_deg dbpos;
+                point_ll_deg dbpos;
                 boost::geometry::read_wkt(dbloc, dbpos);
 
                 const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
@@ -203,7 +205,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
                 {
                     const string spnt1 = mapInitialBox.substr(0, pos + 1);
                     const string spnt2 = mapInitialBox.substr(pos + 2);
-                    boost::geometry::point_ll_deg loc1, loc2;
+                    point_ll_deg loc1, loc2;
                     boost::geometry::read_wkt(spnt1, loc1);
                     boost::geometry::read_wkt(spnt2, loc2);
                     bbox = std::make_pair(Wt::WGoogleMap::Coordinate(loc1.lat(), loc1.lon()), Wt::WGoogleMap::Coordinate(loc2.lat(), loc2.lon()));

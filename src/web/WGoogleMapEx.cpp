@@ -6,6 +6,7 @@
 #include <boost/math/constants/constants.hpp>
 // witty
 #include <Wt/WApplication>
+#include <Wt/WContainerWidget>
 #include "WGoogleMapEx.h"
 // boost
 #include <boost/foreach.hpp>
@@ -14,11 +15,19 @@
 #include <fstream>
 
 using namespace Wt;
-using boost::geometry::point_ll_deg;
 using boost::geometry::longitude;
 using boost::geometry::latitude;
 using std::string;
 
+typedef boost::geometry::model::ll::point<> point_ll_deg;
+
+namespace {
+  // if there is no google api key configured, use the one for
+  // http://localhost:8080/
+  static const std::string localhost_key
+    = "ABQIAAAAWqrN5o4-ISwj0Up_depYvhTwM0brOpm-"
+      "All5BF6PoaKBxRWWERS-S9gPtCri-B6BZeXV8KpT4F80DQ";
+}
 
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // the following function is only here as long as it's not part of boost::geometry
@@ -48,10 +57,20 @@ inline void point_at_distance(P1 const& p1, double distance, double tc, double r
 } // namespace boost
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 WGoogleMapEx::WGoogleMapEx(WContainerWidget *parent)
-    : WGoogleMap(parent)
 {
+    setImplementation(new WContainerWidget());
+
     WApplication *app = WApplication::instance();
-    app;
+
+    std::string googlekey = localhost_key;
+    Wt::WApplication::readConfigurationProperty("google_api_key", googlekey);
+
+    // init the google javascript api
+    const std::string gmuri = "http://www.google.com/jsapi?key=" + googlekey;
+    app->require(gmuri, "google");
+
+    if(parent)
+        parent->addWidget(this);
 /*
     // if there is no google api key configured, use the one for
     // http://localhost:8080/
@@ -94,7 +113,78 @@ WGoogleMapEx::WGoogleMapEx(WContainerWidget *parent)
 */
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void WGoogleMapEx::addMarker(const Coordinate &pos, const string &imgUrl)
+void WGoogleMapEx::render(WFlags<RenderFlag> flags)
+{
+  if (flags & RenderFull) {
+    // initialize the map
+    std::stringstream strm;
+    strm <<
+      "{ function initialize() {"
+      """var self = " << jsRef() << ";"
+      """var map = new google.maps.Map2(self);"
+      """map.setCenter(new google.maps.LatLng(47.01887777, 8.651888), 13);"
+      """self.map = map;"
+/*
+      // eventhandling
+      """google.maps.Event.addListener(map, \"click\", "
+      ""                              "function(overlay, latlng) {"
+      ""  "if (latlng) {"
+      ""  << clicked_.createCall("latlng.lat() +' '+ latlng.lng()") << ";"
+      ""  "}"
+      """});"
+
+      """google.maps.Event.addListener(map, \"dblclick\", "
+      ""                              "function(overlay, latlng) {"
+      ""  "if (latlng) {"
+      ""  << doubleClicked_.createCall("latlng.lat() +' '+ latlng.lng()") << ";"
+      ""  "}"
+      """});"
+
+      """google.maps.Event.addListener(map, \"mousemove\", "
+      ""                              "function(latlng) {"
+      ""  "if (latlng) {"
+      ""  << mouseMoved_.createCall("latlng.lat() +' '+ latlng.lng()") << ";"
+      ""  "}"
+*/
+      """});";
+
+    // additional things
+    for (unsigned int i = 0; i < additions_.size(); i++)
+      strm << additions_[i];
+
+    strm <<
+      "}" // function initialize()
+      "google.load(\"maps\", \"2\", "
+      ""          "{other_params:\"sensor=false\", callback: initialize});"
+      "}"; // private scope
+
+    additions_.clear();
+
+    WApplication::instance()->doJavaScript(strm.str());
+  }
+
+  WCompositeWidget::render(flags);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::clearOverlays()
+{
+  doGmJavaScript(jsRef() + ".map.clearOverlays();", false);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::doGmJavaScript(const std::string& jscode, bool sepScope)
+{
+  std::string js = jscode;
+  // to keep the variables inside a scope where they don't interfere
+  if (sepScope)
+    js = "{" + js + "}";
+
+  if (isRendered())
+    WApplication::instance()->doJavaScript(js);
+  else
+    additions_.push_back(js);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::addMarker(const WGoogleMap::Coordinate &pos, const string &imgUrl)
 {
     std::ostringstream strm;
     strm << "var icon = new google.maps.Icon(G_DEFAULT_ICON);"
@@ -106,7 +196,7 @@ void WGoogleMapEx::addMarker(const Coordinate &pos, const string &imgUrl)
     doGmJavaScript(strm.str(), false);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
+void WGoogleMapEx::addCircle(const WGoogleMap::Coordinate &pos, const double radiusKm,
         const WColor &strokeColor, const size_t strokeWeightPx, const float strokeOpacity)
 {
 /*
@@ -124,13 +214,13 @@ void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
     static const double average_earth_radius = 6372795.0;
     point_ll_deg posi(longitude<>(pos.longitude()), latitude<>(pos.latitude()));
     std::cout << "Circle around " << boost::geometry::make_wkt(posi) << " radius " << radiusKm << " km" << std::endl;
-    std::vector<Coordinate> circlepnts;
+    std::vector<WGoogleMap::Coordinate> circlepnts;
     const size_t steps = 50;
     for(size_t i=0; i<steps; ++i)
     {
         point_ll_deg perifer;
         point_at_distance(posi, radiusKm * 1000,  2 * M_PI * i / steps, average_earth_radius, perifer);
-        circlepnts.push_back(Coordinate(perifer.lat(), perifer.lon()));
+        circlepnts.push_back(WGoogleMap::Coordinate(perifer.lat(), perifer.lon()));
     }
     circlepnts.push_back(circlepnts.front());
     assert(circlepnts.size() == steps + 1);
@@ -180,7 +270,7 @@ void WGoogleMapEx::addCircle(const Coordinate &pos, const double radiusKm,
 */
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void WGoogleMapEx::addArrow(const Coordinate &pos, const double rotationDeg,
+void WGoogleMapEx::addArrow(const WGoogleMap::Coordinate &pos, const double rotationDeg,
         const WColor &color, const float opacity, const std::string &tooltip)
 {
 /*
@@ -195,26 +285,26 @@ void WGoogleMapEx::addArrow(const Coordinate &pos, const double rotationDeg,
 
     point_ll_deg posi(longitude<>(pos.longitude()), latitude<>(pos.latitude()));
 //    std::cout << "Arrow at " << boost::geometry::make_wkt(posi) << std::endl;
-    std::vector<Coordinate> arrowpnts;
+    std::vector<WGoogleMap::Coordinate> arrowpnts;
     // tail
     point_ll_deg pnt;
     point_at_distance(posi, 20000,  2.0 * M_PI * rotationDeg / 360.0, average_earth_radius, pnt);
-    arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
+    arrowpnts.push_back(WGoogleMap::Coordinate(pnt.lat(), pnt.lon()));
     // tip
-    arrowpnts.push_back(Coordinate(posi.lat(), posi.lon()));
+    arrowpnts.push_back(WGoogleMap::Coordinate(posi.lat(), posi.lon()));
     // right
     point_at_distance(posi, 5000,  2.0 * M_PI * (rotationDeg + 30) / 360.0, average_earth_radius, pnt);
-    arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
+    arrowpnts.push_back(WGoogleMap::Coordinate(pnt.lat(), pnt.lon()));
     // left
     point_at_distance(posi, 5000,  2.0 * M_PI * (rotationDeg - 30) / 360.0, average_earth_radius, pnt);
-    arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
+    arrowpnts.push_back(WGoogleMap::Coordinate(pnt.lat(), pnt.lon()));
     // tip
-    arrowpnts.push_back(Coordinate(posi.lat(), posi.lon()));
+    arrowpnts.push_back(WGoogleMap::Coordinate(posi.lat(), posi.lon()));
 
     addPolyline(arrowpnts, color, 2, opacity);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void WGoogleMapEx::addWindIndicator(const Coordinate &pos, const double rotationDeg, const double speed,
+void WGoogleMapEx::addWindIndicator(const WGoogleMap::Coordinate &pos, const double rotationDeg, const double speed,
     const WColor &color, const float opacity, const std::string &tooltip)
 {
     const double polelength = 60000;
@@ -222,30 +312,129 @@ void WGoogleMapEx::addWindIndicator(const Coordinate &pos, const double rotation
     const double dist10kn   = 10000;
 
     point_ll_deg posi(longitude<>(pos.longitude()), latitude<>(pos.latitude()));
-    std::vector<Coordinate> arrowpnts;
+    std::vector<WGoogleMap::Coordinate> arrowpnts;
     // tip
-    arrowpnts.push_back(Coordinate(posi.lat(), posi.lon()));
+    arrowpnts.push_back(WGoogleMap::Coordinate(posi.lat(), posi.lon()));
     // tail
     point_ll_deg pnt;
     point_at_distance(posi, polelength,  2.0 * M_PI * rotationDeg / 360.0, average_earth_radius, pnt);
-    arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
+    arrowpnts.push_back(WGoogleMap::Coordinate(pnt.lat(), pnt.lon()));
 
     for(size_t i=0; i<speed; i+=10)
     {
         const bool full = speed > (i + 5);
         point_at_distance(posi, polelength - i * dist10kn / 10.0,  2.0 * M_PI * rotationDeg / 360.0, average_earth_radius, pnt);
         const point_ll_deg pnt1 = pnt;
-        arrowpnts.push_back(Coordinate(pnt1.lat(), pnt1.lon()));
+        arrowpnts.push_back(WGoogleMap::Coordinate(pnt1.lat(), pnt1.lon()));
         point_at_distance(pnt1, full ? len10kn : len10kn / 2.0,  2.0 * M_PI * (rotationDeg - 45) / 360.0, average_earth_radius, pnt);
-        arrowpnts.push_back(Coordinate(pnt.lat(), pnt.lon()));
-        arrowpnts.push_back(Coordinate(pnt1.lat(), pnt1.lon()));
+        arrowpnts.push_back(WGoogleMap::Coordinate(pnt.lat(), pnt.lon()));
+        arrowpnts.push_back(WGoogleMap::Coordinate(pnt1.lat(), pnt1.lon()));
     }
 
     addPolyline(arrowpnts, color, 2, opacity);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void WGoogleMapEx::addText(const Coordinate &pos, const std::string &text, const WColor &color, const float opacity)
+void WGoogleMapEx::addText(const WGoogleMap::Coordinate &pos, const std::string &text, const WColor &color, const float opacity)
 {
 
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::setMapTypeControl(WGoogleMap::MapTypeControl type)
+{
+    std::string control;
+
+    switch(type)
+    {
+    case WGoogleMap::DefaultControl:
+        control = "google.maps.MapTypeControl";
+        break;
+    case WGoogleMap::MenuControl:
+        control = "google.maps.MenuMapTypeControl";
+        break;
+    case WGoogleMap::HierarchicalControl:
+        control = "google.maps.HierarchicalMapTypeControl";
+        break;
+    default:
+        control = "";
+    }
+
+    std::stringstream strm;
+    strm << jsRef() << ".map.removeControl(" << jsRef() << ".mtc);";
+
+    if(control != "")
+        strm << "var mtc = new " << control << "();"
+             << jsRef() << ".mtc = mtc;"
+             << jsRef() << ".map.addControl(mtc);";
+
+    doGmJavaScript(strm.str(), false);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::enableScrollWheelZoom()
+{
+    doGmJavaScript(jsRef() + ".map.enableScrollWheelZoom();", false);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::disableScrollWheelZoom()
+{
+    doGmJavaScript(jsRef() + ".map.disableScrollWheelZoom();", false);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::enableDragging()
+{
+    doGmJavaScript(jsRef() + ".map.enableDragging();", false);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::disableDragging()
+{
+    doGmJavaScript(jsRef() + ".map.disableDragging();", false);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::zoomWindow(const std::pair<WGoogleMap::Coordinate, WGoogleMap::Coordinate>& bbox)
+{
+  zoomWindow(bbox.first, bbox.second);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::zoomWindow(const WGoogleMap::Coordinate& topLeft, const WGoogleMap::Coordinate& rightBottom)
+{
+  WGoogleMap::Coordinate topLeftC = topLeft;
+  WGoogleMap::Coordinate rightBottomC = rightBottom;
+
+  const WGoogleMap::Coordinate center
+    ((topLeftC.latitude() + rightBottomC.latitude()) / 2.0,
+     (topLeftC.longitude() + rightBottomC.longitude()) / 2.0);
+
+  topLeftC = WGoogleMap::Coordinate(std::min(topLeftC.latitude(), rightBottomC.latitude()),
+                                    std::min(topLeftC.longitude(), rightBottomC.longitude()));
+  rightBottomC = WGoogleMap::Coordinate(std::max(topLeftC.latitude(), rightBottomC.latitude()),
+                                        std::max(topLeftC.longitude(), rightBottomC.longitude()));
+  std::stringstream strm;
+  strm << "var bbox = new google.maps.LatLngBounds(new google.maps.LatLng("
+       << topLeftC.latitude()  << ", " << topLeftC.longitude() << "), "
+       << "new google.maps.LatLng("
+       << rightBottomC.latitude() << ", " << rightBottomC.longitude() << "));"
+       << "var zooml = " << jsRef() << ".map.getBoundsZoomLevel(bbox);"
+       << jsRef() << ".map.setCenter(new google.maps.LatLng("
+       << center.latitude() << ", " << center.longitude() << "), zooml);";
+
+  doGmJavaScript(strm.str(), true);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void WGoogleMapEx::addPolyline(const std::vector<WGoogleMap::Coordinate>& points,
+			     const WColor& color, int width, double opacity)
+{
+  // opacity has to be between 0.0 and 1.0
+  opacity = std::max(std::min(opacity, 1.0), 0.0);
+
+  std::stringstream strm;
+  strm << "var waypoints = [];";
+  for (size_t i = 0; i < points.size(); ++i)
+    strm << "waypoints[" << i << "] = new google.maps.LatLng("
+	 << points[i].latitude() << ", " << points[i].longitude() << ");";
+
+  strm << "var poly = new google.maps.Polyline(waypoints, \""
+       << color.cssText() << "\", " << width << ", " << opacity << ");"
+       << jsRef() << ".map.addOverlay(poly);";
+
+  doGmJavaScript(strm.str(), true);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
