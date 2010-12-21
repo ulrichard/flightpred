@@ -23,6 +23,10 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
 // std lib
 #include <iostream>
 
@@ -472,7 +476,10 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
 	bfs::ofstream ofs(outfile, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 	if(!ofs.good())
         throw std::runtime_error("could not write to " + outfile.string());
-	boost::archive::text_oarchive oa(ofs);
+    boost::iostreams::filtering_stream<boost::iostreams::output> out;
+    out.push(boost::iostreams::zlib_compressor());
+    out.push(ofs);
+	boost::archive::text_oarchive oa(out);
 
     // information about the flying site
 	oa << site_name_;
@@ -562,8 +569,11 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
     bfs::ifstream ifs(infile, std::ios_base::in | std::ios_base::binary);
 	if(!ifs.good())
         throw std::runtime_error("file not found : " + infile.string());
+    boost::iostreams::filtering_stream<boost::iostreams::input> in;
+    in.push(boost::iostreams::zlib_decompressor());
+    in.push(ifs);
+	boost::archive::text_iarchive ia(in);
 
-	boost::archive::text_iarchive ia(ifs);
     // read class state from archive
     string site_name;
 	ia >> site_name;

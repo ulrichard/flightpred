@@ -29,6 +29,7 @@
 					<Add library="boost_system-mt" />
 					<Add library="boost_regex-mt" />
 					<Add library="boost_serialization-mt" />
+					<Add library="boost_iostreams-mt" />
 					<Add library="jsonspirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
@@ -42,13 +43,13 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--db-user flightpred --db-password flightpred --get-weather --start-date &apos;2006-10-01&apos; --end-date &apos;2006-10-05&apos; " />
+				<Option parameters="--db-user flightpred --db-password flightpred --export-solution --name Fiesch --backup-dir &apos;/home/richi/sourcecode/flightpred/backup&apos;" />
 				<Compiler>
 					<Add option="-march=athlon64" />
 					<Add option="-Wmain" />
 					<Add option="-pedantic" />
-					<Add option="-W" />
 					<Add option="-g" />
+					<Add option="-W" />
 					<Add option="-D__DEBUG" />
 					<Add option="-D_DEBUG" />
 					<Add directory=".." />
@@ -63,6 +64,7 @@
 					<Add library="boost_system-mt" />
 					<Add library="boost_regex-mt" />
 					<Add library="boost_serialization-mt" />
+					<Add library="boost_iostreams-mt" />
 					<Add library="jsonspirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
@@ -93,6 +95,7 @@
 					<Add library="boost_system-mt" />
 					<Add library="boost_regex-mt" />
 					<Add library="boost_serialization-mt" />
+					<Add library="boost_iostreams-mt" />
 					<Add library="jsonspirit" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
