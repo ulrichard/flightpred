@@ -479,25 +479,71 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
 
 	pqxx::transaction<> trans(flightpred_db::get_conn(), "solution_manager::export_solution");
     std::stringstream sstr;
-    sstr << "SELECT AsText(location) as loc, country FROM pred_sites "
+    sstr << "SELECT AsText(location) as loc, country, pred_site_id FROM pred_sites "
          << "WHERE site_name='" << site_name_ << "'";
     pqxx::result res = trans.exec(sstr.str());
     if(!res.size())
         throw std::runtime_error("site not found : " + site_name_);
     string country;
     res[0]["country"].to(country);
+    oa << country;
     string locstr;
     res[0]["loc"].to(locstr);
     point_ll_deg location;
     boost::geometry::read_wkt(locstr, location);
-    oa << country;
 	oa << location;
-	trans.commit();
+	size_t pred_site_id;
+	res[0]["pred_site_id"].to(pred_site_id);
+
+	// trained solutions
+	sstr.str("");
+	sstr << "SELECT * FROM trained_solutions "
+         << "WHERE pred_site_id=" << pred_site_id;
+    res = trans.exec(sstr.str());
+    if(!res.size())
+        throw std::runtime_error("could not query details about trained solutions");
+    const size_t num_trained_solution = res.size();
+    oa << num_trained_solution;
+    for(size_t i=0; i<num_trained_solution; ++i)
+    {
+        string config;
+        res[i]["configuration"].to(config);
+        oa << config;
+
+        double validation_error;
+        res[i]["validation_error"].to(validation_error);
+        oa << validation_error;
+
+        double train_time;
+        res[i]["train_time"].to(train_time);
+        oa << train_time;
+
+        double train_time_prod;
+        res[i]["train_time_prod"].to(train_time_prod);
+        oa << train_time_prod;
+
+        size_t generation;
+        res[i]["generation"].to(generation);
+        oa << generation;
+
+        size_t num_samples;
+        res[i]["num_samples"].to(num_samples);
+        oa << num_samples;
+
+        size_t num_samples_prod;
+        res[i]["num_samples_prod"].to(num_samples_prod);
+        oa << num_samples_prod;
+
+        size_t num_features;
+        res[i]["num_features"].to(num_features);
+        oa << num_features;
+    }
+    trans.commit();
 
     // register all derived algoritms that are in use
-    oa.register_type<lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
-    oa.register_type<lm_dlib_rvm<dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > > >();
-    oa.register_type<lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > > >();
+    oa.register_type<lm_dlib_rvm <dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    oa.register_type<lm_dlib_rvm <dlib::sigmoid_kernel     <dlib::matrix<double, 0, 1> > > >();
+    oa.register_type<lm_dlib_rvm <dlib::polynomial_kernel  <dlib::matrix<double, 0, 1> > > >();
     oa.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
 
 	// serialize the solution itself
@@ -560,18 +606,68 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
              << site_name << "', '" << country << "', "
              << "ST_GeomFromText('" << boost::geometry::make_wkt(location) << "', " << PG_SIR_WGS84 << "))";
         trans.exec(sstr.str());
+
+        sstr.str("");
+        sstr << "SELECT pred_site_id FROM pred_sites "
+             << "WHERE site_name='" << site_name << "'";
+        pqxx::result res = trans.exec(sstr.str());
+        if(!res.size())
+            throw std::runtime_error("site creation failed : " + site_name);
+        res[0]["pred_site_id"].to(site_id);
+    }
+
+    // trained solutions
+    size_t num_trained_solution = 0;
+    ia >> num_trained_solution;
+    for(size_t i=0; i<num_trained_solution; ++i)
+    {
+        string config;
+        ia >> config;
+        double validation_error;
+        ia >> validation_error;
+        double train_time;
+        ia >> train_time;
+        double train_time_prod;
+        ia >> train_time_prod;
+        size_t generation;
+        ia >> generation;
+        size_t num_samples;
+        ia >> num_samples;
+        size_t num_samples_prod;
+        ia >> num_samples_prod;
+        size_t num_features;
+        ia >> num_features;
+
+        std::stringstream sstr;
+        sstr << "SELECT train_sol_id FROM trained_solutions WHERE "
+             << "pred_site_id="  << site_id << " AND "
+             << "configuration='" << config  << "'";
+        res = trans.exec(sstr.str());
+        if(res.size())
+        {
+            // todo : option to override the numbers
+            continue;
+        }
+
+        sstr.str("");
+        sstr << "INSERT INTO trained_solutions (pred_site_id, generation, configuration, validation_error, train_time, "
+             << "train_time_prod, num_samples, num_samples_prod, num_features) VALUES "
+             << "(" << site_id << ", " << generation << ", '" << config << "', " << validation_error << ", "
+             << train_time << ", " << train_time_prod << ", " << num_samples << ", " << num_samples_prod << ", " << num_features << ")";
+        trans.exec(sstr.str());
     }
     trans.commit();
 
-
     // register all derived algoritms
-    ia.register_type<lm_dlib_rvm<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
-    ia.register_type<lm_dlib_rvm<dlib::sigmoid_kernel<dlib::matrix<double, 0, 1> > > >();
-    ia.register_type<lm_dlib_rvm<dlib::polynomial_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.register_type<lm_dlib_rvm <dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.register_type<lm_dlib_rvm <dlib::sigmoid_kernel     <dlib::matrix<double, 0, 1> > > >();
+    ia.register_type<lm_dlib_rvm <dlib::polynomial_kernel  <dlib::matrix<double, 0, 1> > > >();
     ia.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
 
     solution_config *sol = 0;
     ia >> sol;
+    // the de-serialization of the solution_config wrote it to the db already...
+
 
     report(INFO) << "solution_config sucesfully imported from : " << infile.string();
 }
