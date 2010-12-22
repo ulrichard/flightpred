@@ -5,6 +5,7 @@
 #include "common/learning_machine.h"
 #include "common/features_weather.h"
 #include "common/flightpred_globals.h"
+#include "common/lm_svm_dlib.h"
 //boost
 #include <boost/shared_ptr.hpp>
 #include <boost/serialization/base_object.hpp>

@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
     try
     {
         const string processowner(getenv("USER") ? getenv("USER") : "root");
-        string name, position, start_date, end_date, pred_model, backup_directory(getenv("HOME") ? getenv("HOME") : "/tmp");
+        string name, position, start_date, end_date, pred_model, backup_fmt, backup_directory(getenv("HOME") ? getenv("HOME") : "/tmp");
         double area_radius = 5000.0, mutation_rate, max_eval_time = 50.0;
         size_t download_pack = 100, iterations;
         string db_host, db_name, db_user, db_password;
@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
             ("get-weather",        "get past weather prediction grib data around the registered sites (start-date, end-date, download-pack)")
             ("evolve-population",  "evolve a population of solutions (name, generations, mutation-rate)")
             ("train",		       "train the system with the best performing solution found so far (name, start-date, end-date, max_eval_time)")
-            ("export-solution",    "save the best solution for a flying site to a file for backup or transfer (name, backup-dir)")
+            ("export-solution",    "save the best solution for a flying site to a file for backup or transfer (name, backup-dir, backup-fmt)")
             ("import-solution",    "restore solutions that were trained before and saved to a file (name, backup-dir)")
             ("get-future-weather", "get future weather prediction grib data for central europe (download-pack)")
             ("forecast",           "predict possible flights for the next few days")
@@ -101,6 +101,7 @@ int main(int argc, char* argv[])
             ("mutation-rate", po::value<double>(&mutation_rate)->default_value(0.125),    "the probability of mutations in the breeding of the evolution")
             ("max-eval-time", po::value<double>(&max_eval_time)->default_value(max_eval_time), "use only solution with a maximum training time of x[sec] during evolution")
             ("backup-dir",    po::value<string>(&backup_directory)->default_value(backup_directory), "the directory with the saved solutions")
+            ("backup-fmt",    po::value<string>(&backup_fmt)->default_value("BAK_TEXT"),  "the format of the backup (BAK_TEXT BAK_TEXT_COMP BAK_BIN BAK_BIN_COMP)")
             ("db-host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
             ("db-port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
             ("db-name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
@@ -220,16 +221,24 @@ int main(int argc, char* argv[])
         {
             bfs::path backup_dir(backup_directory);
 
+            solution_manager::BackupFormat bfmt = solution_manager::BAK_TEXT;
+            if(backup_fmt == "BAK_TEXT_COMP")
+                bfmt = solution_manager::BAK_TEXT_COMP;
+            else if(backup_fmt == "BAK_BIN")
+                bfmt = solution_manager::BAK_BIN;
+            else if(backup_fmt == "BAK_BIN_COMP")
+                bfmt = solution_manager::BAK_BIN_COMP;
+
             if(name.length())
             {
                 solution_manager mgr(name);
-                mgr.export_solution(backup_dir);
+                mgr.export_solution(backup_dir, bfmt);
             }
             else
                 BOOST_FOREACH(const string &site_name, site_names)
                 {
                     solution_manager mgr(site_name);
-                    mgr.export_solution(backup_dir);
+                    mgr.export_solution(backup_dir, bfmt);
                 }
             show_help_msg = false;
         }

@@ -469,18 +469,49 @@ std::auto_ptr<solution_config> solution_manager::load_best_solution(const bool o
     return std::auto_ptr<solution_config>(new solution_config(solution_id));
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void solution_manager::export_solution(const bfs::path &backup_dir)
+void solution_manager::export_solution(const bfs::path &backup_dir, const BackupFormat bfmt)
 {
     bfs::create_directories(backup_dir);
     bfs::path outfile(backup_dir / (site_name_ + ".flightpred"));
 	bfs::ofstream ofs(outfile, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 	if(!ofs.good())
         throw std::runtime_error("could not write to " + outfile.string());
-    boost::iostreams::filtering_stream<boost::iostreams::output> out;
-    out.push(boost::iostreams::zlib_compressor());
-    out.push(ofs);
-	boost::archive::text_oarchive oa(out);
+    const uint8_t nbfmt = bfmt;
+    ofs << nbfmt;
 
+    if(bfmt == BAK_TEXT)
+    {
+        boost::archive::text_oarchive oa(ofs);
+        do_export(oa);
+    }
+    else if(bfmt == BAK_TEXT_COMP)
+    {
+        boost::iostreams::filtering_stream<boost::iostreams::output> out;
+        out.push(boost::iostreams::zlib_compressor());
+        out.push(ofs);
+        boost::archive::text_oarchive oa(out);
+        do_export(oa);
+    }
+    else if(bfmt == BAK_BIN)
+    {
+        boost::archive::binary_oarchive oa(ofs);
+        do_export(oa);
+    }
+    else if(bfmt == BAK_BIN_COMP)
+    {
+        boost::iostreams::filtering_stream<boost::iostreams::output> out;
+        out.push(boost::iostreams::gzip_compressor());
+        out.push(ofs);
+        boost::archive::binary_oarchive oa(out);
+        do_export(oa);
+    }
+
+    report(INFO) << "solution_config sucesfully exported to : " << outfile.string();
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+template<class ArchiveT>
+void solution_manager::do_export(ArchiveT& oa)
+{
     // information about the flying site
 	oa << site_name_;
 
@@ -548,17 +579,15 @@ void solution_manager::export_solution(const bfs::path &backup_dir)
     trans.commit();
 
     // register all derived algoritms that are in use
-    oa.register_type<lm_dlib_rvm <dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
-    oa.register_type<lm_dlib_rvm <dlib::sigmoid_kernel     <dlib::matrix<double, 0, 1> > > >();
-    oa.register_type<lm_dlib_rvm <dlib::polynomial_kernel  <dlib::matrix<double, 0, 1> > > >();
-    oa.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    oa.template register_type<lm_dlib_rvm <dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    oa.template register_type<lm_dlib_rvm <dlib::sigmoid_kernel     <dlib::matrix<double, 0, 1> > > >();
+    oa.template register_type<lm_dlib_rvm <dlib::polynomial_kernel  <dlib::matrix<double, 0, 1> > > >();
+    oa.template register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
 
 	// serialize the solution itself
     std::auto_ptr<solution_config> sol = load_best_solution(true);
     solution_config *sc = sol.get();
 	oa << sc;
-
-    report(INFO) << "solution_config sucesfully exported to : " << outfile.string();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void solution_manager::import_solution(const bfs::path &backup_dir)
@@ -569,11 +598,43 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
     bfs::ifstream ifs(infile, std::ios_base::in | std::ios_base::binary);
 	if(!ifs.good())
         throw std::runtime_error("file not found : " + infile.string());
-    boost::iostreams::filtering_stream<boost::iostreams::input> in;
-    in.push(boost::iostreams::zlib_decompressor());
-    in.push(ifs);
-	boost::archive::text_iarchive ia(in);
 
+    uint8_t nbfmt = 0;
+    ifs >> nbfmt;
+
+    if(nbfmt == BAK_TEXT)
+    {
+        boost::archive::text_iarchive ia(ifs);
+        do_import(ia);
+    }
+    else if(nbfmt == BAK_TEXT_COMP)
+    {
+        boost::iostreams::filtering_stream<boost::iostreams::input> in;
+        in.push(boost::iostreams::zlib_decompressor());
+        in.push(ifs);
+        boost::archive::text_iarchive ia(in);
+        do_import(ia);
+    }
+    else if(nbfmt == BAK_BIN)
+    {
+        boost::archive::binary_iarchive ia(ifs);
+        do_import(ia);
+    }
+    else if(nbfmt == BAK_BIN_COMP)
+    {
+        boost::iostreams::filtering_stream<boost::iostreams::input> in;
+        in.push(boost::iostreams::gzip_decompressor());
+        in.push(ifs);
+        boost::archive::binary_iarchive ia(in);
+        do_import(ia);
+    }
+
+    report(INFO) << "solution_config sucesfully imported from : " << infile.string();
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+template<class ArchiveT>
+void solution_manager::do_import(ArchiveT& ia)
+{
     // read class state from archive
     string site_name;
 	ia >> site_name;
@@ -669,17 +730,14 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
     trans.commit();
 
     // register all derived algoritms
-    ia.register_type<lm_dlib_rvm <dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
-    ia.register_type<lm_dlib_rvm <dlib::sigmoid_kernel     <dlib::matrix<double, 0, 1> > > >();
-    ia.register_type<lm_dlib_rvm <dlib::polynomial_kernel  <dlib::matrix<double, 0, 1> > > >();
-    ia.register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.template register_type<lm_dlib_rvm <dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.template register_type<lm_dlib_rvm <dlib::sigmoid_kernel     <dlib::matrix<double, 0, 1> > > >();
+    ia.template register_type<lm_dlib_rvm <dlib::polynomial_kernel  <dlib::matrix<double, 0, 1> > > >();
+    ia.template register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
 
     solution_config *sol = 0;
     ia >> sol;
     // the de-serialization of the solution_config wrote it to the db already...
-
-
-    report(INFO) << "solution_config sucesfully imported from : " << infile.string();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

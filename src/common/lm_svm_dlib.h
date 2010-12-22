@@ -12,7 +12,7 @@
 #include <pqxx/largeobject>
 // boost
 #include <boost/serialization/split_member.hpp>
-#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/base_object.hpp>
 // standard library
 #include <string>
 #include <vector>

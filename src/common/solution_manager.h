@@ -26,7 +26,14 @@ public:
 
     std::auto_ptr<solution_config> load_best_solution(const bool onlyFullyTrained, const double maxTrainSec = 50.0);
 
-    void export_solution(const boost::filesystem::path &backup_dir);
+    enum BackupFormat
+    {
+        BAK_TEXT,
+        BAK_TEXT_COMP,
+        BAK_BIN,
+        BAK_BIN_COMP
+    };
+    void export_solution(const boost::filesystem::path &backup_dir, const BackupFormat bfmt);
     void import_solution(const boost::filesystem::path &backup_dir);
 
     static const std::set<boost::gregorian::date> get_ignored_days(bool onlyConfirmed);
@@ -40,6 +47,11 @@ private:
     bool   used_for_training(const boost::gregorian::date &day) const;
     bool   used_for_validation(const boost::gregorian::date &day) const;
     double test_fitness(const solution_config &sol);
+    template<class ArchiveT>
+    void  do_export(ArchiveT& oa);
+    template<class ArchiveT>
+    void  do_import(ArchiveT& ia);
+
 
     const std::string site_name_;
     const size_t      pred_site_id_;
