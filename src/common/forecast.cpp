@@ -73,12 +73,12 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
 
             // let the machine make it's (educated) guesses
             map<string, double> predval;
-            for(size_t k=0; k<flightpred_globals::pred_values.size(); ++k)
+            BOOST_FOREACH(const string& prednam, flightpred_globals::pred_values)
             {
-                double val = sol->get_decision_function(flightpred_globals::pred_values[k])->eval(features);
+                double val = sol->get_decision_function(prednam)->eval(features);
                 if(isnan(val) || val < 0.0)
                    val = 0.0;
-                predval[flightpred_globals::pred_values[k]] = val;
+                predval[prednam] = val;
             }
 
             sstr.str("");
@@ -86,7 +86,7 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
             std::copy(flightpred_globals::pred_values.begin(), flightpred_globals::pred_values.end(), std::ostream_iterator<string>(sstr, ", "));
             sstr << "calculated, pred_day) VALUES (" << pred_site_id << ", " << sol->get_solution_id() << ", ";
 
-            BOOST_FOREACH(string predname, flightpred_globals::pred_values)
+            BOOST_FOREACH(const string& predname, flightpred_globals::pred_values)
             {
                 double val = predval[predname];
                 sstr << val << ", ";

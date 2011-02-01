@@ -7,6 +7,7 @@
 #include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 // boost
 #include <boost/date_time/gregorian/gregorian_types.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/noncopyable.hpp>
 // standard library
@@ -19,15 +20,16 @@ typedef boost::geometry::model::ll::point<> point_ll_deg;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 struct flight
 {
-    size_t                          id;
-    std::string                     pilot_name;
-    std::string                     pilot_country;
-    std::string                     takeoff_name;
-    std::string                     takeoff_country;
-    point_ll_deg                    pos;
-    double                          distance;
-    double                          score;
-    boost::gregorian::date          day;
+    size_t          id;
+    std::string     pilot_name;
+    std::string     pilot_country;
+    std::string     takeoff_name;
+    std::string     takeoff_country;
+    point_ll_deg    pos;
+    double          distance;
+    double          score;
+    boost::gregorian::date           day;
+    boost::posix_time::time_duration duration;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 class flight_grabber : public boost::noncopyable

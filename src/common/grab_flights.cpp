@@ -9,6 +9,8 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/time_facet.hpp>
 #include <boost/timer.hpp>
 // standard library
 #include <iostream>
@@ -60,18 +62,18 @@ void flight_grabber::read_json(const bfs::path &jsonfile)
     boost::timer btim;
     bfs::ifstream is(jsonfile);
     json_spirit::mValue val;
-    std::cout << "Reading json file : " << jsonfile << std::endl;
+    report(INFO) << "Reading json file : " << jsonfile << std::endl;
     json_spirit::read(is, val);
 
-    std::cout << "json file read in " << btim.elapsed() << "sec" << std::endl;
+    report(INFO) << "json file read in " << btim.elapsed() << "sec" << std::endl;
     const json_spirit::mArray flights = val.get_obj().find("items")->second.get_array();
     btim.restart();
-    std::cout << "start processing " << flights.size() << " records (flights)" << std::endl;
+    report(INFO) << "start processing " << flights.size() << " records (flights)" << std::endl;
 //    std::for_each(flights.begin(), flights.end(),
 //        boost::bind(&flight_grabber::read_flight, boost::bind(&json_spirit::mValue::get_obj, ::_1)));
     for(json_spirit::mArray::const_iterator it = flights.begin(); it != flights.end(); ++it)
         read_flight(it->get_obj());
-     std::cout << std::endl << "processed in " << btim.elapsed() << "sec" << std::endl;
+     report(INFO) << std::endl << "processed in " << btim.elapsed() << "sec" << std::endl;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::read_flight(const json_spirit::mObject &flObj)
@@ -108,6 +110,12 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
         fl.day              = bgreg::from_string(flObj.find("pointStart")->second.get_obj().find("time")->second.get_str().substr(0, 10));
         const string durstr = flObj.find("stats")->second.get_obj().find("duration")->second.get_str();  // format : "PT01H54M36S"
 
+        std::stringstream sstr(durstr);
+        boost::posix_time::time_input_facet* inpfac = new boost::posix_time::time_input_facet();
+        sstr.imbue(std::locale(sstr.getloc(), inpfac));
+        inpfac->time_duration_format("PT%HH%MM%SS");
+        sstr >> fl.duration;
+
         write_flight_to_db(fl);
 
         static size_t counter = 0;
@@ -117,7 +125,7 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
     }
     catch(std::exception &ex)
     {
-        std::cout << ex.what() << std::endl;
+        report(ERROR) << ex.what() << std::endl;
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -169,9 +177,9 @@ void flight_grabber::write_flight_to_db(const flight &fl)
     if(!trans.exec(sstr).size())
     {
         std::stringstream sstr;
-        sstr << "INSERT INTO flights (external_id, pilot_id, contest_id, site_id, flight_date, distance, score) "
+        sstr << "INSERT INTO flights (external_id, pilot_id, contest_id, site_id, flight_date, distance, score, duration) "
              << "values (" << fl.id << "," << pilot_id << ", " << contest_id << ", " << site_id << ", '"
-             << bgreg::to_iso_extended_string(fl.day) << "', " << fl.distance << ", " << fl.score << ")";
+             << bgreg::to_iso_extended_string(fl.day) << "', " << fl.distance << ", " << fl.score << ", " << fl.duration.total_seconds() / 60 << ")";
         res = trans.exec(sstr.str());
     }
 

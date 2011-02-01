@@ -104,8 +104,8 @@ struct assign_dlib_rvm_rbf
         typedef lm_dlib_rvm<kernT> rvmT;
 
         kernT kern(gamma_);
-        for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new rvmT(*it, kern));
+        BOOST_FOREACH(const string& prednam, flightpred_globals::pred_values)
+            learning_machines_[prednam] = shared_ptr<learning_machine>(new rvmT(prednam, kern));
     }
 private:
     map<string, shared_ptr<learning_machine> > &learning_machines_;
@@ -124,8 +124,8 @@ struct assign_dlib_rvm_sig
         typedef lm_dlib_rvm<kernT> rvmT;
 
         kernT kern(gamma_, coef_);
-        for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new rvmT(*it, kern));
+        BOOST_FOREACH(const string& prednam, flightpred_globals::pred_values)
+            learning_machines_[prednam] = shared_ptr<learning_machine>(new rvmT(prednam, kern));
     }
 private:
     map<string, shared_ptr<learning_machine> > &learning_machines_;
@@ -145,8 +145,8 @@ struct assign_dlib_rvm_poly
         typedef lm_dlib_rvm<kernT> rvmT;
 
         kernT kern(gamma_, coef_, deg_);
-        for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new rvmT(*it, kern));
+        BOOST_FOREACH(const string& prednam, flightpred_globals::pred_values)
+            learning_machines_[prednam] = shared_ptr<learning_machine>(new rvmT(prednam, kern));
     }
 private:
     map<string, shared_ptr<learning_machine> > &learning_machines_;
@@ -167,8 +167,8 @@ struct assign_dlib_krls_rbf
 
         assert(5 == flightpred_globals::pred_values.size());
         kernT kern(gamma_);
-        for(array<string, 5>::const_iterator it = flightpred_globals::pred_values.begin(); it != flightpred_globals::pred_values.end(); ++it)
-            learning_machines_[*it] = shared_ptr<learning_machine>(new krlsT(*it, kern, fact_));
+        BOOST_FOREACH(const string& prednam, flightpred_globals::pred_values)
+            learning_machines_[prednam] = shared_ptr<learning_machine>(new krlsT(prednam, kern, fact_));
     }
 private:
     map<string, shared_ptr<learning_machine> > &learning_machines_;
