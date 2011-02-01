@@ -33,7 +33,7 @@ using std::string;
 
 typedef boost::geometry::model::ll::point<> point_ll_deg;
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to, const double max_val_train_time)
+void train_svm::train(const string &site_name, const bgreg::date &from, const bgreg::date &to, const double max_val_train_time, const std::vector<std::string>& figures)
 {
     report(INFO) << "train_svm::train(" << site_name << ", " << bgreg::to_iso_extended_string(from)
                  << ", " << bgreg::to_iso_extended_string(to) <<  ")";
@@ -58,8 +58,12 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     // collect the labels
     report(INFO) << "collecting labels";
     sstr.str("");
-    sstr << "SELECT flight_date, COUNT(*) AS num_flights, MAX(distance) AS max_dist, AVG(distance) AS avg_dist, "
-         << "MAX(duration) AS max_dur, AVG(duration) AS avg_dur FROM flights INNER JOIN sites "
+    sstr << "SELECT flight_date, COUNT(*) AS " << flightpred_globals::pred_values[0]    // num_flight
+         << ", MAX(distance) AS " << flightpred_globals::pred_values[1]                 // max_dist
+         << ", AVG(distance) AS " << flightpred_globals::pred_values[2]                 // avg_dist
+         << ", MAX(duration) AS " << flightpred_globals::pred_values[3]                 // max_dur
+         << ", AVG(duration) AS " << flightpred_globals::pred_values[4]                 // avg_dur
+         << " FROM flights INNER JOIN sites "
          << "ON flights.site_id = sites.site_id "
          << "WHERE pred_site_id = " << pred_site_id << " "
          << "GROUP BY flight_date "
@@ -71,10 +75,10 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         string datestr;
         res[i]["flight_date"].to(datestr);
         bgreg::date day(bgreg::from_string(datestr));
-        double dval;
-        for(size_t j=0; j<5; ++j)
+        for(size_t j=0; j<flightpred_globals::pred_values.size(); ++j)
         {
-            res[i][static_cast<unsigned int>(1 + j)].to(dval);
+            double dval;
+            res[i][flightpred_globals::pred_values[j]].to(dval);
             if(dval < 1.0)
                 dval = 0.0;
             labelsbydate[day][j] = dval;
@@ -106,13 +110,17 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
                 labels[i].push_back(labelsbydate[day][i]);
         }
         else
+        {
             for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
                 labels[i].push_back(0.0);
+        }
 
-        report(INFO) << "collecting features for " << bgreg::to_iso_extended_string(day)
+        report(INFO) << site_name << " " << bgreg::to_iso_extended_string(day)
                      << " "     << labels[0].back() << " flights "
                      << " max " << labels[1].back() << " km "
-                     << " avg " << labels[2].back() << " km";
+                     << " avg " << labels[2].back() << " km "
+                     << " max " << labels[3].back() << " min "
+                     << " avg " << labels[4].back() << " min";
         const vector<double> valweather = weather.get_features(features, day, false);
         assert(valweather.size() == features.size());
 
@@ -127,18 +135,24 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
     double traintime = 0.0;
     for(size_t i=0; i<flightpred_globals::pred_values.size(); ++i)
     {
-        report(INFO) << "\nTrain the machine learning algorithm for " << flightpred_globals::pred_values[i] << " at site: " << site_name;
+        const string& prednam = flightpred_globals::pred_values[i];
+        if(std::find(figures.begin(), figures.end(), prednam) == figures.end())
+        {
+            report(INFO) << "\nSkipping " << prednam << " at site: " << site_name;
+            continue;
+        }
+        report(INFO) << "\nTrain the machine learning algorithm for " << prednam << " at site: " << site_name;
         report(INFO) << "This can take a long time, seriously. Starting at " << bpt::to_simple_string(bpt::second_clock::local_time()) << "\n";
         boost::timer btim;
-        sol->get_decision_function(flightpred_globals::pred_values[i])->train(training_samples, labels[i]);
+        sol->get_decision_function(prednam)->train(training_samples, labels[i]);
         traintime += btim.elapsed();
-        std::cout << "training took " << btim.elapsed() / 60.0 << " min" << std::endl;
-        sol->get_decision_function(flightpred_globals::pred_values[i])->write_to_db(sol->get_solution_id());
+        report(INFO) << "training took " << btim.elapsed() / 60.0 << " min" << std::endl;
+        sol->get_decision_function(prednam)->write_to_db(sol->get_solution_id());
     }
 
     pqxx::transaction<> trans3(flightpred_db::get_conn(), "update training info");
     sstr.str("");
-    sstr << "UPDATE trained_solutions SET train_time_prod=" << traintime << ", num_samples_prod=" << training_samples.size()
+    sstr << "UPDATE trained_solutions SET train_time_prod=train_time_prod+" << traintime << ", num_samples_prod=" << training_samples.size()
          << ", num_features=" << training_samples.front().size()
          << "  WHERE train_sol_id=" << sol->get_solution_id();
     res = trans3.exec(sstr.str());

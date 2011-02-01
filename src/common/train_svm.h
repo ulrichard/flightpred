@@ -19,7 +19,8 @@ public:
     train_svm() { }
     virtual ~train_svm() { }
 
-    void train(const std::string &site_name, const boost::gregorian::date &from, const boost::gregorian::date &to, const double max_val_train_time);
+    void train(const std::string &site_name, const boost::gregorian::date &from, const boost::gregorian::date &to,
+               const double max_val_train_time, const std::vector<std::string>& figures);
 
 
 private:

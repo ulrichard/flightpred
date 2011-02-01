@@ -65,6 +65,9 @@ int main(int argc, char* argv[])
         size_t download_pack = 100, iterations;
         string db_host, db_name, db_user, db_password;
         size_t db_port;
+        std::vector<std::string> figures;
+
+        std::copy(flightpred_globals::pred_values.begin(), flightpred_globals::pred_values.end(), std::back_inserter(figures));
 
         bgreg::date dtend(bgreg::day_clock::local_day());
         bgreg::date dtstart(dtend - bgreg::months(5));
@@ -209,10 +212,10 @@ int main(int argc, char* argv[])
         {
             train_svm trainer;
             if(name.length())
-                trainer.train(name, dtstart, dtend, max_eval_time);
+                trainer.train(name, dtstart, dtend, max_eval_time, figures);
             else
                 std::for_each(site_names.begin(), site_names.end(),
-                    boost::bind(&train_svm::train, boost::ref(trainer), _1, dtstart, dtend, max_eval_time));
+                    boost::bind(&train_svm::train, boost::ref(trainer), _1, dtstart, dtend, max_eval_time, figures));
 
             show_help_msg = false;
         }

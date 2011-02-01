@@ -1,6 +1,7 @@
 // flightpred
 #include "grab_flights.h"
 #include "common/flightpred_globals.h"
+#include "common/reporter.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -18,6 +19,7 @@
 #include <sstream>
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 namespace bfs   = boost::filesystem;
 namespace bgreg = boost::gregorian;
 using boost::bind;
@@ -69,11 +71,9 @@ void flight_grabber::read_json(const bfs::path &jsonfile)
     const json_spirit::mArray flights = val.get_obj().find("items")->second.get_array();
     btim.restart();
     report(INFO) << "start processing " << flights.size() << " records (flights)" << std::endl;
-//    std::for_each(flights.begin(), flights.end(),
-//        boost::bind(&flight_grabber::read_flight, boost::bind(&json_spirit::mValue::get_obj, ::_1)));
     for(json_spirit::mArray::const_iterator it = flights.begin(); it != flights.end(); ++it)
         read_flight(it->get_obj());
-     report(INFO) << std::endl << "processed in " << btim.elapsed() << "sec" << std::endl;
+     report(INFO) << "\nprocessed in " << btim.elapsed() << "sec";
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::read_flight(const json_spirit::mObject &flObj)
@@ -125,7 +125,7 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
     }
     catch(std::exception &ex)
     {
-        report(ERROR) << ex.what() << std::endl;
+        report(ERROR) << "Exception: " << ex.what();
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
