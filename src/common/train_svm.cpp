@@ -143,6 +143,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         }
         report(INFO) << "\nTrain the machine learning algorithm for " << prednam << " at site: " << site_name;
         report(INFO) << "This can take a long time, seriously. Starting at " << bpt::to_simple_string(bpt::second_clock::local_time()) << "\n";
+        assert(training_samples.size() == labels[i].size());
         boost::timer btim;
         sol->get_decision_function(prednam)->train(training_samples, labels[i]);
         traintime += btim.elapsed();
