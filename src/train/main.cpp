@@ -19,6 +19,7 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 #include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
 // standard library
 #include <iostream>
 #include <string>
@@ -63,16 +64,17 @@ int main(int argc, char* argv[])
         string name, position, start_date, end_date, pred_model, backup_fmt, backup_directory(getenv("HOME") ? getenv("HOME") : "/tmp");
         double area_radius = 5000.0, mutation_rate, max_eval_time = 50.0;
         size_t download_pack = 100, iterations;
-        string db_host, db_name, db_user, db_password;
+        string db_host, db_name, db_user, db_password, figures;
         size_t db_port;
-        std::vector<std::string> figures;
-
-        std::copy(flightpred_globals::pred_values.begin(), flightpred_globals::pred_values.end(), std::back_inserter(figures));
 
         bgreg::date dtend(bgreg::day_clock::local_day());
         bgreg::date dtstart(dtend - bgreg::months(5));
         start_date = bgreg::to_iso_extended_string(dtstart);
         end_date   = bgreg::to_iso_extended_string(dtend);
+
+        std::stringstream sstr;
+        std::copy(flightpred_globals::pred_values.begin(), flightpred_globals::pred_values.end(), std::ostream_iterator<string>(sstr, ","));
+        figures = sstr.str();
 
         ReportDispatcher::inst().add(new ListenerCout(), reporting::DEBUGING);
         bfs::path error_file(bfs::initial_path() / "error.log");
@@ -94,6 +96,7 @@ int main(int argc, char* argv[])
             ("db-maintenance",     "delete old unused data, analyze indices...")
             ("ignore-errors",      "flag to tell the program not to stop on errors, but instead report and continue.")
             ("name",	      po::value<string>(&name)->default_value(""), "name of the area or competition")
+            ("figures",	      po::value<string>(&figures)->default_value(figures), "figures to train")
             ("position",      po::value<string>(&position)->default_value("N 0 E 0"), "geographic position")
             ("area-radius",   po::value<double>(&area_radius)->default_value(area_radius), "radius around the flight area to include flights for training [m]")
             ("pred-model",    po::value<string>(&pred_model)->default_value("GFS"), "name of the numeric weather prediction model")
@@ -210,12 +213,18 @@ int main(int argc, char* argv[])
 
         if(vm.count("train"))
         {
+            vector<string> vfigures;
+            figures.erase(std::remove(figures.begin(), figures.end(), ' '), figures.end());
+            boost::char_separator<char> sep(",");
+            boost::tokenizer<boost::char_separator<char> > tokens(figures, sep);
+            std::copy(tokens.begin(), tokens.end(), back_inserter(vfigures));
+
             train_svm trainer;
             if(name.length())
-                trainer.train(name, dtstart, dtend, max_eval_time, figures);
+                trainer.train(name, dtstart, dtend, max_eval_time, vfigures);
             else
                 std::for_each(site_names.begin(), site_names.end(),
-                    boost::bind(&train_svm::train, boost::ref(trainer), _1, dtstart, dtend, max_eval_time, figures));
+                    boost::bind(&train_svm::train, boost::ref(trainer), _1, dtstart, dtend, max_eval_time, vfigures));
 
             show_help_msg = false;
         }

@@ -1,0 +1,243 @@
+
+// boost
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
+#include <boost/test/floating_point_comparison.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/foreach.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/lambda/bind.hpp>
+#include <boost/version.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+// std lib
+#include <iostream>
+#include <sstream>
+
+using namespace boost::unit_test;
+namespace bfs = boost::filesystem;
+using std::string;
+using std::vector;
+
+
+enum BackupFormat
+{
+    BAK_TEXT,
+    BAK_TEXT_COMP,
+    BAK_BIN,
+    BAK_BIN_COMP
+};
+
+static const string BackupFormatTxt[] =
+{
+    "BAK_TEXT",
+    "BAK_TEXT_COMP",
+    "BAK_BIN",
+    "BAK_BIN_COMP"
+};
+
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+template<class ArchiveT>
+void do_export(ArchiveT& oa)
+{
+    string teststr("Hallo");
+	oa << teststr;
+
+	int testint(19091977);
+	oa << testint;
+
+	size_t testsize(777);
+	oa << testsize;
+
+	double testdouble(182.75);
+	oa << testdouble;
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void write_test_file(const bfs::path &backup_dir, const BackupFormat bfmt)
+{
+    std::stringstream sstr;
+    bfs::create_directories(backup_dir / BackupFormatTxt[bfmt]);
+
+    // operating system
+#ifdef  __unix__
+    sstr << "linux";
+ #ifdef __LP64__
+    sstr << "64";
+ #else
+    sstr << "32";
+ #endif
+
+#else
+ #ifdef _WIN64
+    sstr << "win64";
+ #else
+  #ifdef __WIN32
+    sstr << "win32";
+  #else
+    sstr << "win";
+  #endif
+ #endif
+#endif
+
+    // compiler version
+#ifdef __GNUC__
+    sstr << "_gcc-" << __GNUC__ << "-" << __GNUC_MINOR__ << "-" << __GNUC_PATCHLEVEL__;
+#endif
+#ifdef _MSC_VER
+    sstr << "_msvc-" << _MSC_VER;
+#endif
+
+
+    // boost version
+    sstr << "_boost-" << BOOST_VERSION;
+
+    bfs::path outfile(backup_dir / BackupFormatTxt[bfmt] / sstr.str());
+    bfs::ofstream ofs(outfile, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+	BOOST_REQUIRE(ofs.good());
+
+    const uint8_t nbfmt = bfmt;
+    ofs << nbfmt;
+
+    if(bfmt == BAK_TEXT)
+    {
+        boost::archive::text_oarchive oa(ofs);
+        do_export(oa);
+    }
+    else if(bfmt == BAK_TEXT_COMP)
+    {
+        boost::iostreams::filtering_stream<boost::iostreams::output> out;
+        out.push(boost::iostreams::zlib_compressor());
+        out.push(ofs);
+        boost::archive::text_oarchive oa(out);
+        do_export(oa);
+    }
+    else if(bfmt == BAK_BIN)
+    {
+        boost::archive::binary_oarchive oa(ofs);
+        do_export(oa);
+    }
+    else if(bfmt == BAK_BIN_COMP)
+    {
+        boost::iostreams::filtering_stream<boost::iostreams::output> out;
+        out.push(boost::iostreams::gzip_compressor());
+        out.push(ofs);
+        boost::archive::binary_oarchive oa(out);
+        do_export(oa);
+    }
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+template<class ArchiveT>
+void do_import(ArchiveT& ia)
+{
+    string teststr;
+	ia >> teststr;
+	BOOST_CHECK_EQUAL("Hallo", teststr);
+
+	int testint(0);
+	ia >> testint;
+	BOOST_CHECK_EQUAL(19091977, testint);
+
+	size_t testsize(0);
+	ia >> testsize;
+	BOOST_CHECK_EQUAL(777, testsize);
+
+	double testdouble(0.0);
+	ia >> testdouble;
+	BOOST_CHECK_EQUAL(182.75, testdouble);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void read_test_file(const bfs::path &infile, const BackupFormat bfmt)
+{
+    BOOST_REQUIRE(bfs::exists(infile));
+    bfs::ifstream ifs(infile, std::ios_base::in | std::ios_base::binary);
+	BOOST_REQUIRE(ifs.good());
+
+    uint8_t nbfmt = 0;
+    ifs >> nbfmt;
+
+    BOOST_CHECK_EQUAL(bfmt, nbfmt);
+
+    if(nbfmt == BAK_TEXT)
+    {
+        boost::archive::text_iarchive ia(ifs);
+        do_import(ia);
+    }
+    else if(nbfmt == BAK_TEXT_COMP)
+    {
+        boost::iostreams::filtering_stream<boost::iostreams::input> in;
+        in.push(boost::iostreams::zlib_decompressor());
+        in.push(ifs);
+        boost::archive::text_iarchive ia(in);
+        do_import(ia);
+    }
+    else if(nbfmt == BAK_BIN)
+    {
+        boost::archive::binary_iarchive ia(ifs);
+        do_import(ia);
+    }
+    else if(nbfmt == BAK_BIN_COMP)
+    {
+        boost::iostreams::filtering_stream<boost::iostreams::input> in;
+        in.push(boost::iostreams::gzip_decompressor());
+        in.push(ifs);
+        boost::archive::binary_iarchive ia(in);
+        do_import(ia);
+    }
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+void check_test_files(const bfs::path& testdir,  const BackupFormat bfmt)
+{
+    bfs::directory_iterator end_itr; // default construction yields past-the-end
+    for(bfs::directory_iterator itr(testdir / BackupFormatTxt[bfmt]); itr != end_itr; ++itr)
+        if(!bfs::is_directory(itr->status()))
+            read_test_file(itr->path(), bfmt);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+BOOST_AUTO_TEST_CASE(SerializationTEXT)
+{
+    const BackupFormat fmt = BAK_TEXT;
+    const bfs::path testdir(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "backup/serialization_test");
+
+    write_test_file(testdir, fmt);
+
+    check_test_files(testdir, fmt);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+BOOST_AUTO_TEST_CASE(SerializationTEXT_COMP)
+{
+    const BackupFormat fmt = BAK_TEXT_COMP;
+    const bfs::path testdir(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "backup/serialization_test");
+
+    write_test_file(testdir, fmt);
+
+    check_test_files(testdir, fmt);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+BOOST_AUTO_TEST_CASE(SerializationBIN)
+{
+    const BackupFormat fmt = BAK_BIN;
+    const bfs::path testdir(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "backup/serialization_test");
+
+    write_test_file(testdir, fmt);
+
+    check_test_files(testdir, fmt);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+BOOST_AUTO_TEST_CASE(SerializationBIN_COMP)
+{
+    const BackupFormat fmt = BAK_BIN_COMP;
+    const bfs::path testdir(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "backup/serialization_test");
+
+    write_test_file(testdir, fmt);
+
+    check_test_files(testdir, fmt);
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

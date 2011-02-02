@@ -138,7 +138,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
         const string& prednam = flightpred_globals::pred_values[i];
         if(std::find(figures.begin(), figures.end(), prednam) == figures.end())
         {
-            report(INFO) << "\nSkipping " << prednam << " at site: " << site_name;
+            report(INFO) << "Skipping " << prednam << " at site: " << site_name;
             continue;
         }
         report(INFO) << "\nTrain the machine learning algorithm for " << prednam << " at site: " << site_name;
@@ -153,7 +153,7 @@ void train_svm::train(const string &site_name, const bgreg::date &from, const bg
 
     pqxx::transaction<> trans3(flightpred_db::get_conn(), "update training info");
     sstr.str("");
-    sstr << "UPDATE trained_solutions SET train_time_prod=train_time_prod+" << traintime << ", num_samples_prod=" << training_samples.size()
+    sstr << "UPDATE trained_solutions SET train_time_prod=(train_time_prod+" << traintime << "), num_samples_prod=" << training_samples.size()
          << ", num_features=" << training_samples.front().size()
          << "  WHERE train_sol_id=" << sol->get_solution_id();
     res = trans3.exec(sstr.str());
