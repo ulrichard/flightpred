@@ -135,26 +135,37 @@ void write_test_file(const bfs::path &backup_dir, const BackupFormat bfmt)
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 template<class ArchiveT>
-void do_import(ArchiveT& ia)
+bool do_import(ArchiveT& ia)
 {
+    bool ret = true;
     string teststr;
 	ia >> teststr;
 	BOOST_CHECK_EQUAL("Hallo", teststr);
+	if("Hallo" != teststr)
+        ret = false;
 
 	int testint(0);
 	ia >> testint;
 	BOOST_CHECK_EQUAL(19091977, testint);
+	if(19091977 != testint)
+        ret = false;
 
 	size_t testsize(0);
 	ia >> testsize;
 	BOOST_CHECK_EQUAL(777, testsize);
+	if(777 != testsize)
+        ret = false;
 
 	double testdouble(0.0);
 	ia >> testdouble;
-	BOOST_CHECK_EQUAL(182.75, testdouble);
+	BOOST_CHECK_CLOSE(182.75, testdouble, 1);
+    if(fabs(182.75 - testdouble) > 0.001)
+        ret = false;
+
+    return ret;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void read_test_file(const bfs::path &infile, const BackupFormat bfmt)
+bool read_test_file(const bfs::path &infile, const BackupFormat bfmt)
 {
     BOOST_REQUIRE(bfs::exists(infile));
     bfs::ifstream ifs(infile, std::ios_base::in | std::ios_base::binary);
@@ -164,11 +175,13 @@ void read_test_file(const bfs::path &infile, const BackupFormat bfmt)
     ifs >> nbfmt;
 
     BOOST_CHECK_EQUAL(bfmt, nbfmt);
+    if(bfmt != nbfmt)
+        return false;
 
     if(nbfmt == BAK_TEXT)
     {
         boost::archive::text_iarchive ia(ifs);
-        do_import(ia);
+        return do_import(ia);
     }
     else if(nbfmt == BAK_TEXT_COMP)
     {
@@ -176,12 +189,12 @@ void read_test_file(const bfs::path &infile, const BackupFormat bfmt)
         in.push(boost::iostreams::zlib_decompressor());
         in.push(ifs);
         boost::archive::text_iarchive ia(in);
-        do_import(ia);
+        return do_import(ia);
     }
     else if(nbfmt == BAK_BIN)
     {
         boost::archive::binary_iarchive ia(ifs);
-        do_import(ia);
+        return do_import(ia);
     }
     else if(nbfmt == BAK_BIN_COMP)
     {
@@ -189,7 +202,7 @@ void read_test_file(const bfs::path &infile, const BackupFormat bfmt)
         in.push(boost::iostreams::gzip_decompressor());
         in.push(ifs);
         boost::archive::binary_iarchive ia(in);
-        do_import(ia);
+        return do_import(ia);
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -198,7 +211,8 @@ void check_test_files(const bfs::path& testdir,  const BackupFormat bfmt)
     bfs::directory_iterator end_itr; // default construction yields past-the-end
     for(bfs::directory_iterator itr(testdir / BackupFormatTxt[bfmt]); itr != end_itr; ++itr)
         if(!bfs::is_directory(itr->status()))
-            read_test_file(itr->path(), bfmt);
+            if(!read_test_file(itr->path(), bfmt))
+                BOOST_CHECK_EQUAL("Error in file", itr->path().leaf());
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 BOOST_AUTO_TEST_CASE(SerializationTEXT)
