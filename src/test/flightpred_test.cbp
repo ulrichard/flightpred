@@ -24,6 +24,7 @@
 					<Add library="boost_date_time-mt" />
 					<Add library="boost_serialization-mt" />
 					<Add library="boost_filesystem-mt" />
+					<Add library="boost_iostreams-mt" />
 					<Add library="pqxx" />
 					<Add library="grib_api" />
 					<Add library="evocosm" />
@@ -69,6 +70,7 @@
 		<Unit filename="../common/solution_config.cpp" />
 		<Unit filename="../common/solution_manager.cpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="serialization_test.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />
