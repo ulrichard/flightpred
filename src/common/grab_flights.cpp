@@ -78,9 +78,10 @@ void flight_grabber::read_json(const bfs::path &jsonfile)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::read_flight(const json_spirit::mObject &flObj)
 {
+    flight fl;
+
     try
     {
-        flight fl;
         fl.id               = flObj.find("id")->second.get_int();
         fl.pilot_name       = flObj.find("pilot")->second.get_obj().find("name")->second.get_str();
         fl.pilot_country    = flObj.find("pilot")->second.get_obj().find("countryIso")->second.get_str();
@@ -131,7 +132,7 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
     }
     catch(std::exception &ex)
     {
-        report(ERROR) << "Exception: " << ex.what();
+        report(ERROR) << "Exception: " << ex.what() << " with: " << fl.pilot_name << " at " << fl.takeoff_name;
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -144,6 +145,8 @@ char flight_grabber::replace_char(char cc)
     if(cc >= 'A' && cc <= 'Z')
         return cc;
     if(cc == 'ä' || cc == 'ö' || cc == 'ü' || cc == 'Ä' || cc == 'Ö' || cc == 'Ü')
+        return cc;
+    if(cc == '(' || cc == ')' || cc == '-' || cc == '_' || cc == ',' || cc == '.' || cc == '/' || cc == ' ')
         return cc;
 
     return '_';
