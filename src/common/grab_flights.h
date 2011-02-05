@@ -51,6 +51,7 @@ private:
     void read_json(const boost::filesystem::path &jsonfile);
     void read_flight(const json_spirit::mObject &flObj);
     void write_flight_to_db(const flight &fl);
+    static char replace_char(char cc);
 
     const Contest cont_;
 };

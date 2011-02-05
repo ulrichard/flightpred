@@ -116,6 +116,12 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
         inpfac->time_duration_format("PT%HH%MM%SS");
         sstr >> fl.duration;
 
+        // the json files contain UTF characters. For the moment, we work only with ASCII in here
+        std::transform(fl.pilot_name.begin(),      fl.pilot_name.end(),      fl.pilot_name.begin(),      boost::bind(&flight_grabber::replace_char, ::_1));
+        std::transform(fl.pilot_country.begin(),   fl.pilot_country.end(),   fl.pilot_country.begin(),   boost::bind(&flight_grabber::replace_char, ::_1));
+        std::transform(fl.takeoff_name.begin(),    fl.takeoff_name.end(),    fl.takeoff_name.begin(),    boost::bind(&flight_grabber::replace_char, ::_1));
+        std::transform(fl.takeoff_country.begin(), fl.takeoff_country.end(), fl.takeoff_country.begin(), boost::bind(&flight_grabber::replace_char, ::_1));
+
         write_flight_to_db(fl);
 
         static size_t counter = 0;
@@ -127,6 +133,20 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
     {
         report(ERROR) << "Exception: " << ex.what();
     }
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+char flight_grabber::replace_char(char cc)
+{
+    if(cc >= '0' && cc <= '9')
+        return cc;
+    if(cc >= 'a' && cc <= 'z')
+        return cc;
+    if(cc >= 'A' && cc <= 'Z')
+        return cc;
+    if(cc == 'ä' || cc == 'ö' || cc == 'ü' || cc == 'Ä' || cc == 'Ö' || cc == 'Ü')
+        return cc;
+
+    return '_';
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void flight_grabber::write_flight_to_db(const flight &fl)
