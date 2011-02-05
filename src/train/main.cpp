@@ -75,6 +75,7 @@ int main(int argc, char* argv[])
         std::stringstream sstr;
         std::copy(flightpred_globals::pred_values.begin(), flightpred_globals::pred_values.end(), std::ostream_iterator<string>(sstr, ","));
         figures = sstr.str();
+        figures = figures.substr(0, figures.length() - 1);
 
         ReportDispatcher::inst().add(new ListenerCout(), reporting::DEBUGING);
         bfs::path error_file(bfs::initial_path() / "error.log");

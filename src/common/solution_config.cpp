@@ -27,6 +27,12 @@
   using namespace boost::spirit::classic;
   using namespace phoenix;
 #endif
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+
 
 using namespace flightpred;
 using namespace flightpred::reporting;
@@ -39,6 +45,9 @@ using std::string;
 using std::vector;
 using std::map;
 using std::set;
+
+BOOST_CLASS_EXPORT(solution_config)
+
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 const std::string solution_config::rgxreal_ = "\\d+((\\.\\d+)?(e[+-]\\d{1,3})?)?";
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -312,5 +321,30 @@ void solution_config::write_to_db()
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+template<class Archive>
+void solution_config::serialize(Archive &ar, const unsigned int version)
+{
+    ar & train_sol_id_;
+    ar & generation_;
+    ar & site_name_;
+    ar & solution_description_;
+    ar & validation_error_;
+    ar & train_time_;
+    ar & train_time_prod_;
+    ar & num_samples_;
+    ar & num_samples_prod_;
+    ar & num_features_;
+    ar & learning_machines_;
 
+    if(Archive::is_loading::value)
+    {
+         decode();
+
+         // insert or overwrite
+	    if(flightpred_db::connected())
+            write_to_db();
+    }
+
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 

@@ -61,30 +61,7 @@ public:
 private:
     void write_to_db();
     solution_config() { }  // default constructable only for serialization
-    template<class Archive> void serialize(Archive &ar, const unsigned int version)
-	{
-		ar & train_sol_id_;
-		ar & generation_;
-		ar & site_name_;
-		ar & solution_description_;
-		ar & validation_error_;
-		ar & train_time_;
-		ar & train_time_prod_;
-		ar & num_samples_;
-		ar & num_samples_prod_;
-		ar & num_features_;
-		ar & learning_machines_;
-
-        if(Archive::is_loading::value)
-		{
-		     decode();
-
-		     // insert or overwrite
-		     if(flightpred_db::connected())
-                write_to_db();
-		}
-
-	}
+    template<class Archive> void serialize(Archive &ar, const unsigned int version);
 
 protected:
     void decode();

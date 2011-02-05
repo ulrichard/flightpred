@@ -583,6 +583,7 @@ void solution_manager::do_export(ArchiveT& oa)
     oa.template register_type<lm_dlib_rvm <dlib::sigmoid_kernel     <dlib::matrix<double, 0, 1> > > >();
     oa.template register_type<lm_dlib_rvm <dlib::polynomial_kernel  <dlib::matrix<double, 0, 1> > > >();
     oa.template register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    oa.template register_type<solution_config>();
 
 	// serialize the solution itself
     std::auto_ptr<solution_config> sol = load_best_solution(true);
@@ -734,10 +735,14 @@ void solution_manager::do_import(ArchiveT& ia)
     ia.template register_type<lm_dlib_rvm <dlib::sigmoid_kernel     <dlib::matrix<double, 0, 1> > > >();
     ia.template register_type<lm_dlib_rvm <dlib::polynomial_kernel  <dlib::matrix<double, 0, 1> > > >();
     ia.template register_type<lm_dlib_krls<dlib::radial_basis_kernel<dlib::matrix<double, 0, 1> > > >();
+    ia.template register_type<solution_config>();
 
     solution_config *sol = 0;
     ia >> sol;
     // the de-serialization of the solution_config wrote it to the db already...
+
+    report(INFO) << "Imported solution : " << sol->get_short_description();
+
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 
