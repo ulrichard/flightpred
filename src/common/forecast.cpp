@@ -81,6 +81,23 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
                 predval[prednam] = val;
             }
 
+            // normalize (some flying sites have no values between 0.0 and say 2.3 or so. In this step we subtract these minimal values.)
+            pqxx::transaction<> transl(flightpred_db::get_conn(), "flight prediction");
+            BOOST_FOREACH(const string& prednam, flightpred_globals::pred_values)
+            {
+                sstr.str("");
+                sstr << "SELECT " << prednam << " FROM flight_pred "
+                     << "WHERE pred_site_id = " << pred_site_id << " AND " << prednam << " > 0.0 AND train_sol_id = " << sol->get_solution_id()
+                     << " ORDER BY " << prednam << " ASC LIMIT 32";
+                res = transl.exec(sstr.str());
+                double smallest = 0.0;
+                if(res.size() >= 30)
+                {
+                    res[0]["pred_site_id"].to(pred_site_id);
+                    predval[prednam] -= smallest;
+                }
+            }
+
             sstr.str("");
             sstr << "INSERT INTO flight_pred (pred_site_id, train_sol_id,";
             std::copy(flightpred_globals::pred_values.begin(), flightpred_globals::pred_values.end(), std::ostream_iterator<string>(sstr, ", "));
@@ -90,12 +107,12 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
             {
                 double val = predval[predname];
                 sstr << val << ", ";
-                std::cout << site_name << " " << bgreg::to_iso_extended_string(day) << " "
-                          << predname << " " << val << std::endl;
+                report(INFO) << site_name << " " << bgreg::to_iso_extended_string(day) << " "
+                             << predname << " " << val << std::endl;
             }
 
             sstr << "Now(), '" <<  bgreg::to_iso_extended_string(day) << "')";
-            pqxx::transaction<> transl(flightpred_db::get_conn(), "flight prediction");
+
             res = transl.exec(sstr.str());
             transl.commit();
         }
