@@ -49,6 +49,7 @@ CREATE TABLE sites
 );
 SELECT AddGeometryColumn('sites', 'location', 4326, 'POINT', 2);
 CREATE INDEX sites_by_location ON sites USING GIST(location);
+CREATE INDEX sites_by_pred_site_id ON sites (pred_site_id);
 
 CREATE TABLE flights
 (
@@ -67,6 +68,8 @@ CREATE TABLE flights
 	CONSTRAINT FK_site_id      FOREIGN KEY(site_id)      REFERENCES sites      (site_id)
 );
 CREATE INDEX flightByDate ON flights (flight_date, distance);
+CREATE INDEX flightBySite ON flights (site_id, flight_date);
+
 
 CREATE TABLE trained_solutions
 (

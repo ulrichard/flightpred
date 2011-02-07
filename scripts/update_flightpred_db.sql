@@ -29,3 +29,9 @@ select create_pred_ignore_table();
 drop function create_pred_ignore_table();
 
 
+DROP INDEX IF EXISTS sites_by_pred_site_id;
+CREATE INDEX sites_by_pred_site_id ON sites (pred_site_id);
+DROP INDEX IF EXISTS flightBySite;
+CREATE INDEX flightBySite ON flights (site_id, flight_date);
+
+

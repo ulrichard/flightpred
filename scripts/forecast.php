@@ -77,7 +77,7 @@ while($day = pg_fetch_assoc($days))
 		}
 		else
 		{
-			echo "\t\t<site name='{$site['site_name']}' location='{$site['loc']}' calculated='{$site['calc']}'>\n";
+			echo "\t\t<site name='{$site['site_name']}' location='{$site['loc']}' calculated='{$results['calc']}'>\n";
 			echo "\t\t\t<num_flight>{$results['num_flight']}</num_flight>\n";
 			echo "\t\t\t<max_dist>{$results['max_dist']}</max_dist>\n";
 			echo "\t\t\t<avg_dist>{$results['avg_dist']}</avg_dist>\n";
