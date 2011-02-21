@@ -157,7 +157,7 @@ void locations_around_site_testfunc(const point_ll_deg& pos, const size_t num, c
     {
         std::stringstream sstr;
         sstr << boost::geometry::make_wkt(pos);
-        BOOST_CHECK_EQUAL(sstr.str(), "FountButNotExpected");
+        BOOST_CHECK_EQUAL(sstr.str(), "FoundButNotExpected");
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
