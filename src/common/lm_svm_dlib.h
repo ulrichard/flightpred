@@ -19,6 +19,8 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <typeinfo>
+
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 namespace flightpred
 {
@@ -91,6 +93,8 @@ public:
         sstr << "UPDATE trained_solutions SET " << pred_name_ << "=" << oid_blob << " WHERE train_sol_id=" << conf_id;
         trans.exec(sstr.str());
         trans.commit();
+
+        reporting::report(reporting::VERBOSE) << pred_name_ << " (" << oid_blob << ") has " << learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
 
     virtual void read_from_db(const size_t conf_id)
@@ -109,23 +113,21 @@ public:
 
         pqxx::ilostream dbstrm(trans, oid_blob);
         assert(dbstrm.good());
-        deserialize(normalizer_, dbstrm);
+        dlib::deserialize(normalizer_, dbstrm);
         dlib::deserialize(learnedfunc_, dbstrm);
 
-        reporting::report(reporting::VERBOSE) << pred_name_ << " has " << learnedfunc_.basis_vectors.nr() << " support vectors.";
+        reporting::report(reporting::VERBOSE) << pred_name_ << " (" << oid_blob << ") has " << learnedfunc_.basis_vectors.nr() << " support vectors.";
     }
 
-protected:
-    virtual void write_to_stream(std::ostream &os)
+    virtual int main_metric() const
     {
-        dlib::serialize(normalizer_, os);
-        dlib::serialize(learnedfunc_, os);
+        return learnedfunc_.basis_vectors.nr();
     }
 
-    virtual void read_from_stream(std::istream &is)
+    virtual std::string description() const
     {
-        dlib::deserialize(normalizer_, is);
-        dlib::deserialize(learnedfunc_, is);
+        const std::string classnam(typeid(*this).name());
+        return classnam + boost::lexical_cast<std::string>(learnedfunc_.basis_vectors.nr());
     }
 
 private:
@@ -137,7 +139,8 @@ private:
         std::stringstream sstr;
         dlib::serialize(normalizer_, sstr);
         dlib::serialize(learnedfunc_, sstr);
-        std::string strs = sstr.str();
+        std::string strs(sstr.str());
+        reporting::report(reporting::DEBUGING) << "lm_dlib_base::save() : strs.length()=" << strs.length() << "  main_metric()=" << main_metric();
         ar << strs;
     }
     template<class Archive>
@@ -151,6 +154,7 @@ private:
 	    sstr.str(strs);
 	    dlib::deserialize(normalizer_, sstr);
         dlib::deserialize(learnedfunc_, sstr);
+        reporting::report(reporting::DEBUGING) << "lm_dlib_base::load() : strs.length()=" << strs.length() << "  main_metric()=" << main_metric();
     }
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 
@@ -196,7 +200,8 @@ private:
 
         std::stringstream sstr;
         dlib::serialize(kern_, sstr);
-        std::string strs = sstr.str();
+        std::string strs(sstr.str());
+        reporting::report(reporting::DEBUGING) << "lm_dlib_rvm::save() : strs.length()=" << strs.length();
         ar << strs;
     }
     template<class Archive>
@@ -206,6 +211,7 @@ private:
 
 	    std::string strs;
 	    ar >> strs;
+	    reporting::report(reporting::DEBUGING) << "lm_dlib_rvm::load() : strs.length()=" << strs.length();
 	    std::stringstream sstr;
 	    sstr.str(strs);
 	    dlib::deserialize(kern_, sstr);
@@ -248,7 +254,8 @@ private:
 
         std::stringstream sstr;
         dlib::serialize(kern_, sstr);
-        std::string strs = sstr.str();
+        std::string strs(sstr.str());
+        reporting::report(reporting::DEBUGING) << "lm_dlib_krls::save() : strs.length()=" << strs.length();
         ar << strs;
         ar << fact_;
     }
@@ -259,6 +266,7 @@ private:
 
 	    std::string strs;
 	    ar >> strs;
+	    reporting::report(reporting::DEBUGING) << "lm_dlib_krls::load() : strs.length()=" << strs.length();
 	    std::stringstream sstr;
 	    sstr.str(strs);
 	    dlib::deserialize(kern_, sstr);

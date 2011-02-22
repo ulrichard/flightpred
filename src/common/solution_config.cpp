@@ -214,7 +214,7 @@ void solution_config::decode()
     features_desc_.clear();
 
 #if BOOST_VERSION >= 104300
-  #error will have to implement the parser with the new spirit
+  #error ToDo: implement the parser with the new spirit
 #else
 
     features_weather::feat_desc currfeat;
@@ -328,6 +328,8 @@ void solution_config::serialize(Archive &ar, const unsigned int version)
     ar & generation_;
     ar & site_name_;
     ar & solution_description_;
+    if(Archive::is_loading::value)
+         decode();
     ar & validation_error_;
     ar & train_time_;
     ar & train_time_prod_;
@@ -338,7 +340,9 @@ void solution_config::serialize(Archive &ar, const unsigned int version)
 
     if(Archive::is_loading::value)
     {
-         decode();
+        for(std::map<std::string, boost::shared_ptr<learning_machine> >::iterator it = learning_machines_.begin(); it != learning_machines_.end(); ++it)
+            report(DEBUGING) <<  "solution_config::serialize() " << it->first << "->main_metric()=" << it->second->main_metric();
+
 
          // insert or overwrite
 	    if(flightpred_db::connected())

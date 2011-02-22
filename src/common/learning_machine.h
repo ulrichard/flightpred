@@ -22,18 +22,16 @@ class learning_machine : public boost::noncopyable
 {
     friend class boost::serialization::access;
 public:
-    learning_machine(const std::string &pred_name)
-        : pred_name_(pred_name) { }
     virtual ~learning_machine() { }
 
     typedef std::vector<std::vector<double> > SampleType;
 
-    virtual void   train(const SampleType &samples, const std::vector<double> &labels) = 0;
-    virtual double eval(const std::vector<double> &sample) const = 0;
-    virtual void   write_to_db(const size_t conf_id) = 0;
-    virtual void   read_from_db(const size_t conf_id) = 0;
-    virtual void   write_to_stream(std::ostream &os) = 0;
-    virtual void   read_from_stream(std::istream &is) = 0;
+    virtual void        train(const SampleType &samples, const std::vector<double> &labels) = 0;
+    virtual double      eval(const std::vector<double> &sample) const = 0;
+    virtual void        write_to_db(const size_t conf_id) = 0;
+    virtual void        read_from_db(const size_t conf_id) = 0;
+    virtual int         main_metric() const = 0; // can be number of support vectors, number of neurons or whatever
+    virtual std::string description() const = 0;
 
 private:
     template<class Archive> void serialize(Archive &ar, const unsigned int version)
@@ -43,6 +41,8 @@ private:
 
 protected:
     learning_machine() { } // only for serialization of derived classes
+    explicit learning_machine(const std::string &pred_name)
+        : pred_name_(pred_name) { }
 
     const std::string pred_name_;
 };

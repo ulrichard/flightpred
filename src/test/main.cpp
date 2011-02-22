@@ -292,18 +292,31 @@ BOOST_AUTO_TEST_CASE(SerializeTrainedSolution)
     trainer.train(site_name, bgreg::from_string("2009-09-02"), bgreg::from_string("2009-09-05"), 1, vfigures);
 
     // check
-    pqxx::transaction<> trans2(flightpred_db::get_conn(), "SerializeTrainedSolution test");
-    pqxx::result res = trans2.exec("select num_flight, train_time_prod, num_samples_prod from trained_solutions where pred_site_id=4");
-    BOOST_REQUIRE_GE(res.size(), 1);
-    int oid_num_flight;
-    res[0][0].to(oid_num_flight);
-    BOOST_CHECK_GT(oid_num_flight, 0);
-    trans2.commit();
+    solution_manager mgr(site_name);
+    {
+        pqxx::transaction<> trans2(flightpred_db::get_conn(), "SerializeTrainedSolution test");
+        pqxx::result res = trans2.exec("select num_flight, train_time_prod, num_samples_prod from trained_solutions where pred_site_id=4");
+        BOOST_REQUIRE_GE(res.size(), 1);
+        int oid_num_flight;
+        res[0][0].to(oid_num_flight);
+        BOOST_CHECK_GT(oid_num_flight, 0);
+        trans2.commit();
+
+        std::auto_ptr<solution_config> sol = mgr.load_best_solution(true);
+        BOOST_CHECK_EQUAL(10, sol->get_generation());
+        BOOST_CHECK_EQUAL("Rothenflue", sol->get_site_name());
+        BOOST_CHECK_GE(sol->get_weather_feature_desc().size(), 100);
+        BOOST_CHECK_GE(sol->get_decision_function("num_flight")->main_metric(), 3);
+        BOOST_CHECK_GE(sol->get_decision_function("max_dist")->main_metric(), 3);
+        BOOST_CHECK_GE(sol->get_decision_function("avg_dist")->main_metric(), 3);
+        BOOST_CHECK_GE(sol->get_decision_function("max_dur")->main_metric(), 3);
+        BOOST_CHECK_GE(sol->get_decision_function("avg_dur")->main_metric(), 3);
+    }
 
     // export
     const bfs::path backup_dir("/tmp/flightpred_test");
     const solution_manager::BackupFormat bfmt = solution_manager::BAK_TEXT;
-    solution_manager mgr(site_name);
+
     mgr.export_solution(backup_dir, bfmt);
     BOOST_REQUIRE(bfs::exists(backup_dir / "Rothenflue.flightpred"));
 
@@ -317,11 +330,23 @@ BOOST_AUTO_TEST_CASE(SerializeTrainedSolution)
 
     // check
     pqxx::transaction<> trans4(flightpred_db::get_conn(), "SerializeTrainedSolution test");
-    res = trans4.exec("select num_flight, train_time_prod, num_samples_prod from trained_solutions where pred_site_id=4");
+    pqxx::result res = trans4.exec("select num_flight, train_time_prod, num_samples_prod from trained_solutions where pred_site_id=4");
     BOOST_REQUIRE_GE(res.size(), 1);
+    int oid_num_flight;
     res[0][0].to(oid_num_flight);
     BOOST_CHECK_GT(oid_num_flight, 0);
     trans4.commit();
+
+    std::auto_ptr<solution_config> sol = mgr.load_best_solution(true);
+    BOOST_CHECK_EQUAL(10, sol->get_generation());
+    BOOST_CHECK_EQUAL("Rothenflue", sol->get_site_name());
+    BOOST_CHECK_GE(sol->get_weather_feature_desc().size(), 100);
+    BOOST_CHECK_GE(sol->get_decision_function("num_flight")->main_metric(), 3);
+    BOOST_CHECK_GE(sol->get_decision_function("max_dist")->main_metric(), 3);
+    BOOST_CHECK_GE(sol->get_decision_function("avg_dist")->main_metric(), 3);
+    BOOST_CHECK_GE(sol->get_decision_function("max_dur")->main_metric(), 3);
+    BOOST_CHECK_GE(sol->get_decision_function("avg_dur")->main_metric(), 3);
+
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
