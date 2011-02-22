@@ -117,7 +117,7 @@ struct MyConfig
 #ifndef SKIP_FLPR_DB_SETUP
     ~MyConfig()
     {
-        std::stringstrm sstr;
+        std::stringstream sstr;
         sstr << "psql -e -a -c \"DROP DATABASE IF EXISTS " << dbname_ << "\"";
         int ret = system(sstr.str().c_str());
         std::cout << "dropping the db returned: " << ret;
