@@ -13,6 +13,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add option="-DSKIP_FLPR_DB_SETUP" />
 					<Add directory="../" />
 					<Add directory="../../3rd-party/ggl" />
 					<Add directory="../../3rd-party/dclib" />
@@ -69,6 +70,7 @@
 		<Unit filename="../common/reporter.cpp" />
 		<Unit filename="../common/solution_config.cpp" />
 		<Unit filename="../common/solution_manager.cpp" />
+		<Unit filename="../common/train_svm.cpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="serialization_test.cpp" />
 		<Extensions>

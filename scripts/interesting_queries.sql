@@ -9,5 +9,6 @@ from trained_solutions right outer join pred_sites on  trained_solutions.pred_si
 group by site_name, generation order by site_name, generation asc;
 
 
+select site_name, generation, configuration, num_flight, max_dist, avg_dist, max_dur, avg_dur, validation_error, train_time, train_time_prod, num_samples_prod, num_features from trained_solutions inner join pred_sites on trained_solutions.pred_site_id = pred_sites.pred_site_id where avg_dur >= 0 order by pred_sites.pred_site_id, generation;
 
 

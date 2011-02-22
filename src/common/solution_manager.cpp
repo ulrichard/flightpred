@@ -454,7 +454,7 @@ std::auto_ptr<solution_config> solution_manager::load_best_solution(const bool o
     std::stringstream sstr;
     sstr << "SELECT train_sol_id, configuration, validation_error, train_time, generation FROM trained_solutions WHERE ";
     if(onlyFullyTrained)
-        sstr << "num_samples_prod > 300 AND ";
+        sstr << "num_samples_prod > 3 AND ";
     if(maxTrainSec > 0.0)
         sstr << "train_time <= " << maxTrainSec << " AND ";
     sstr << "pred_site_id=" << pred_site_id_ << " ORDER BY validation_error ASC, generation DESC";
@@ -721,11 +721,18 @@ void solution_manager::do_import(ArchiveT& ia)
             continue;
         }
 
+        if(train_time_prod < 1e-10)
+            train_time_prod = 0.0;
+        if(num_samples > 100000)
+            num_samples = 0;
+
         sstr.str("");
         sstr << "INSERT INTO trained_solutions (pred_site_id, generation, configuration, validation_error, train_time, "
              << "train_time_prod, num_samples, num_samples_prod, num_features) VALUES "
              << "(" << site_id << ", " << generation << ", '" << config << "', " << validation_error << ", "
              << train_time << ", " << train_time_prod << ", " << num_samples << ", " << num_samples_prod << ", " << num_features << ")";
+        std::string msg(sstr.str());
+        report(DEBUGING) << msg;
         trans.exec(sstr.str());
     }
     trans.commit();

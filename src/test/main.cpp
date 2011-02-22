@@ -2,7 +2,11 @@
 #include "common/solution_config.h"
 #include "common/features_weather.h"
 #include "common/lm_svm_dlib.h"
+#include "common/grab_grib.h"
+#include "common/solution_manager.h"
+#include "common/train_svm.h"
 #include "common/GenGeomLibSerialize.h"
+#include "common/reporter.h"
 // ggl (boost sandbox)
 #include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost
@@ -16,6 +20,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
 
 #include <boost/lambda/bind.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
@@ -25,14 +30,106 @@
 #include <sstream>
 
 using namespace flightpred;
+using namespace flightpred::reporting;
 using namespace boost::unit_test;
 namespace bfs = boost::filesystem;
+namespace bgreg = boost::gregorian;
 using boost::geometry::point_ll_deg;
 using boost::geometry::latitude;
 using boost::geometry::longitude;
 using std::string;
 using std::vector;
 
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+struct MyConfig
+{
+    MyConfig()
+        : dbname_("flightpred_test")
+    {
+        const bfs::path scriptdir(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "scripts");
+        const bfs::path backupdir(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "backup");
+
+        ReportDispatcher::inst().add(new ListenerCout(), DEBUGING);
+
+#ifndef SKIP_FLPR_DB_SETUP
+        // set up the database
+        std::stringstream sstr;
+        sstr << "psql -e -a -c \"DROP DATABASE IF EXISTS " << dbname_ << "\"";
+        int ret = system(sstr.str().c_str());
+        std::cout << sstr.str() << " returned: " << ret << std::endl;
+
+        sstr.str("");
+        sstr << "createdb -e " << dbname_ << "";
+        ret = system(sstr.str().c_str());
+        std::cout << sstr.str() << " returned: " << ret << std::endl;
+
+        sstr.str("");
+        sstr << "createlang plpgsql " << dbname_ << "";
+        ret = system(sstr.str().c_str());
+        std::cout << sstr.str() << " returned: " << ret << std::endl;
+
+        sstr.str("");
+        sstr << "psql -e -a -d " << dbname_ << " -f /usr/share/postgresql/8.4/contrib/postgis-1.5/postgis.sql";
+        ret = system(sstr.str().c_str());
+        std::cout << sstr.str() << " returned: " << ret << std::endl;
+
+        sstr.str("");
+        sstr << "psql -e -a -d " << dbname_ << " -f /usr/share/postgresql/8.4/contrib/postgis-1.5/spatial_ref_sys.sql";
+        ret = system(sstr.str().c_str());
+        std::cout << sstr.str() << " returned: " << ret << std::endl;
+
+        sstr.str("");
+        sstr << "psql -e -a -d " << dbname_ << " -f " << (scriptdir / "create_flightpred_db.sql").external_file_string();
+        ret = system(sstr.str().c_str());
+        std::cout << sstr.str() << " returned: " << ret << std::endl;
+
+        // add some flights
+        sstr.str("");
+        sstr << "psql -e -a -d " << dbname_ << " -c \""
+             << "INSERT INTO pilots  (pilot_name, country) VALUES ('Richard Ulrich', 'CH');"
+             << "INSERT INTO sites   (pred_site_id, site_name, country) VALUES (4, 'Rothenflue', 'CH');"
+             << "INSERT INTO flights (pilot_id, contest_id, site_id, flight_date, distance, score, duration) VALUES (1, 1, 1, '2009-09-03', 52, 52, 65);"
+             << "INSERT INTO flights (pilot_id, contest_id, site_id, flight_date, distance, score, duration) VALUES (1, 1, 1, '2009-09-03', 25, 25, 30);"
+             << "INSERT INTO flights (pilot_id, contest_id, site_id, flight_date, distance, score, duration) VALUES (1, 1, 1, '2009-09-04', 48, 48, 130);"
+             << "INSERT INTO flights (pilot_id, contest_id, site_id, flight_date, distance, score, duration) VALUES (1, 1, 1, '2009-09-05', 37, 37, 99);"
+             << "\"";
+        ret = system(sstr.str().c_str());
+        std::cout << sstr.str() << " returned: " << ret << std::endl;
+
+        // download weather data
+        const char* user = getenv("USER");
+        const string db_conn_str = "host=localhost port=5432 dbname=" + dbname_ + " user=flightpred password=flightpred";
+        flightpred_db::init(db_conn_str);
+
+        grib_grabber_gfs_past gr(50, true);
+        gr.grab_grib(bgreg::from_string("2009-09-01"), bgreg::from_string("2009-09-07"));
+
+#else
+
+        const char* user = getenv("USER");
+        const string db_conn_str = "host=localhost port=5432 dbname=" + dbname_ + " user=flightpred password=flightpred";
+        flightpred_db::init(db_conn_str);
+
+#endif // SKIP_FLPR_DB_SETUP
+
+    }
+
+#ifndef SKIP_FLPR_DB_SETUP
+    ~MyConfig()
+    {
+        std::stringstrm sstr;
+        sstr << "psql -e -a -c \"DROP DATABASE IF EXISTS " << dbname_ << "\"";
+        int ret = system(sstr.str().c_str());
+        std::cout << "dropping the db returned: " << ret;
+    }
+#endif // SKIP_FLPR_DB_SETUP
+
+private:
+    const std::string dbname_;
+};
+
+
+BOOST_GLOBAL_FIXTURE(MyConfig);
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 class Fruit
 {
@@ -58,7 +155,7 @@ BOOST_AUTO_TEST_CASE(SolutionParser_DLIB_KRLS)
     BOOST_CHECK_EQUAL("DLIB_KRLS(RBF)", solconf.get_algorithm_name(false));
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-BOOST_AUTO_TEST_CASE(SolutionSerialize)
+BOOST_AUTO_TEST_CASE(SerializeSolutionConfiguration)
 {
     const string soldescr("DLIB_KRLS(RBF(0.01 )1e-05)   FEATURE(GFS -12:00:00 POINT(8 46) 0 PRES) FEATURE(GFS -12:00:00 POINT(8 47) 0 PRES)");
     const solution_config solconf("Rothenflue", soldescr, 0);
@@ -131,6 +228,100 @@ BOOST_AUTO_TEST_CASE(SolutionSerialize)
 
     }
 
+
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+BOOST_AUTO_TEST_CASE(SerializeTrainedSolution)
+{
+    const std::string site_name("Rothenflue");
+    std::stringstream sstr;
+
+    // clear the trained_solutions
+    pqxx::transaction<> trans1(flightpred_db::get_conn(), "SerializeTrainedSolution test");
+    trans1.exec("delete from trained_solutions where pred_site_id=4");
+
+    // insert a solution
+    sstr << "insert into trained_solutions (pred_site_id, configuration, validation_error, train_time, generation, num_features) values ("
+         << "4, 'DLIB_RVM(RBF(0.02 ))  "
+         << "FEATURE(GFS -12:00:00 POINT(6 47) 0 PRES) FEATURE(GFS -12:00:00 POINT(7 46) 0 PRES) FEATURE(GFS -12:00:00 POINT(7 47) 0 PRES) "
+         << "FEATURE(GFS -12:00:00 POINT(8 46) 0 PRES) FEATURE(GFS -12:00:00 POINT(8 47) 0 PRES) FEATURE(GFS -12:00:00 POINT(8 48) 0 PRES) "
+         << "FEATURE(GFS -12:00:00 POINT(9 45) 0 PRES) FEATURE(GFS -12:00:00 POINT(9 46) 0 PRES) FEATURE(GFS -12:00:00 POINT(9 47) 0 PRES) "
+         << "FEATURE(GFS -12:00:00 POINT(9 48) 0 PRES) FEATURE(GFS -12:00:00 POINT(9 49) 0 PRES) FEATURE(GFS -12:00:00 POINT(10 46) 0 PRES) "
+         << "FEATURE(GFS -12:00:00 POINT(10 47) 0 PRES) FEATURE(GFS -12:00:00 POINT(10 48) 0 PRES) FEATURE(GFS -12:00:00 POINT(11 46) 0 PRES) "
+         << "FEATURE(GFS -12:00:00 POINT(11 47) 0 PRES) FEATURE(GFS -12:00:00 POINT(11 48) 0 PRES) FEATURE(GFS -06:00:00 POINT(6 47) 0 PRES) "
+         << "FEATURE(GFS -06:00:00 POINT(7 46) 0 PRES) FEATURE(GFS -06:00:00 POINT(7 47) 0 PRES) FEATURE(GFS -06:00:00 POINT(7 48) 0 PRES) "
+         << "FEATURE(GFS -06:00:00 POINT(8 46) 0 PRES) FEATURE(GFS -06:00:00 POINT(8 47) 0 PRES) FEATURE(GFS -06:00:00 POINT(8 48) 0 PRES) "
+         << "FEATURE(GFS -06:00:00 POINT(9 45) 0 PRES) FEATURE(GFS -06:00:00 POINT(9 46) 0 PRES) FEATURE(GFS -06:00:00 POINT(9 47) 0 PRES) "
+         << "FEATURE(GFS -06:00:00 POINT(9 48) 0 PRES) FEATURE(GFS -06:00:00 POINT(9 49) 0 PRES) FEATURE(GFS -06:00:00 POINT(10 46) 0 PRES) "
+         << "FEATURE(GFS -06:00:00 POINT(10 47) 0 PRES) FEATURE(GFS -06:00:00 POINT(10 48) 0 PRES) FEATURE(GFS -06:00:00 POINT(11 46) 0 PRES) "
+         << "FEATURE(GFS -06:00:00 POINT(11 47) 0 PRES) FEATURE(GFS -06:00:00 POINT(11 48) 0 PRES) FEATURE(GFS 00:00:00 POINT(6 47) 0 PRES) "
+         << "FEATURE(GFS 00:00:00 POINT(7 46) 0 PRES) FEATURE(GFS 00:00:00 POINT(7 47) 0 PRES) FEATURE(GFS 00:00:00 POINT(7 48) 0 PRES) "
+         << "FEATURE(GFS 00:00:00 POINT(8 46) 0 PRES) FEATURE(GFS 00:00:00 POINT(8 47) 0 PRES) FEATURE(GFS 00:00:00 POINT(8 48) 0 PRES) "
+         << "FEATURE(GFS 00:00:00 POINT(9 45) 0 PRES) FEATURE(GFS 00:00:00 POINT(9 46) 0 PRES) FEATURE(GFS 00:00:00 POINT(9 47) 0 PRES) "
+         << "FEATURE(GFS 00:00:00 POINT(9 48) 0 PRES) FEATURE(GFS 00:00:00 POINT(9 49) 0 PRES) FEATURE(GFS 00:00:00 POINT(10 47) 0 PRES) "
+         << "FEATURE(GFS 00:00:00 POINT(10 48) 0 PRES) FEATURE(GFS 00:00:00 POINT(11 46) 0 PRES) FEATURE(GFS 00:00:00 POINT(11 47) 0 PRES) "
+         << "FEATURE(GFS 00:00:00 POINT(11 48) 0 PRES) FEATURE(GFS 06:00:00 POINT(6 47) 0 PRES) FEATURE(GFS 06:00:00 POINT(7 46) 0 PRES) "
+         << "FEATURE(GFS 06:00:00 POINT(7 47) 0 PRES) FEATURE(GFS 06:00:00 POINT(7 48) 0 PRES) FEATURE(GFS 06:00:00 POINT(8 46) 0 PRES) "
+         << "FEATURE(GFS 06:00:00 POINT(8 47) 0 PRES) FEATURE(GFS 06:00:00 POINT(8 48) 0 PRES) FEATURE(GFS 06:00:00 POINT(9 45) 0 PRES) "
+         << "FEATURE(GFS 06:00:00 POINT(9 46) 0 PRES) FEATURE(GFS 06:00:00 POINT(9 47) 0 PRES) FEATURE(GFS 06:00:00 POINT(9 48) 0 PRES) "
+         << "FEATURE(GFS 06:00:00 POINT(9 49) 0 PRES) FEATURE(GFS 06:00:00 POINT(10 46) 0 PRES) FEATURE(GFS 06:00:00 POINT(10 47) 0 PRES) "
+         << "FEATURE(GFS 06:00:00 POINT(10 48) 0 PRES) FEATURE(GFS 06:00:00 POINT(11 46) 0 PRES) FEATURE(GFS 06:00:00 POINT(11 47) 0 PRES) "
+         << "FEATURE(GFS 06:00:00 POINT(11 48) 0 PRES) FEATURE(GFS 12:00:00 POINT(6 47) 0 PRES) FEATURE(GFS 12:00:00 POINT(7 46) 0 PRES) "
+         << "FEATURE(GFS 12:00:00 POINT(7 47) 0 PRES) FEATURE(GFS 12:00:00 POINT(7 48) 0 PRES) FEATURE(GFS 12:00:00 POINT(8 46) 0 PRES) "
+         << "FEATURE(GFS 12:00:00 POINT(8 47) 0 PRES) FEATURE(GFS 12:00:00 POINT(8 48) 0 PRES) FEATURE(GFS 12:00:00 POINT(9 45) 0 PRES) "
+         << "FEATURE(GFS 12:00:00 POINT(9 46) 0 PRES) FEATURE(GFS 12:00:00 POINT(9 47) 0 PRES) FEATURE(GFS 12:00:00 POINT(9 48) 0 PRES) "
+         << "FEATURE(GFS 12:00:00 POINT(9 49) 0 PRES) FEATURE(GFS 12:00:00 POINT(10 46) 0 PRES) FEATURE(GFS 12:00:00 POINT(10 47) 0 PRES) "
+         << "FEATURE(GFS 12:00:00 POINT(10 48) 0 PRES) FEATURE(GFS 12:00:00 POINT(11 46) 0 PRES) FEATURE(GFS 12:00:00 POINT(11 47) 0 PRES) "
+         << "FEATURE(GFS 12:00:00 POINT(11 48) 0 PRES) FEATURE(GFS 18:00:00 POINT(6 47) 0 PRES) FEATURE(GFS 18:00:00 POINT(7 46) 0 PRES) "
+         << "FEATURE(GFS 18:00:00 POINT(7 47) 0 PRES) FEATURE(GFS 18:00:00 POINT(7 48) 0 PRES) FEATURE(GFS 18:00:00 POINT(8 46) 0 PRES) "
+         << "FEATURE(GFS 18:00:00 POINT(8 47) 0 PRES) FEATURE(GFS 18:00:00 POINT(9 45) 0 PRES) FEATURE(GFS 18:00:00 POINT(9 46) 0 PRES) "
+         << "FEATURE(GFS 18:00:00 POINT(9 47) 0 PRES) FEATURE(GFS 18:00:00 POINT(9 48) 0 PRES) FEATURE(GFS 18:00:00 POINT(9 49) 0 PRES) "
+         << "FEATURE(GFS 18:00:00 POINT(10 46) 0 PRES) FEATURE(GFS 18:00:00 POINT(10 47) 0 PRES) FEATURE(GFS 18:00:00 POINT(10 48) 0 PRES)', "
+         << 122.157 << ", " << 0.13 << ", " << 10 << ", " << 52 << ")";
+    trans1.exec(sstr.str());
+    trans1.commit();
+
+    // train
+    vector<string> vfigures;
+    vfigures.push_back("num_flight");
+    vfigures.push_back("max_dist");
+    vfigures.push_back("avg_dist");
+    vfigures.push_back("max_dur");
+    vfigures.push_back("avg_dur");
+    train_svm trainer;
+    trainer.train(site_name, bgreg::from_string("2009-09-02"), bgreg::from_string("2009-09-05"), 1, vfigures);
+
+    // check
+    pqxx::transaction<> trans2(flightpred_db::get_conn(), "SerializeTrainedSolution test");
+    pqxx::result res = trans2.exec("select num_flight, train_time_prod, num_samples_prod from trained_solutions where pred_site_id=4");
+    BOOST_REQUIRE_GE(res.size(), 1);
+    int oid_num_flight;
+    res[0][0].to(oid_num_flight);
+    BOOST_CHECK_GT(oid_num_flight, 0);
+    trans2.commit();
+
+    // export
+    const bfs::path backup_dir("/tmp/flightpred_test");
+    const solution_manager::BackupFormat bfmt = solution_manager::BAK_TEXT;
+    solution_manager mgr(site_name);
+    mgr.export_solution(backup_dir, bfmt);
+    BOOST_REQUIRE(bfs::exists(backup_dir / "Rothenflue.flightpred"));
+
+    //  clear from the db
+    pqxx::transaction<> trans3(flightpred_db::get_conn(), "SerializeTrainedSolution test");
+    trans3.exec("delete from trained_solutions where pred_site_id=4");
+    trans3.commit();
+
+    // import
+    mgr.import_solution(backup_dir);
+
+    // check
+    pqxx::transaction<> trans4(flightpred_db::get_conn(), "SerializeTrainedSolution test");
+    res = trans4.exec("select num_flight, train_time_prod, num_samples_prod from trained_solutions where pred_site_id=4");
+    BOOST_REQUIRE_GE(res.size(), 1);
+    res[0][0].to(oid_num_flight);
+    BOOST_CHECK_GT(oid_num_flight, 0);
+    trans4.commit();
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
