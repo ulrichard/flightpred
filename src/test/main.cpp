@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(SerializeTrainedSolution)
     trans3.commit();
 
     // import
-    mgr.import_solution(backup_dir);
+    solution_manager::import_solution(backup_dir, site_name);
 
     // check
     pqxx::transaction<> trans4(flightpred_db::get_conn(), "SerializeTrainedSolution test");
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(SerializeTrainedSolution)
 
     std::auto_ptr<solution_config> sol = mgr.load_best_solution(true);
     BOOST_CHECK_EQUAL(10, sol->get_generation());
-    BOOST_CHECK_EQUAL("Rothenflue", sol->get_site_name());
+    BOOST_CHECK_EQUAL(site_name, sol->get_site_name());
     BOOST_CHECK_GE(sol->get_weather_feature_desc().size(), 100);
     BOOST_CHECK_GE(sol->get_decision_function("num_flight")->main_metric(), 3);
     BOOST_CHECK_GE(sol->get_decision_function("max_dist")->main_metric(), 3);
@@ -347,6 +347,37 @@ BOOST_AUTO_TEST_CASE(SerializeTrainedSolution)
     BOOST_CHECK_GE(sol->get_decision_function("max_dur")->main_metric(), 3);
     BOOST_CHECK_GE(sol->get_decision_function("avg_dur")->main_metric(), 3);
 
+
+}
+/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
+BOOST_AUTO_TEST_CASE(ImportUnknownSolution)
+{
+    const std::string site_name("Emberger Alm");
+    const bfs::path backupdir(bfs::path(__FILE__).parent_path().parent_path().parent_path() / "backup");
+    std::stringstream sstr;
+
+    solution_manager::import_solution(backupdir, site_name);
+
+    // check
+    pqxx::transaction<> trans4(flightpred_db::get_conn(), "ImportUnknownSolution test");
+    pqxx::result res = trans4.exec("select num_flight, train_time_prod, num_samples_prod from trained_solutions inner join pred_sites "
+                                    "on trained_solutions.pred_site_id = pred_sites.pred_site_id where site_name='" + site_name + "' order by train_time_prod desc");
+    BOOST_REQUIRE_GE(res.size(), 1);
+    int oid_num_flight;
+    res[0][0].to(oid_num_flight);
+    BOOST_CHECK_NE(oid_num_flight, 0);
+    trans4.commit();
+
+    solution_manager mgr(site_name);
+    std::auto_ptr<solution_config> sol = mgr.load_best_solution(true);
+    BOOST_CHECK_EQUAL(0, sol->get_generation());
+    BOOST_CHECK_EQUAL(site_name, sol->get_site_name());
+    BOOST_CHECK_EQUAL(sol->get_weather_feature_desc().size(), 528);
+    BOOST_CHECK_EQUAL(sol->get_decision_function("num_flight")->main_metric(), 34);
+    BOOST_CHECK_EQUAL(sol->get_decision_function("max_dist")->main_metric(), 41);
+    BOOST_CHECK_EQUAL(sol->get_decision_function("avg_dist")->main_metric(), 42);
+    BOOST_CHECK_EQUAL(sol->get_decision_function("max_dur")->main_metric(), 49);
+    BOOST_CHECK_EQUAL(sol->get_decision_function("avg_dur")->main_metric(), 47);
 
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

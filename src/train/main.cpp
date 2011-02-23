@@ -261,16 +261,10 @@ int main(int argc, char* argv[])
             bfs::path backup_dir(backup_directory);
 
             if(name.length())
-            {
-                solution_manager mgr(name);
-                mgr.import_solution(backup_dir);
-            }
+                solution_manager::import_solution(backup_dir, name);
             else
                 BOOST_FOREACH(const string &site_name, site_names)
-                {
-                    solution_manager mgr(site_name);
-                    mgr.import_solution(backup_dir);
-                }
+                    solution_manager::import_solution(backup_dir, site_name);
             show_help_msg = false;
         }
 

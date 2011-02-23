@@ -34,7 +34,7 @@ public:
         BAK_BIN_COMP
     };
     void export_solution(const boost::filesystem::path &backup_dir, const BackupFormat bfmt);
-    void import_solution(const boost::filesystem::path &backup_dir);
+    static void import_solution(const boost::filesystem::path &backup_dir, const std::string &site_name);
 
     static const std::set<boost::gregorian::date> get_ignored_days(bool onlyConfirmed);
 
@@ -50,7 +50,7 @@ private:
     template<class ArchiveT>
     void  do_export(ArchiveT& oa);
     template<class ArchiveT>
-    void  do_import(ArchiveT& ia);
+    static void do_import(ArchiveT& ia, const std::string &site_name);
 
 
     const std::string site_name_;

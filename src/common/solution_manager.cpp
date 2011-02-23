@@ -591,9 +591,9 @@ void solution_manager::do_export(ArchiveT& oa)
 	oa << sc;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void solution_manager::import_solution(const bfs::path &backup_dir)
+void solution_manager::import_solution(const bfs::path& backup_dir, const std::string& site_name)
 {
-    bfs::path infile(backup_dir / (site_name_ + ".flightpred"));
+    bfs::path infile(backup_dir / (site_name + ".flightpred"));
     if(!bfs::exists(infile))
         throw std::runtime_error("file not found : " + infile.string());
     bfs::ifstream ifs(infile, std::ios_base::in | std::ios_base::binary);
@@ -606,7 +606,7 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
     if(nbfmt == BAK_TEXT)
     {
         boost::archive::text_iarchive ia(ifs);
-        do_import(ia);
+        do_import(ia, site_name);
     }
     else if(nbfmt == BAK_TEXT_COMP)
     {
@@ -614,12 +614,12 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
         in.push(boost::iostreams::zlib_decompressor());
         in.push(ifs);
         boost::archive::text_iarchive ia(in);
-        do_import(ia);
+        do_import(ia, site_name);
     }
     else if(nbfmt == BAK_BIN)
     {
         boost::archive::binary_iarchive ia(ifs);
-        do_import(ia);
+        do_import(ia, site_name);
     }
     else if(nbfmt == BAK_BIN_COMP)
     {
@@ -627,20 +627,20 @@ void solution_manager::import_solution(const bfs::path &backup_dir)
         in.push(boost::iostreams::gzip_decompressor());
         in.push(ifs);
         boost::archive::binary_iarchive ia(in);
-        do_import(ia);
+        do_import(ia, site_name);
     }
 
     report(INFO) << "solution_config sucesfully imported from : " << infile.string();
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 template<class ArchiveT>
-void solution_manager::do_import(ArchiveT& ia)
+void solution_manager::do_import(ArchiveT& ia, const std::string &site_name)
 {
     // read class state from archive
-    string site_name;
-	ia >> site_name;
-	if(site_name != site_name_)
-        throw std::runtime_error("wrong site : " + site_name + " != " + site_name_);
+    string site_nam;
+	ia >> site_nam;
+	if(site_name != site_nam)
+        throw std::runtime_error("wrong site : " + site_name + " != " + site_nam);
 
     string country;
     ia >> country;
@@ -725,6 +725,8 @@ void solution_manager::do_import(ArchiveT& ia)
             train_time_prod = 0.0;
         if(num_samples > 100000)
             num_samples = 0;
+        if(num_samples_prod > 100000000)
+            num_samples_prod = 900;
 
         sstr.str("");
         sstr << "INSERT INTO trained_solutions (pred_site_id, generation, configuration, validation_error, train_time, "
