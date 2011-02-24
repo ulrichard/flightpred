@@ -44,7 +44,7 @@ vector<string> get_site_names()
     pqxx::transaction<> trans(flightpred_db::get_conn(), "get site names");
 
     std::stringstream sstr;
-    sstr << "SELECT site_name FROM pred_sites";
+    sstr << "SELECT site_name FROM pred_sites order by pred_site_id";
     pqxx::result res = trans.exec(sstr.str());
     for(size_t i=0; i<res.size(); ++i)
     {
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
         string name, position, start_date, end_date, pred_model, backup_fmt, backup_directory(getenv("HOME") ? getenv("HOME") : "/tmp");
         double area_radius = 5000.0, mutation_rate, max_eval_time = 50.0;
         size_t download_pack = 100, iterations;
-        string db_host, db_name, db_user, db_password, figures;
+        string db_host, db_name, db_user, db_password, figures, loglvl;
         size_t db_port;
 
         bgreg::date dtend(bgreg::day_clock::local_day());
@@ -74,14 +74,9 @@ int main(int argc, char* argv[])
 
         std::stringstream sstr;
         std::copy(flightpred_globals::pred_values.begin(), flightpred_globals::pred_values.end(), std::ostream_iterator<string>(sstr, ","));
-        figures = sstr.str();
-        figures = figures.substr(0, figures.length() - 1);
+        figures = sstr.str().substr(0, figures.length() - 1);
 
-        ReportDispatcher::inst().add(new ListenerCout(), reporting::DEBUGING);
-        bfs::path error_file(bfs::initial_path() / "error.log");
-        ReportDispatcher::inst().add(new ListenerFile(error_file), reporting::ERROR);
-
-        // Declare the supported options.
+        // Declare the supported commandline options.
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help",		       "produce help message")
@@ -109,6 +104,7 @@ int main(int argc, char* argv[])
             ("max-eval-time", po::value<double>(&max_eval_time)->default_value(max_eval_time), "use only solution with a maximum training time of x[sec] during evolution")
             ("backup-dir",    po::value<string>(&backup_directory)->default_value(backup_directory), "the directory with the saved solutions")
             ("backup-fmt",    po::value<string>(&backup_fmt)->default_value("BAK_TEXT"),  "the format of the backup (BAK_TEXT BAK_TEXT_COMP BAK_BIN BAK_BIN_COMP)")
+            ("log-lvl",       po::value<string>(&loglvl)->default_value("INFO"),          "the log level for stdout (DEBUGING VERBOSE INFO WARN ERROR SEVERE)")
             ("db-host",       po::value<string>(&db_host)->default_value("localhost"),    "name or ip of the database server")
             ("db-port",       po::value<size_t>(&db_port)->default_value(5432),           "port of the database server")
             ("db-name",       po::value<string>(&db_name)->default_value("flightpred"),   "name of the database")
@@ -118,6 +114,11 @@ int main(int argc, char* argv[])
         po::variables_map vm;
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
+
+        const reporting::Level rptlvl = reporting::ParseLevel(loglvl, reporting::INFO);
+        ReportDispatcher::inst().add(new ListenerCout(), rptlvl);
+        bfs::path error_file(bfs::initial_path() / "error.log");
+        ReportDispatcher::inst().add(new ListenerFile(error_file), reporting::ERROR);
 
         dtstart = bgreg::from_string(start_date);
         dtend   = bgreg::from_string(end_date);

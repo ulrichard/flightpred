@@ -42,7 +42,7 @@ while($day = pg_fetch_assoc($days))
 	$first_day = false;
 
 	// Performing SQL query
-	$query = 'select pred_site_id, site_name, country, astext(location) as loc from pred_sites;';
+	$query = 'select pred_site_id, site_name, country, astext(location) as loc from pred_sites order by pred_site_id asc;';
 	$sites = pg_query($query) or die('Query failed: ' . pg_last_error());
 
 	$first_site = true;

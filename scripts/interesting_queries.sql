@@ -1,5 +1,5 @@
 select site_name, country, pred_site_id, count(flight_id) as flights, sum(distance) as sum_dist, AsText(location) 
-from sites inner join flights on sites.site_id = flights.site_id 
+from sites right outer join flights on sites.site_id = flights.site_id 
 group by site_name, country, pred_site_id, location 
 order by sum_dist desc;
 

@@ -26,6 +26,8 @@ enum Level
     ERROR,
     SEVERE
 };
+
+Level ParseLevel(const std::string& lvlstr, const Level fallback);
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /** @brief abstract interface */
 class ListenerBase
@@ -112,7 +114,7 @@ private:
     boost::filesystem::ofstream ofs_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-} // namespace
-} // namespace
+} // namespace reporting
+} // namespace flightpred
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 #endif // REPORTER_H_INCLUDED

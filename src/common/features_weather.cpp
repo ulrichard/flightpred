@@ -30,6 +30,7 @@
 #include <boost/random.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/timer.hpp>
 // standard library
 #include <vector>
 #include <map>
@@ -290,7 +291,9 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
             sstr << "ST_GeomFromText('" << boost::geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
         }
         sstr << ")";
+        boost::timer btim;
         pqxx::result res = trans.exec(sstr.str());
+        report(DEBUGING) << "SQL query \"" << sstr.str() << "\"  -> returned " << res.size() << " records in " << btim.elapsed() << " sec";
         if(!res.size())
             throw std::runtime_error("no weather features found.");
 
