@@ -34,9 +34,8 @@ build-stamp: configure-stamp
 
 clean: 
 
-# this is an attempt to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
-	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),no)
-
+# this is an attempt (hack) to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
+	ifneq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
 		sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
 				-e 's/libboost-program-options-dev/libboost-program-options1.42-dev/' \
 				-e 's/libboost-date-time-dev/libboost-date-time1.42-dev/' \
@@ -48,7 +47,6 @@ clean:
 				-e 's/libboost-test-dev/libboost-test1.42-dev/' \
 				-e 's/postgresql-contrib-8.4/postgresql-contrib-8.3/' \
 			$(CURDIR)/debian/control
-
 	endif
 
 	dh_testdir
@@ -118,7 +116,7 @@ binary-arch: build install
 	else
 		DEPENDS=postgresql-contrib-8.3, postgresql-8.3-postgis
 	endif
-	dh_gencontrol -- -Vdist:Depends='$(BUILDDEP)'
+	dh_gencontrol -- -Vdist:Depends='$(DEPENDS)'
 	dh_md5sums
 	dh_builddeb
 

@@ -7,7 +7,7 @@ standards-Version: 3.8.1.0
 Homepage: http://sourceforge.net/projects/flightpred
 
 Package: flightpred
-Architecture: i386 amd64
+Architecture: i386 amd64 armel
 Essential: no
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${dist:Depends}, apache2, libapache2-mod-fastcgi, adduser, postgis, xml-twig-tools, php5-pgsql, libapache2-mod-php5
 Description: Free flight prediction system to forecast good days and locations for cross country flights
