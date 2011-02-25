@@ -1,3 +1,16 @@
+flightpred (0.0.17~maverick) maverick; urgency=low
+
+  * added a new commandline option to choose the log level for stdout.
+  * Enabled importing of solutions from previously unknown sites.
+  * Fixed a bug that prevented successful import of trained solutions.
+  * Added some unit tests for import and export.
+  * Added a timestamp to the forecast xml.
+  * Normalizing the strings from the json flight import from xcontest.org
+  * Parsing the flight duration from the json file from xcontest.org
+  * Added some backup format options for binary/text and compressed/uncompressed streams.
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Fri,  25 Feb 2011 20:51:00 +0200
+
 flightpred (0.0.16~maverick) maverick; urgency=low
 
   * first build for maverick

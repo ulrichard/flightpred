@@ -1,6 +1,6 @@
 #!/bin/sh
 # build a debian sourcepackage and upload it to the launchpad ppa
-FLIGHTPREDVERSIONSTR=0.0.16~maverick
+FLIGHTPREDVERSIONSTR=0.0.17~maverick
 export GPGKEY=DA94BB53
 export DEBEMAIL="richi@paraeasy.ch"
 export DEBFULLNAME="Richard Ulrich"
