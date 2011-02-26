@@ -15,12 +15,14 @@ rm -r 3rd-party/dclib/docs/*
 rm -r 3rd-party/dclib/examples/*
 rm -r 3rd-party/ggl/libs/*
 rm -r 3rd-party/ggl/other/*
-#ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
+ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
   dpkg-buildpackage -rfakeroot -S
-#else
-#  dpkg-buildpackage -rfakeroot -S -d # injecting different package dependencies after the check
-#endif
-cd ..
-rm -r flightpred-$FLIGHTPREDVERSIONSTR
-dput ppa:richi-paraeasy/ppa ./flightpred_${FLIGHTPREDVERSIONSTR}_source.changes
+  cd ..
+  rm -r flightpred-$FLIGHTPREDVERSIONSTR
+  dput ppa:richi-paraeasy/ppa ./flightpred_${FLIGHTPREDVERSIONSTR}_source.changes
+else
+  dpkg-buildpackage -rfakeroot -d # injecting different package dependencies after the check
+  cd ..
+  rm -r flightpred-$FLIGHTPREDVERSIONSTR
+endif
 killall -q gpg-agent
