@@ -15,14 +15,23 @@ rm -r 3rd-party/dclib/docs/*
 rm -r 3rd-party/dclib/examples/*
 rm -r 3rd-party/ggl/libs/*
 rm -r 3rd-party/ggl/other/*
-ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
-  dpkg-buildpackage -rfakeroot -S
-  cd ..
-  rm -r flightpred-$FLIGHTPREDVERSIONSTR
-  dput ppa:richi-paraeasy/ppa ./flightpred_${FLIGHTPREDVERSIONSTR}_source.changes
+if [ -e /etc/dpkg/origins/default] then
+	ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
+		# we're on ubuntu. Make a source package and upload to the launchpad ppa
+		dpkg-buildpackage -rfakeroot -S
+		cd ..
+		rm -r flightpred-$FLIGHTPREDVERSIONSTR
+		dput ppa:richi-paraeasy/ppa ./flightpred_${FLIGHTPREDVERSIONSTR}_source.changes
+	else
+		# we're probably on squeeze. Substitute some variables and make a binary package
+		dpkg-buildpackage -rfakeroot -d # injecting different package dependencies after the check
+		cd ..
+		rm -r flightpred-$FLIGHTPREDVERSIONSTR
+	endif
 else
-  dpkg-buildpackage -rfakeroot -d # injecting different package dependencies after the check
-  cd ..
-  rm -r flightpred-$FLIGHTPREDVERSIONSTR
-endif
+	# we're probably on lenny. Substitute some variables and make a binary package
+	dpkg-buildpackage -rfakeroot -d # injecting different package dependencies after the check
+	cd ..
+	rm -r flightpred-$FLIGHTPREDVERSIONSTR
+fi
 killall -q gpg-agent
