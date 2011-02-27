@@ -10,9 +10,7 @@
 #export DH_VERBOSE=1
 
 
-if test -e /etc/dpkg/origins/default; \
-    then HASDPKVENDOR=TRUE \
-fi
+
 
 
 configure: configure-stamp
@@ -38,6 +36,9 @@ build-stamp: configure-stamp
 clean: 
 
 # this is an attempt (hack) to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
+    if test -e /etc/dpkg/origins/default; then \
+        HASDPKVENDOR=TRUE \
+    fi
     ifndef HASDPKVENDOR
 		# we're probably on lenny
 		sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
@@ -115,6 +116,9 @@ binary-arch: build install
 	dh_fixperms
 	dh_installdeb
 	# this is an attempt to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
+    if test -e /etc/dpkg/origins/default; then \
+        HASDPKVENDOR=TRUE \
+    fi
     ifdef HASDPKVENDOR
         ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
 		    dh_gencontrol -- -Vdist:Depends="postgresql-contrib-8.4, postgresql-8.4-postgis"
