@@ -36,22 +36,22 @@ build-stamp: configure-stamp
 clean: 
 
 # this is an attempt (hack) to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
-    if test -e /etc/dpkg/origins/default; then \
+    if [ -e /etc/dpkg/origins/default ] ; then \
         HASDPKVENDOR=TRUE \
     fi
     ifndef HASDPKVENDOR
 		# we're probably on lenny
-		sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
-				-e 's/libboost-program-options-dev/libboost-program-options1.42-dev/' \
-				-e 's/libboost-date-time-dev/libboost-date-time1.42-dev/' \
-				-e 's/libboost-signals-dev/libboost-signals1.42-dev/' \
-				-e 's/libboost-thread-dev/libboost-thread1.42-dev/' \
-				-e 's/libboost-system-dev/libboost-system1.42-dev/' \
-				-e 's/libboost-filesystem-dev/libboost-filesystem1.42-dev/' \
-				-e 's/libboost-serialization-dev/libboost-serialization1.42-dev/' \
-				-e 's/libboost-test-dev/libboost-test1.42-dev/' \
-				-e 's/postgresql-contrib-8.4/postgresql-contrib-8.3/' \
-			$(CURDIR)/debian/control
+        sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
+                -e 's/libboost-program-options-dev/libboost-program-options1.42-dev/' \
+                -e 's/libboost-date-time-dev/libboost-date-time1.42-dev/' \
+                -e 's/libboost-signals-dev/libboost-signals1.42-dev/' \
+                -e 's/libboost-thread-dev/libboost-thread1.42-dev/' \
+                -e 's/libboost-system-dev/libboost-system1.42-dev/' \
+                -e 's/libboost-filesystem-dev/libboost-filesystem1.42-dev/' \
+                -e 's/libboost-serialization-dev/libboost-serialization1.42-dev/' \
+                -e 's/libboost-test-dev/libboost-test1.42-dev/' \
+                -e 's/postgresql-contrib-8.4/postgresql-contrib-8.3/' \
+            $(CURDIR)/debian/control
     endif
 
 	dh_testdir
