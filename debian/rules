@@ -40,7 +40,7 @@ clean:
         HASDPKVENDOR=TRUE \
     fi
     ifndef HASDPKVENDOR
-		# we're probably on lenny
+        # we're probably on lenny
         sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
                 -e 's/libboost-program-options-dev/libboost-program-options1.42-dev/' \
                 -e 's/libboost-date-time-dev/libboost-date-time1.42-dev/' \
