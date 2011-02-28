@@ -9,9 +9,20 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# this is an attempt (hack) to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
+if [ -e /etc/dpkg/origins/default ] then \
+    HASDPKVENDOR=TRUE \
+fi
 
-
-
+ifdef HASDPKVENDOR
+    ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
+	    DISTDEPENDS = -Vdist:Depends="postgresql-contrib-8.4, postgresql-8.4-postgis"
+    else
+        DISTDEPENDS = -Vdist:Depends="postgresql-contrib-8.3, postgresql-8.3-postgis"
+    endif
+else
+    DISTDEPENDS = -Vdist:Depends="postgresql-contrib-8.3, postgresql-8.3-postgis"
+endif
 
 configure: configure-stamp
 configure-stamp:
@@ -36,13 +47,10 @@ build-stamp: configure-stamp
 clean: 
 
 # this is an attempt (hack) to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
-    if [ -e /etc/dpkg/origins/default ] ; then \
-        HASDPKVENDOR=TRUE \
-    fi
+    
     ifndef HASDPKVENDOR
-        # we're probably on lenny
-        sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
-                -e 's/libboost-program-options-dev/libboost-program-options1.42-dev/' \
+		sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
+               -e 's/libboost-program-options-dev/libboost-program-options1.42-dev/' \
                 -e 's/libboost-date-time-dev/libboost-date-time1.42-dev/' \
                 -e 's/libboost-signals-dev/libboost-signals1.42-dev/' \
                 -e 's/libboost-thread-dev/libboost-thread1.42-dev/' \
@@ -114,20 +122,8 @@ binary-arch: build install
 	dh_makeshlibs -pflightpred -V'flightpred (>= 0.0.17)'
 	dh_shlibdeps -a
 	dh_fixperms
-	dh_installdeb
-	# this is an attempt to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
-    if test -e /etc/dpkg/origins/default; then \
-        HASDPKVENDOR=TRUE \
-    fi
-    ifdef HASDPKVENDOR
-        ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
-		    dh_gencontrol -- -Vdist:Depends="postgresql-contrib-8.4, postgresql-8.4-postgis"
-        else
-	        dh_gencontrol -- -Vdist:Depends="postgresql-contrib-8.3, postgresql-8.3-postgis"
-        endif
-    else
-        dh_gencontrol -- -Vdist:Depends="postgresql-contrib-8.3, postgresql-8.3-postgis"
-    endif
+	dh_installdeb	  
+	dh_gencontrol -- $(DISTDEPENDS)
 	dh_md5sums
 	dh_builddeb
 
