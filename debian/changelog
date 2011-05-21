@@ -1,3 +1,9 @@
+flightpred (0.0.17~natty) maverick; urgency=low
+
+* first build for natty
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Sat,  21 May 2011 20:45:00 +0200
+
 flightpred (0.0.17~maverick) maverick; urgency=low
 
   * added a new commandline option to choose the log level for stdout.
