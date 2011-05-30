@@ -9,20 +9,6 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-# this is an attempt (hack) to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
-if [ -e /etc/dpkg/origins/default ] then \
-    HASDPKVENDOR=TRUE \
-fi
-
-ifdef HASDPKVENDOR
-    ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
-	    DISTDEPENDS = -Vdist:Depends="postgresql-contrib-8.4, postgresql-8.4-postgis"
-    else
-        DISTDEPENDS = -Vdist:Depends="postgresql-contrib-8.3, postgresql-8.3-postgis"
-    endif
-else
-    DISTDEPENDS = -Vdist:Depends="postgresql-contrib-8.3, postgresql-8.3-postgis"
-endif
 
 configure: configure-stamp
 configure-stamp:
@@ -35,7 +21,7 @@ configure-stamp:
 build: build-stamp
 
 build-stamp: configure-stamp  
-	dh_testdir	
+	dh_testdir
 
 	# Add here commands to compile the package.
 	mkdir -p $(CURDIR)/build-debian
@@ -45,23 +31,6 @@ build-stamp: configure-stamp
 	touch $@
 
 clean: 
-
-# this is an attempt (hack) to handle the different dependencies between debian and ubuntu in one set of files without the need for two separate branches
-    
-    ifndef HASDPKVENDOR
-		sed -i  -e 's/libboost-regex-dev/libboost-regex1.42-dev/' \
-               -e 's/libboost-program-options-dev/libboost-program-options1.42-dev/' \
-                -e 's/libboost-date-time-dev/libboost-date-time1.42-dev/' \
-                -e 's/libboost-signals-dev/libboost-signals1.42-dev/' \
-                -e 's/libboost-thread-dev/libboost-thread1.42-dev/' \
-                -e 's/libboost-system-dev/libboost-system1.42-dev/' \
-                -e 's/libboost-filesystem-dev/libboost-filesystem1.42-dev/' \
-                -e 's/libboost-serialization-dev/libboost-serialization1.42-dev/' \
-                -e 's/libboost-test-dev/libboost-test1.42-dev/' \
-                -e 's/postgresql-contrib-8.4/postgresql-contrib-8.3/' \
-            $(CURDIR)/debian/control
-    endif
-
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
@@ -70,7 +39,7 @@ clean:
 	# $(MAKE) clean
 	rm -rf $(CURDIR)/build-debian
 	rm -rf $(CURDIR)/debian/tmp
-	rm -rf $(CURDIR)/debian/flightpred	
+	rm -rf $(CURDIR)/debian/flightpred
 
 	dh_clean 
 
@@ -122,8 +91,8 @@ binary-arch: build install
 	dh_makeshlibs -pflightpred -V'flightpred (>= 0.0.17)'
 	dh_shlibdeps -a
 	dh_fixperms
-	dh_installdeb	  
-	dh_gencontrol -- $(DISTDEPENDS)
+	dh_installdeb
+	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
 
