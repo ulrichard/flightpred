@@ -1,6 +1,8 @@
 Alias /flightpred /usr/share/flightpred/www_docroot
 
-setenv WT_CONFIG_XML "/etc/flightpred/wt_config_flightpred.xml"
+<IfModule mod_fastcgi.c>
+	FastCgiServer /flightpred/flightpred_web.fcgi -initial-env WT_APP_ROOT=/etc/flightpred
+</IfModule>
 
 <Directory /usr/share/flightpred/www_docroot>
         Allow from all
