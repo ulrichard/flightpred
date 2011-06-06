@@ -1,3 +1,9 @@
+libjsonspirit (4.2.1~natty) natty; urgency=low
+
+  * natty
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue, 06 Jun 2011 21:34:03 +0200
+
 libjsonspirit (4.2.1~maverick) maverick; urgency=low
 
   * maverick
