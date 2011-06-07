@@ -1,3 +1,9 @@
+flightpred (0.0.18~natty) natty; urgency=low
+
+* using doc root fcgi configuration
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue,  07 Jun 2011 21:08:00 +0200
+
 flightpred (0.0.17~natty) natty; urgency=low
 
 * first build for natty
