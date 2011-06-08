@@ -1,3 +1,9 @@
+flightpred (0.0.20~natty) natty; urgency=low
+
+* Re-added dependency to postgresql-8.4-postgis
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue,  08 Jun 2011 01:08:00 +0200
+
 flightpred (0.0.19~natty) natty; urgency=low
 
 * Added build-dependency to boost-iostreams-dev

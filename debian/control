@@ -9,6 +9,6 @@ Homepage: http://sourceforge.net/projects/flightpred
 Package: flightpred
 Architecture: i386 amd64 armel
 Essential: no
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${dist:Depends}, apache2, libapache2-mod-fastcgi, adduser, postgis, xml-twig-tools, php5-pgsql, libapache2-mod-php5
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${dist:Depends}, apache2, libapache2-mod-fastcgi, adduser, postgis, postgresql-8.4-postgis, xml-twig-tools, php5-pgsql, libapache2-mod-php5
 Description: Free flight prediction system to forecast good days and locations for cross country flights
  A system that shall predict good days and locations for cross country free flying such as paragliding. The system is trained with past weather prediction data and flights from online xc competitions. With current weather prediction data it can then make predictoins about possible flights in areas it is trained for.
