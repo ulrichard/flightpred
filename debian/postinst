@@ -57,14 +57,6 @@ case "$1" in
 		chown -R flightpred:www-data /home/flightpred
 		chmod -R 775 /home/flightpred
 
-		# update the wt configuration
-		if ! grep -q "^flightpred:" /etc/wt/wt_config.xml ; then
-			chmod +x /usr/share/flightpred/append_wt_config.pl
-			/usr/share/flightpred/append_wt_config.pl > /etc/wt/wt_config.xml.new
-			mv /etc/wt/wt_config.xml /etc/wt/wt_config.xml.old
-			mv /etc/wt/wt_config.xml.new /etc/wt/wt_config.xml
-		fi
-
 		# register with apache
 		a2enmod fastcgi
 		echo "register flightpred with apache"

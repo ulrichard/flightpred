@@ -1,0 +1,17 @@
+<VirtualHost *:80>
+        ServerName flightpred.homelinux.org
+        DocumentRoot /usr/share/flightpred/www_docroot
+        ServerAdmin richi@paraeasy.ch
+
+        <Directory /usr/share/flightpred/www_docroot>
+                Options FollowSymLinks MultiViews ExecCGI
+                DirectoryIndex flightpred_web.fcgi
+                AllowOverride None
+                Order allow,deny
+                allow from all
+        </Directory>
+
+        ErrorLog /var/log/apache2/flightpred_error.log
+        CustomLog /var/log/apache2/flightpred_access.log combined
+</VirtualHost>
+

@@ -48,7 +48,7 @@ while($day = pg_fetch_assoc($days))
 	$first_site = true;
 	while($site = pg_fetch_assoc($sites)) 
 	{	 
-		$query = "select num_flight, max_dist, avg_dist, max_dur, avg_dur, to_char(calculated, 'YYYY-MM-DD hh:mm:ss') as calc from flight_pred where pred_day='{$day['pred_day']}' and pred_site_id={$site['pred_site_id']} order by calculated desc limit 1;";
+		$query = "select num_flight, max_dist, avg_dist, max_dur, avg_dur, to_char(calculated, 'YYYY-MM-DD hh24:mi:ss') as calc from flight_pred where pred_day='{$day['pred_day']}' and pred_site_id={$site['pred_site_id']} order by calculated desc limit 1;";
 		$result = pg_query($query) or die('Query failed: ' . pg_last_error());
 		$results = pg_fetch_assoc($result);
 

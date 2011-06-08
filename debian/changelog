@@ -1,3 +1,10 @@
+flightpred (0.0.21~natty) natty; urgency=low
+
+* Using absolute path in apache fcgi config
+* Removed the config merging.
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Wed,  09 Jun 2011 18:08:00 +0200
+
 flightpred (0.0.20~natty) natty; urgency=low
 
 * Re-added dependency to postgresql-8.4-postgis
