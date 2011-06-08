@@ -25,7 +25,7 @@ build-stamp: configure-stamp
 
 	# Add here commands to compile the package.
 	mkdir -p $(CURDIR)/build-debian
-	(cd $(CURDIR)/build-debian; cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=1 -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCONFIGDIR:PATH=/etc/flightpred/ -DWT_CMAKE_FINDER_INSTALL_DIR:PATH=/share/cmake-2.6/Modules -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_SKIP_RPATH:BOOL=1 -DWEBUSER:STRING=www-data -DWEBGROUP:STRING=www-data ..)
+	(cd $(CURDIR)/build-debian; cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=1 -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCONFIGDIR:PATH=/etc/flightpred/ -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_SKIP_RPATH:BOOL=1 -DWEBUSER:STRING=www-data -DWEBGROUP:STRING=www-data ..)
 
 	(cd $(CURDIR)/build-debian; $(MAKE) )
 	touch $@
@@ -50,7 +50,6 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/flightpred.
-	# $(MAKE) DESTDIR=$(CURDIR)/debian/flightpred install
 	(cd $(CURDIR)/build-debian; $(MAKE) install DESTDIR=$(CURDIR)/debian/flightpred/ )
 
 	for TASK in install upgrade; do \

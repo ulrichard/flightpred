@@ -6,7 +6,7 @@ SET(flightpred_MAIN_DIR ${flightpred_SOURCE_DIR})
 
 SET(VERSION_SERIES 0)
 SET(VERSION_MAJOR 0)
-SET(VERSION_MINOR 21)
+SET(VERSION_MINOR 22)
 
 SET(flightpred_common_SOVERSION 3)
 SET(flightpred_train_SOVERSION 3)

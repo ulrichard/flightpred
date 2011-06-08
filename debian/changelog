@@ -1,3 +1,9 @@
+flightpred (0.0.22~natty) natty; urgency=low
+
+* wt_config.xml changes
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu,  09 Jun 2011 00:41:00 +0200
+
 flightpred (0.0.21~natty) natty; urgency=low
 
 * Using absolute path in apache fcgi config
