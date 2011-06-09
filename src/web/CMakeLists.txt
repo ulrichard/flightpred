@@ -16,8 +16,10 @@ SET_TARGET_PROPERTIES(
     DEBUG_POSTFIX "d"
   )
 
-INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/wt_config.xml    DESTINATION /etc/flightpred/)
-INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/flightpred.local DESTINATION /etc/apache2/sites-available/)
+IF(NOT EXISTS /etc/flightpred/wt_config.xml)
+	INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/wt_config.xml DESTINATION /etc/flightpred/)
+ENDIF (NOT EXISTS /etc/flightpred/wt_config.xml)
+INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/flightpred.local  DESTINATION /etc/apache2/sites-available/)
 
 INSTALL(DIRECTORY ${flightpred_MAIN_DIR}/www_docroot DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred/)
 INSTALL(DIRECTORY /usr/share/Wt/resources            DESTINATION ${CMAKE_INSTALL_PREFIX}/share/flightpred/www_docroot/)
