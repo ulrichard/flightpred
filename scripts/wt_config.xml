@@ -463,13 +463,14 @@
 
     <application-settings location="/usr/share/flightpred/www_docroot/flightpred_web.fcgi">
 		<session-management>
-			<timeout>60</timeout>
+			<timeout>120</timeout>
 		</session-management>
 		<connector-fcgi>
 			<run-directory>/usr/run/flightpred</run-directory>
 		</connector-fcgi>
 		<max-request-size>512</max-request-size>
 		<session-id-length>16</session-id-length>
+		<progressive-bootstrap>true</progressive-bootstrap>
 		<properties>
 			<property name="persistenceDir">/home/flightpred/</property>
 			<property name="google_api_key">ABQIAAAAWqrN5o4-ISwj0Up_depYvhS5xVgjcBp1Rg20t8xmBonmOp0fbBQ9c6aO458KNtGzpz2uUSlAczglvQ</property>
