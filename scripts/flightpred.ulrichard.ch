@@ -1,5 +1,5 @@
 <VirtualHost *:80>
-        ServerName flightpred.homelinux.org
+        ServerName flightpred.ulrichard.ch
         DocumentRoot /usr/share/flightpred/www_docroot
         ServerAdmin richi@paraeasy.ch
 

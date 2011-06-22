@@ -127,7 +127,7 @@
 
                Path used by Wt to do session management.
 	      -->
-	    <run-directory>/var/run/wt</run-directory>
+	    <run-directory>/usr/wt/run</run-directory>
 
 	    <!-- Number of threads per process
 
@@ -233,7 +233,7 @@
            Maximum size of an incoming POST request. This value must be
            increased when the user is allowed to upload files.
          -->
-	<max-request-size>128</max-request-size>
+	<max-request-size>5120</max-request-size>
 
 	<!-- Session id length (number of characters) -->
 	<session-id-length>16</session-id-length>
@@ -468,7 +468,7 @@
 		<connector-fcgi>
 			<run-directory>/usr/run/flightpred</run-directory>
 		</connector-fcgi>
-		<max-request-size>512</max-request-size>
+		<max-request-size>2048</max-request-size>
 		<session-id-length>16</session-id-length>
 		<progressive-bootstrap>true</progressive-bootstrap>
 		<properties>
@@ -481,7 +481,7 @@
 			<property name="db-user">flightpred</property>
 			<property name="db-password">flightpred</property>
 			<property name="forecast_days">3</property>	
-			<property name="footertxt">Powered by:   libwt / libboost / postgresql / dclib / libevocosm / Alix / GFS / xcontest / debian</property>	
+			<property name="footertxt">Powered by:   libwt / libboost / postgresql / dclib / libevocosm / GFS / xcontest / ubuntu</property>	
 		</properties>
 	</application-settings>
 </server>
