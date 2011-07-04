@@ -1,3 +1,15 @@
+flightpred (0.0.25~natty) natty; urgency=low
+
+* bugfix with normalization of minimal forecast.
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue,  05 Jul 2011 00:33:00 +0200
+
+flightpred (0.0.24~natty) natty; urgency=low
+
+* wt_config.xml changes
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu,  23 Jun 2011 23:41:00 +0200
+
 flightpred (0.0.23~natty) natty; urgency=low
 
 * wt_config.xml changes

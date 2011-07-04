@@ -53,9 +53,11 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
         //load the configuration with the best score
         solution_manager solmgr(site_name);
         std::auto_ptr<solution_config> sol = solmgr.load_best_solution(true, 0.0);
+        report(VERBOSE) << "Loaded solution  config : " << sol->get_solution_id() << " : " << sol->get_algorithm_name(true);
 
         // get the feature descriptions of the weather data
         const set<features_weather::feat_desc> &features = sol->get_weather_feature_desc();
+        report(VERBOSE) << "Loaded " << features.size() << " features.";
 
         for(size_t j=0; j<pred_days; ++j)
         {
@@ -93,7 +95,7 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
                 double smallest = 0.0;
                 if(res.size() >= 30)
                 {
-                    res[0]["pred_site_id"].to(pred_site_id);
+                    res[0][0].to(smallest);
                     predval[prednam] -= smallest;
                 }
             }
