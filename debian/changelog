@@ -1,3 +1,9 @@
+flightpred (0.0.26~natty) natty; urgency=low
+
+* Using libwt 3.1.10
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Wed, 20 Jul 2011 18:33:00 +0200
+
 flightpred (0.0.25~natty) natty; urgency=low
 
 * bugfix with normalization of minimal forecast.
