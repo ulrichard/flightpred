@@ -10,7 +10,7 @@ namespace Wt
 {
     class WComboBox;
     class WSlider;
-    class WGoogleMapEx;
+    class WGoogleMap;
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 namespace flightpred
@@ -29,10 +29,10 @@ private:
     Wt::WContainerWidget *impl_;
     const std::string db_conn_str_;
     const std::string model_name_;
-    Wt::WComboBox *parameters_;
-    Wt::WComboBox *levels_;
-    Wt::WSlider   *time_slider_;
-    Wt::WGoogleMapEx *gmap_;
+    Wt::WComboBox*  parameters_;
+    Wt::WComboBox*  levels_;
+    Wt::WSlider*    time_slider_;
+    Wt::WGoogleMap* gmap_;
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace flightpred

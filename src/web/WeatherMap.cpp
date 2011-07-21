@@ -3,9 +3,9 @@
 #include "common/grab_grib.h"
 #include "common/GenGeomLibSerialize.h"
 
-#if WT_SERIES >= 0x3
- #include "WGoogleMapEx.h"
-#endif
+//#if WT_SERIES >= 0x3
+// #include "WGoogleMapEx.h"
+//#endif
 
 // witty
 #include <Wt/WText>
@@ -15,6 +15,7 @@
 #include <Wt/WSlider>
 #include <Wt/WApplication>
 #include <Wt/WLogger>
+#include <Wt/WGoogleMap>
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -90,7 +91,7 @@ WeatherMap::WeatherMap(const std::string &db_conn_str, const std::string &model_
 
     new Wt::WBreak(impl_);
 
-    gmap_ = new Wt::WGoogleMapEx(impl_);
+    gmap_ = new Wt::WGoogleMap(impl_);
     gmap_->resize(1000, 700);
     gmap_->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
     gmap_->enableScrollWheelZoom();
@@ -173,12 +174,13 @@ void WeatherMap::loadWeatherMap(const bool resize)
                 const double length = sqrt(it->second["UGRD"] * it->second["UGRD"] + it->second["VGRD"] * it->second["VGRD"]);
 
 
-                gmap_->addWindIndicator(gmCoord, angle / 2 / M_PI * 360, length, Wt::WColor("#FF0000"), 0.9, "");
+//                gmap_->addWindIndicator(gmCoord, angle / 2 / M_PI * 360, length, Wt::WColor("#FF0000"), 0.9, "");
 
             }
             else
             {
-                gmap_->addMarker(gmCoord, "/sigma.gif");
+//                gmap_->addMarker(gmCoord, "/sigma.gif");
+                gmap_->addMarker(gmCoord);
             }
         }
 

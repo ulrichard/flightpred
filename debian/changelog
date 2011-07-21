@@ -1,3 +1,9 @@
+flightpred (0.0.27~natty) natty; urgency=low
+
+* Using the stock WGoogleMaps widget with reduced functionality
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Wed, 21 Jul 2011 07:53:00 +0200
+
 flightpred (0.0.26~natty) natty; urgency=low
 
 * Using libwt 3.1.10

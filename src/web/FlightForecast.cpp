@@ -1,9 +1,9 @@
 // flightpred
 #include "FlightForecast.h"
 
-#if WT_SERIES >= 0x3
- #include "WGoogleMapEx.h"
-#endif
+//#if WT_SERIES >= 0x3
+// #include "WGoogleMapEx.h"
+//#endif
 
 // witty
 #include <Wt/WTable>
@@ -14,6 +14,7 @@
 #include <Wt/WApplication>
 #include <Wt/WLogger>
 #include <Wt/WText>
+#include <Wt/WGoogleMap>
 // pqxx
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
@@ -156,7 +157,7 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
         if(showMap)
         {
             parentForMap->setStyleClass("forecastTableCell");
-            Wt::WGoogleMapEx *gmap = new Wt::WGoogleMapEx(parentForMap);
+            Wt::WGoogleMap *gmap = new Wt::WGoogleMap(parentForMap);
             gmap->resize(352, 300);
             gmap->setMapTypeControl(Wt::WGoogleMap::HierarchicalControl);
             gmap->enableScrollWheelZoom();
@@ -185,9 +186,10 @@ void FlightForecast::makePredDay(const bgreg::date &day, Wt::WContainerWidget *p
 
                 const Wt::WGoogleMap::Coordinate gmCoord(dbpos.lat(), dbpos.lon());
     //            gmap->addMarker(gmCoord, "/sigma16.gif");
-                gmap->addMarker(gmCoord, "/sigma.gif");
+//                gmap->addMarker(gmCoord, "/sigma.gif");
+                gmap->addMarker(gmCoord);
                 const double radiusKm = max_dist / 10.0;
-                gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000"), 4, 0.9);
+                gmap->addCircle(gmCoord, radiusKm, Wt::WColor("#FF0000F0"), 4, Wt::WColor("#FF000055"));
 
                 bbox.first.setLatitude(  std::min(bbox.first.latitude(),   dbpos.lat()));
                 bbox.first.setLongitude( std::min(bbox.first.longitude(),  dbpos.lon()));
