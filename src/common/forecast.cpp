@@ -92,9 +92,10 @@ void forecast::prediction_run(const string &site_name, const size_t pred_days)
                      << "WHERE pred_site_id = " << pred_site_id << " AND " << prednam << " > 0.0 AND train_sol_id = " << sol->get_solution_id()
                      << " ORDER BY " << prednam << " ASC LIMIT 32";
                 res = transl.exec(sstr.str());
-                double smallest = 0.0;
+
                 if(res.size() >= 30)
                 {
+                    double smallest = 0.0;
                     res[0][0].to(smallest);
                     predval[prednam] -= smallest;
                 }

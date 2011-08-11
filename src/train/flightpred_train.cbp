@@ -43,7 +43,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--db-user flightpred --db-password flightpred --export-solution --name Fiesch --backup-dir &apos;/home/richi/sourcecode/flightpred/backup&apos;" />
+				<Option parameters="--db-host ulrichard.ch --db-user flightpred --db-password flightpred --forecast" />
 				<Compiler>
 					<Add option="-march=athlon64" />
 					<Add option="-Wmain" />

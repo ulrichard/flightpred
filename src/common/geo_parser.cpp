@@ -77,6 +77,8 @@ struct position_grammar : public grammar<position_grammar/*, pair_closure::conte
 	{
 		definition(position_grammar const& self)
 		{
+            static const unsigned char DEG_CHAR = 0xB0; // °
+
 
 			top = (rLat[set_lat(self.pos_)(arg1)] >> rLon[set_lon(self.pos_)(arg1)])
 			    | (rLon[set_lon(self.pos_)(arg1)] >> rLat[set_lat(self.pos_)(arg1)])
@@ -88,41 +90,41 @@ struct position_grammar : public grammar<position_grammar/*, pair_closure::conte
 			rLon = rLonD[rLon.val = arg1] | rLonDM[rLon.val = arg1] | rLonDMS[rLon.val = arg1];
 
 			rLatD
-				=   ureal_p[rLatD.val =  arg1] >> !ch_p('°') >> 'N' | 'N' >> ureal_p[rLatD.val =  arg1] >> !ch_p('°')
-				|   ureal_p[rLatD.val = -arg1] >> !ch_p('°') >> 'S' | 'S' >> ureal_p[rLatD.val = -arg1] >> !ch_p('°')
+				=   ureal_p[rLatD.val =  arg1] >> !ch_p(DEG_CHAR) >> 'N' | 'N' >> ureal_p[rLatD.val =  arg1] >> !ch_p(DEG_CHAR)
+				|   ureal_p[rLatD.val = -arg1] >> !ch_p(DEG_CHAR) >> 'S' | 'S' >> ureal_p[rLatD.val = -arg1] >> !ch_p(DEG_CHAR)
 				;
 
             rLonD
-                =   ureal_p[rLonD.val =  arg1] >> !ch_p('°') >> 'E' | 'E' >> ureal_p[rLonD.val =  arg1] >> !ch_p('°')
-				|   ureal_p[rLonD.val = -arg1] >> !ch_p('°') >> 'W' | 'W' >> ureal_p[rLonD.val = -arg1] >> !ch_p('°')
+                =   ureal_p[rLonD.val =  arg1] >> !ch_p(DEG_CHAR) >> 'E' | 'E' >> ureal_p[rLonD.val =  arg1] >> !ch_p(DEG_CHAR)
+				|   ureal_p[rLonD.val = -arg1] >> !ch_p(DEG_CHAR) >> 'W' | 'W' >> ureal_p[rLonD.val = -arg1] >> !ch_p(DEG_CHAR)
 				;
 
             rLatDM
-                =   int_p[rLatDM.val =  arg1] >> !ch_p('°') >> ureal_p[rLatDM.val += (arg1 / 60.0)] >> !ch_p('\'') >> 'N'
-                |   'N' >> int_p[rLatDM.val = arg1] >> !ch_p('°') >> ureal_p[rLatDM.val += (arg1 / 60.0)] >> !ch_p('\'')
-                |   int_p[rLatDM.val = -arg1] >> !ch_p('°') >> ureal_p[rLatDM.val -= (arg1 / 60.0)] >> !ch_p('\'') >> 'S'
-                |   'S' >> int_p[rLatDM.val = -arg1] >> !ch_p('°') >> ureal_p[rLatDM.val -= (arg1 / 60.0)] >> !ch_p('\'')
+                =   int_p[rLatDM.val =  arg1] >> !ch_p(DEG_CHAR) >> ureal_p[rLatDM.val += (arg1 / 60.0)] >> !ch_p('\'') >> 'N'
+                |   'N' >> int_p[rLatDM.val = arg1] >> !ch_p(DEG_CHAR) >> ureal_p[rLatDM.val += (arg1 / 60.0)] >> !ch_p('\'')
+                |   int_p[rLatDM.val = -arg1] >> !ch_p(DEG_CHAR) >> ureal_p[rLatDM.val -= (arg1 / 60.0)] >> !ch_p('\'') >> 'S'
+                |   'S' >> int_p[rLatDM.val = -arg1] >> !ch_p(DEG_CHAR) >> ureal_p[rLatDM.val -= (arg1 / 60.0)] >> !ch_p('\'')
                 ;
 
             rLonDM
-                =   int_p[rLonDM.val =  arg1] >> !ch_p('°') >> ureal_p[rLonDM.val += (arg1 / 60.0)] >> !ch_p('\'') >> 'E'
-                |   'E' >> int_p[rLonDM.val = arg1] >> !ch_p('°') >> ureal_p[rLonDM.val += (arg1 / 60.0)] >> !ch_p('\'')
-                |   int_p[rLonDM.val = -arg1] >> !ch_p('°') >> ureal_p[rLonDM.val -= (arg1 / 60.0)] >> !ch_p('\'') >> 'W'
-                |   'W' >> int_p[rLonDM.val = -arg1] >> !ch_p('°') >> ureal_p[rLonDM.val -= (arg1 / 60.0)] >> !ch_p('\'')
+                =   int_p[rLonDM.val =  arg1] >> !ch_p(DEG_CHAR) >> ureal_p[rLonDM.val += (arg1 / 60.0)] >> !ch_p('\'') >> 'E'
+                |   'E' >> int_p[rLonDM.val = arg1] >> !ch_p(DEG_CHAR) >> ureal_p[rLonDM.val += (arg1 / 60.0)] >> !ch_p('\'')
+                |   int_p[rLonDM.val = -arg1] >> !ch_p(DEG_CHAR) >> ureal_p[rLonDM.val -= (arg1 / 60.0)] >> !ch_p('\'') >> 'W'
+                |   'W' >> int_p[rLonDM.val = -arg1] >> !ch_p(DEG_CHAR) >> ureal_p[rLonDM.val -= (arg1 / 60.0)] >> !ch_p('\'')
                 ;
 
             rLatDMS
-                =   int_p[rLatDMS.val =  arg1] >> !ch_p('°') >> int_p[rLatDMS.val += (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLatDMS.val += (arg1 / 3600.0)] >> !ch_p('"') >> 'N'
-                |   'N' >> int_p[rLatDMS.val =  arg1] >> !ch_p('°') >> int_p[rLatDMS.val += (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLatDMS.val += (arg1 / 3600.0)] >> !ch_p('"')
-                |   int_p[rLatDMS.val = -arg1] >> !ch_p('°') >> int_p[rLatDMS.val -= (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLatDMS.val -= (arg1 / 3600.0)] >> !ch_p('"') >> 'S'
-                |   'S' >> int_p[rLatDMS.val = -arg1] >> !ch_p('°') >> int_p[rLatDMS.val -= (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLatDMS.val -= (arg1 / 3600.0)] >> !ch_p('"')
+                =   int_p[rLatDMS.val =  arg1] >> !ch_p(DEG_CHAR) >> int_p[rLatDMS.val += (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLatDMS.val += (arg1 / 3600.0)] >> !ch_p('"') >> 'N'
+                |   'N' >> int_p[rLatDMS.val =  arg1] >> !ch_p(DEG_CHAR) >> int_p[rLatDMS.val += (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLatDMS.val += (arg1 / 3600.0)] >> !ch_p('"')
+                |   int_p[rLatDMS.val = -arg1] >> !ch_p(DEG_CHAR) >> int_p[rLatDMS.val -= (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLatDMS.val -= (arg1 / 3600.0)] >> !ch_p('"') >> 'S'
+                |   'S' >> int_p[rLatDMS.val = -arg1] >> !ch_p(DEG_CHAR) >> int_p[rLatDMS.val -= (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLatDMS.val -= (arg1 / 3600.0)] >> !ch_p('"')
                 ;
 
             rLonDMS
-                =   int_p[rLonDMS.val =  arg1] >> !ch_p('°') >> int_p[rLonDMS.val += (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLonDMS.val += (arg1 / 3600.0)] >> !ch_p('"') >> 'E'
-                |   'E' >> int_p[rLonDMS.val =  arg1] >> !ch_p('°') >> int_p[rLonDMS.val += (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLonDMS.val += (arg1 / 3600.0)] >> !ch_p('"')
-                |   int_p[rLonDMS.val = -arg1] >> !ch_p('°') >> int_p[rLonDMS.val -= (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLonDMS.val -= (arg1 / 3600.0)] >> !ch_p('"') >> 'W'
-                |   'W' >> int_p[rLonDMS.val = -arg1] >> !ch_p('°') >> int_p[rLonDMS.val -= (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLonDMS.val -= (arg1 / 3600.0)] >> !ch_p('"')
+                =   int_p[rLonDMS.val =  arg1] >> !ch_p(DEG_CHAR) >> int_p[rLonDMS.val += (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLonDMS.val += (arg1 / 3600.0)] >> !ch_p('"') >> 'E'
+                |   'E' >> int_p[rLonDMS.val =  arg1] >> !ch_p(DEG_CHAR) >> int_p[rLonDMS.val += (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLonDMS.val += (arg1 / 3600.0)] >> !ch_p('"')
+                |   int_p[rLonDMS.val = -arg1] >> !ch_p(DEG_CHAR) >> int_p[rLonDMS.val -= (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLonDMS.val -= (arg1 / 3600.0)] >> !ch_p('"') >> 'W'
+                |   'W' >> int_p[rLonDMS.val = -arg1] >> !ch_p(DEG_CHAR) >> int_p[rLonDMS.val -= (arg1 / 60.0)] >> !ch_p('\'') >> ureal_p[rLonDMS.val -= (arg1 / 3600.0)] >> !ch_p('"')
                 ;
 
 

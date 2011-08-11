@@ -136,7 +136,7 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-char flight_grabber::replace_char(char cc)
+char flight_grabber::replace_char(unsigned char cc)
 {
     if(cc >= '0' && cc <= '9')
         return cc;
@@ -144,7 +144,8 @@ char flight_grabber::replace_char(char cc)
         return cc;
     if(cc >= 'A' && cc <= 'Z')
         return cc;
-    if(cc == 'ä' || cc == 'ö' || cc == 'ü' || cc == 'Ä' || cc == 'Ö' || cc == 'Ü')
+//  if(cc == 'ä'  || cc == 'ö'  || cc == 'ü'  || cc == 'Ä'  || cc == 'Ö'  || cc == 'Ü')
+    if(cc == 0xE4 || cc == 0xF6 || cc == 0xFC || cc == 0xC4 || cc == 0xD6 || cc == 0xDC)  //  ISO 8859-1
         return cc;
     if(cc == '(' || cc == ')' || cc == '-' || cc == '_' || cc == ',' || cc == '.' || cc == '/' || cc == ' ')
         return cc;
