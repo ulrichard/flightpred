@@ -1,7 +1,7 @@
 // flightpred
-#include "common/solution_config.h"
-#include "common/lm_svm_dlib.h"
-#include "common/reporter.h"
+#include "solution_config.h"
+#include "lm_svm_dlib.h"
+#include "reporter.h"
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>

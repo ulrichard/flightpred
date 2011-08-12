@@ -1,9 +1,9 @@
 // flightpred
 #include "forecast.h"
-#include "common/features_weather.h"
-#include "common/solution_manager.h"
-#include "common/flightpred_globals.h"
-#include "common/reporter.h"
+#include "features_weather.h"
+#include "solution_manager.h"
+#include "flightpred_globals.h"
+#include "reporter.h"
 // postgre
 #include <pqxx/pqxx>
 //#include <pqxx/largeobject>

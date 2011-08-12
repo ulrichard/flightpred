@@ -2,10 +2,10 @@
 #define SOLUTION_CONFIG_H_INCLUDED
 
 // flightpred
-#include "common/learning_machine.h"
-#include "common/features_weather.h"
-#include "common/flightpred_globals.h"
-#include "common/lm_svm_dlib.h"
+#include "learning_machine.h"
+#include "features_weather.h"
+#include "flightpred_globals.h"
+#include "lm_svm_dlib.h"
 //boost
 #include <boost/shared_ptr.hpp>
 #include <boost/serialization/base_object.hpp>

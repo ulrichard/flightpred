@@ -1,10 +1,10 @@
 // flightpred
-#include "common/features_weather.h"
-#include "common/grib_pred_model.h"
-#include "common/flightpred_globals.h"
-#include "common/reporter.h"
-#include "common/grab_grib.h"
-#include "common/GenGeomLibSerialize.h"
+#include "features_weather.h"
+#include "grib_pred_model.h"
+#include "flightpred_globals.h"
+#include "reporter.h"
+#include "grab_grib.h"
+#include "GenGeomLibSerialize.h"
 //#include "area_mgr.h"
 // postgre
 #include <pqxx/pqxx>

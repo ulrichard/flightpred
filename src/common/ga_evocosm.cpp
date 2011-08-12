@@ -1,7 +1,7 @@
 // flightpred
-#include "common/ga_evocosm.h"
-#include "common/flightpred_globals.h"
-#include "common/reporter.h"
+#include "ga_evocosm.h"
+#include "flightpred_globals.h"
+#include "reporter.h"
 // evocosm
 #include <libevocosm/roulette.h>
 // postgre

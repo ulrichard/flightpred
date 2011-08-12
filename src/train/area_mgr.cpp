@@ -1,7 +1,7 @@
 // flightpred
-#include "train/area_mgr.h"
-#include "common/geo_parser.h"
-#include "common/flightpred_globals.h"
+#include "../train/area_mgr.h"
+#include "../common/geo_parser.h"
+#include "../common/flightpred_globals.h"
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)

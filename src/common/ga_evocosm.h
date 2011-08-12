@@ -2,7 +2,7 @@
 #define GA_EVOCOSM_H_INCLUDED
 
 // flightpred
-#include "common/solution_config.h"
+#include "solution_config.h"
 // evocosm
 #include <libevocosm/organism.h>
 #include <libevocosm/mutator.h>

@@ -2,9 +2,9 @@
 #define LM_SVM_DLIB_H_INCLUDED
 
 // flightpred
-#include "common/learning_machine.h"
-#include "common/flightpred_globals.h"
-#include "common/reporter.h"
+#include "learning_machine.h"
+#include "flightpred_globals.h"
+#include "reporter.h"
 // dlib
 #include <dlib/svm.h>
 // postgre

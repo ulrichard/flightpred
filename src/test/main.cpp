@@ -1,12 +1,12 @@
 // flightpred
-#include "common/solution_config.h"
-#include "common/features_weather.h"
-#include "common/lm_svm_dlib.h"
-#include "common/grab_grib.h"
-#include "common/solution_manager.h"
-#include "common/train_svm.h"
-#include "common/GenGeomLibSerialize.h"
-#include "common/reporter.h"
+#include "../common/solution_config.h"
+#include "../common/features_weather.h"
+#include "../common/lm_svm_dlib.h"
+#include "../common/grab_grib.h"
+#include "../common/solution_manager.h"
+#include "../common/train_svm.h"
+#include "../common/GenGeomLibSerialize.h"
+#include "../common/reporter.h"
 // ggl (boost sandbox)
 #include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost

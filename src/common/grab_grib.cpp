@@ -1,11 +1,11 @@
 // flightpred
-#include "common/grab_grib.h"
-#include "common/geo_parser.h"
-#include "common/flightpred_globals.h"
-#include "common/reporter.h"
-#include "common/features_weather.h"
-#include "common/solution_manager.h"
-#include "common/GenGeomLibSerialize.h"
+#include "grab_grib.h"
+#include "geo_parser.h"
+#include "flightpred_globals.h"
+#include "reporter.h"
+#include "features_weather.h"
+#include "solution_manager.h"
+#include "GenGeomLibSerialize.h"
 // grib api
 #include "grib_api.h"
 // postgre

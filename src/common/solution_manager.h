@@ -2,7 +2,7 @@
 #define SOLUTION_MANAGER_H_INCLUDED
 
 // flightpred
-#include <common/solution_config.h>
+#include "solution_config.h"
 //boost
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
