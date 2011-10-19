@@ -120,10 +120,15 @@ double grib_grabber::get_grid_res(const std::string &model)
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void grib_grabber::download_data(const string &url, std::ostream &ostr, const list<request> &requests)
 {
-    cout << "downloading : " << url << " with " << requests.size() << " byte ranges totaling "
-         << std::accumulate(requests.begin(), requests.end(), 0,
-               _1 + bind(&request::range_end, _2) - bind(&request::range_start, _2)) / 1024.0
-         << " kBytes" << endl;
+//    cout << "downloading : " << url << " with " << requests.size() << " byte ranges totaling "
+//         << std::accumulate(requests.begin(), requests.end(), 0,
+//               _1 + bind(&request::range_end, _2) - bind(&request::range_start, _2)) / 1024.0
+//         << " kBytes" << endl;
+    size_t numbytes = 0;
+    BOOST_FOREACH(const request& requ, requests)
+        numbytes += requ.range_end - requ.range_start;
+    cout << "downloading : " << url << " with " << requests.size() << " byte ranges totaling " << numbytes / 1024.0 << " kBytes" << endl;
+
 
     boost::asio::io_service io_service;
 

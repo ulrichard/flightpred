@@ -5,6 +5,7 @@
 #include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 // boost
 #include <boost/serialization/split_free.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/unordered_set.hpp>
 
 

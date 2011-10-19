@@ -1,3 +1,9 @@
+flightpred (0.0.29~oneiric) oneiric; urgency=low
+
+* Getting to compile on oneiric
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu, 20 Oct 2011 00:53:00 +0200
+
 flightpred (0.0.28~natty) natty; urgency=low
 
 * New GoogleMaps key

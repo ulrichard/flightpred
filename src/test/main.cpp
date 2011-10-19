@@ -79,7 +79,11 @@ struct MyConfig
         std::cout << sstr.str() << " returned: " << ret << std::endl;
 
         sstr.str("");
+#if BOOST_FILESYSTEM_VERSION >= 3
+        sstr << "psql -e -a -d " << dbname_ << " -f " << (scriptdir / "create_flightpred_db.sql").string();
+#else
         sstr << "psql -e -a -d " << dbname_ << " -f " << (scriptdir / "create_flightpred_db.sql").external_file_string();
+#endif
         ret = system(sstr.str().c_str());
         std::cout << sstr.str() << " returned: " << ret << std::endl;
 
