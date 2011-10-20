@@ -1,3 +1,9 @@
+libjsonspirit (4.2.1~oneiric) oneiric; urgency=low
+
+  * oneiric
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu, 20 Oct 2011 00:59:03 +0200
+
 libjsonspirit (4.2.1~natty) natty; urgency=low
 
   * natty

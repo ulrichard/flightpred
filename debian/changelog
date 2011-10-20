@@ -1,3 +1,9 @@
+flightpred (0.0.30~oneiric) oneiric; urgency=low
+
+* correcting postgres package versions for oneiric
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu, 20 Oct 2011 22:53:00 +0200
+
 flightpred (0.0.29~oneiric) oneiric; urgency=low
 
 * Getting to compile on oneiric
