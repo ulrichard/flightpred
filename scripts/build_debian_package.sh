@@ -10,7 +10,7 @@ mkdir builddeb
 cd builddeb
 for DISTRIBUTION in oneiric # natty maverick
 do
-	FLIGHTPREDVERSIONSTR=0.0.30~${DISTRIBUTION}
+	FLIGHTPREDVERSIONSTR=0.0.31~${DISTRIBUTION}
 	svn export https://flightpred.svn.sourceforge.net/svnroot/flightpred/trunk flightpred-$FLIGHTPREDVERSIONSTR
 	cd flightpred-$FLIGHTPREDVERSIONSTR
 	sed -i  -e "s/maverick/${DISTRIBUTION}/g" -e "s/natty/${DISTRIBUTION}/g" -e "s/oneiric/${DISTRIBUTION}/g" debian/changelog

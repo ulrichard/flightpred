@@ -1,79 +1,85 @@
+flightpred (0.0.31~oneiric) oneiric; urgency=low
+
+  * defining the fcgi parameters only once
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu, 20 Oct 2011 22:53:00 +0200
+
 flightpred (0.0.30~oneiric) oneiric; urgency=low
 
-* correcting postgres package versions for oneiric
+  * correcting postgres package versions for oneiric
 
  -- Richard Ulrich <richi@paraeasy.ch>  Thu, 20 Oct 2011 22:53:00 +0200
 
 flightpred (0.0.29~oneiric) oneiric; urgency=low
 
-* Getting to compile on oneiric
+  * Getting to compile on oneiric
 
  -- Richard Ulrich <richi@paraeasy.ch>  Thu, 20 Oct 2011 00:53:00 +0200
 
 flightpred (0.0.28~natty) natty; urgency=low
 
-* New GoogleMaps key
+  * New GoogleMaps key
 
  -- Richard Ulrich <richi@paraeasy.ch>  Wed, 21 Jul 2011 19:53:00 +0200
 
 flightpred (0.0.27~natty) natty; urgency=low
 
-* Using the stock WGoogleMaps widget with reduced functionality
+  * Using the stock WGoogleMaps widget with reduced functionality
 
  -- Richard Ulrich <richi@paraeasy.ch>  Wed, 21 Jul 2011 07:53:00 +0200
 
 flightpred (0.0.26~natty) natty; urgency=low
 
-* Using libwt 3.1.10
+  * Using libwt 3.1.10
 
  -- Richard Ulrich <richi@paraeasy.ch>  Wed, 20 Jul 2011 18:33:00 +0200
 
 flightpred (0.0.25~natty) natty; urgency=low
 
-* bugfix with normalization of minimal forecast.
+  * bugfix with normalization of minimal forecast.
 
  -- Richard Ulrich <richi@paraeasy.ch>  Tue,  05 Jul 2011 00:33:00 +0200
 
 flightpred (0.0.24~natty) natty; urgency=low
 
-* wt_config.xml changes
+  * wt_config.xml changes
 
  -- Richard Ulrich <richi@paraeasy.ch>  Thu,  23 Jun 2011 23:41:00 +0200
 
 flightpred (0.0.23~natty) natty; urgency=low
 
-* wt_config.xml changes
+  * wt_config.xml changes
 
  -- Richard Ulrich <richi@paraeasy.ch>  Thu,  09 Jun 2011 00:41:00 +0200
 
 flightpred (0.0.21~natty) natty; urgency=low
 
-* Using absolute path in apache fcgi config
-* Removed the config merging.
+  * Using absolute path in apache fcgi config
+  * Removed the config merging.
 
  -- Richard Ulrich <richi@paraeasy.ch>  Wed,  09 Jun 2011 18:08:00 +0200
 
 flightpred (0.0.20~natty) natty; urgency=low
 
-* Re-added dependency to postgresql-8.4-postgis
+  * Re-added dependency to postgresql-8.4-postgis
 
  -- Richard Ulrich <richi@paraeasy.ch>  Tue,  08 Jun 2011 01:08:00 +0200
 
 flightpred (0.0.19~natty) natty; urgency=low
 
-* Added build-dependency to boost-iostreams-dev
+  * Added build-dependency to boost-iostreams-dev
 
  -- Richard Ulrich <richi@paraeasy.ch>  Tue,  07 Jun 2011 21:08:00 +0200
 
 flightpred (0.0.18~natty) natty; urgency=low
 
-* using doc root fcgi configuration
+  * using doc root fcgi configuration
 
  -- Richard Ulrich <richi@paraeasy.ch>  Tue,  07 Jun 2011 21:08:00 +0200
 
 flightpred (0.0.17~natty) natty; urgency=low
 
-* first build for natty
+  * first build for natty
 
  -- Richard Ulrich <richi@paraeasy.ch>  Sat,  21 May 2011 20:45:00 +0200
 

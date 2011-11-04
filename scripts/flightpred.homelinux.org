@@ -3,9 +3,9 @@
         DocumentRoot /usr/share/flightpred/www_docroot
         ServerAdmin richi@paraeasy.ch
 
-		<IfModule mod_fastcgi.c>
-                FastCgiServer /usr/share/flightpred/www_docroot/flightpred_web.fcgi -initial-env WT_APP_ROOT=/etc/flightpred  
-        </IfModule>
+#		<IfModule mod_fastcgi.c>
+#                FastCgiServer /usr/share/flightpred/www_docroot/flightpred_web.fcgi -initial-env WT_APP_ROOT=/etc/#flightpred  
+#        </IfModule>
 
 
         <Directory /usr/share/flightpred/www_docroot>
