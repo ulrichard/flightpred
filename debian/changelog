@@ -1,4 +1,10 @@
-flightpred (0.0.32~natty) oneiric; urgency=low
+flightpred (0.0.33~oneiric) oneiric; urgency=low
+
+  * newer package dependencies again
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Tue, 09 Nov 2011 00:30:00 +0200
+
+flightpred (0.0.32~natty) natty; urgency=low
 
   * using older package dependencies for a natty build
 
