@@ -8,9 +8,9 @@ eval $(gpg-agent --daemon)
 rm -r builddeb
 mkdir builddeb
 cd builddeb
-for DISTRIBUTION in oneiric # natty maverick
+for DISTRIBUTION in  natty # maverick oneiric
 do
-	FLIGHTPREDVERSIONSTR=0.0.31~${DISTRIBUTION}
+	FLIGHTPREDVERSIONSTR=0.0.32~${DISTRIBUTION}
 	svn export https://flightpred.svn.sourceforge.net/svnroot/flightpred/trunk flightpred-$FLIGHTPREDVERSIONSTR
 	cd flightpred-$FLIGHTPREDVERSIONSTR
 	sed -i  -e "s/maverick/${DISTRIBUTION}/g" -e "s/natty/${DISTRIBUTION}/g" -e "s/oneiric/${DISTRIBUTION}/g" debian/changelog
