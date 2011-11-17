@@ -3,12 +3,10 @@
 export GPGKEY=DA94BB53
 export DEBEMAIL="richi@paraeasy.ch"
 export DEBFULLNAME="Richard Ulrich"
-killall -q gpg-agent
-eval $(gpg-agent --daemon)
 rm -r builddeb
 mkdir builddeb
 cd builddeb
-for DISTRIBUTION in oneiric # natty maverick 
+for DISTRIBUTION in oneiric precise # natty maverick 
 do
 	FLIGHTPREDVERSIONSTR=0.0.33~${DISTRIBUTION}
 	svn export https://flightpred.svn.sourceforge.net/svnroot/flightpred/trunk flightpred-$FLIGHTPREDVERSIONSTR
@@ -23,4 +21,3 @@ do
 	rm -r flightpred-$FLIGHTPREDVERSIONSTR
 	dput ppa:richi-paraeasy/ppa ./flightpred_${FLIGHTPREDVERSIONSTR}_source.changes
 done
-killall -q gpg-agent

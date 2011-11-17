@@ -21,7 +21,7 @@ SET(CONFIGDIRAPACHE /etc/apache2 CACHE STRING "Path for the apache2 configuratio
 SET(DEPLOYROOT /var/www/localhost/htdocs/flightpred CACHE PATH "Path to deploy into)")
 SET(BOOST_DIR /usr CACHE PATH "Boost installation path prefix")
 SET(BOOST_COMPILER gcc CACHE STRING "Boost libraries compiler signature")
-SET(BOOST_VERSION "1_37" CACHE STRING "Boost libraries version signature")
+SET(BOOST_VERSION "1_42" CACHE STRING "Boost libraries version signature")
 
 
 IF(NOT CMAKE_BUILD_TYPE)

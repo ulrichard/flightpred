@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(flightpred)
 SET(CMAKE_MODULE_PATH ${flightpred_SOURCE_DIR})
 
-FIND_PACKAGE(Boost 1.35 REQUIRED)
+FIND_PACKAGE(Boost 1.42 COMPONENTS system filesystem iostreams unit_test_framework date_time thread regex serialization program_options signals REQUIRED)
 
 ADD_DEFINITIONS(-DWT_THREADED -D_REENTRANT -DBOOST_SPIRIT_THREADSAFE)
 

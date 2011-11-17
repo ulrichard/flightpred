@@ -6,7 +6,18 @@ FIND_PACKAGE(Wt 3.0 REQUIRED)
 include_directories(${Wt_INCLUDE_DIR})
 
 ADD_EXECUTABLE(flightpred_web.fcgi main.cpp FlightForecast.cpp WeatherMap.cpp Populations.cpp)
-TARGET_LINK_LIBRARIES(flightpred_web.fcgi flightpred_common wt wtfcgi wtext pqxx grib_api boost_regex boost_signals boost_system)
+TARGET_LINK_LIBRARIES(flightpred_web.fcgi 
+	flightpred_common
+	${Boost_FILESYSTEM_LIBRARY}
+	${Boost_SYSTEM_LIBRARY}
+	${Boost_REGEX_LIBRARY}
+	${Boost_SIGNALS_LIBRARY}
+ 	wt 
+	wtfcgi 
+	wtext
+	pqxx 
+	grib_api
+)
 
 SET_TARGET_PROPERTIES(
     flightpred_web.fcgi

@@ -2,18 +2,18 @@ PROJECT(flightpred_common)
 SET(CMAKE_MODULE_PATH ${flightpred_common_SOURCE_DIR})
 
 SET(libsources 
-features_weather.cpp
-flightpred_globals.cpp
-forecast.cpp
-ga_evocosm.cpp
-geo_parser.cpp
-grab_flights.cpp
-grab_grib.cpp
-grib_pred_model.cpp
-reporter.cpp
-solution_config.cpp
-solution_manager.cpp
-train_svm.cpp
+	features_weather.cpp
+	flightpred_globals.cpp
+	forecast.cpp
+	ga_evocosm.cpp
+	geo_parser.cpp
+	grab_flights.cpp
+	grab_grib.cpp
+	grib_pred_model.cpp
+	reporter.cpp
+	solution_config.cpp
+	solution_manager.cpp
+	train_svm.cpp
 )
 
 ADD_LIBRARY(flightpred_common ${libsources})
