@@ -6,9 +6,9 @@ export DEBFULLNAME="Richard Ulrich"
 rm -r builddeb
 mkdir builddeb
 cd builddeb
-for DISTRIBUTION in precise # oneiric natty maverick 
+for DISTRIBUTION in precise oneiric natty maverick 
 do
-	JSONSPIRITVERSIONSTR=4.2.1~${DISTRIBUTION}
+	JSONSPIRITVERSIONSTR=4.5.0~${DISTRIBUTION}
 		svn export https://flightpred.svn.sourceforge.net/svnroot/flightpred/trunk/3rd-party/json_spirit/ libjsonspirit-$JSONSPIRITVERSIONSTR
 	cd libjsonspirit-$JSONSPIRITVERSIONSTR
 	sed -i  -e "s/maverick/${DISTRIBUTION}/g" -e "s/natty/${DISTRIBUTION}/g" -e "s/oneiric/${DISTRIBUTION}/g" debian/changelog

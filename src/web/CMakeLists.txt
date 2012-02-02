@@ -5,27 +5,41 @@ FIND_PACKAGE(Wt 3.0 REQUIRED)
 
 include_directories(${Wt_INCLUDE_DIR})
 
-ADD_EXECUTABLE(flightpred_web.fcgi main.cpp FlightForecast.cpp WeatherMap.cpp Populations.cpp)
-TARGET_LINK_LIBRARIES(flightpred_web.fcgi 
-	flightpred_common
+SET(FLP_WEB_SRC
+    main.cpp
+    FlightForecast.cpp
+    WeatherMap.cpp
+    Populations.cpp
+)
+
+SET(FLP_WEB_LIB
+    flightpred_common
 	${Boost_FILESYSTEM_LIBRARY}
 	${Boost_SYSTEM_LIBRARY}
 	${Boost_REGEX_LIBRARY}
 	${Boost_SIGNALS_LIBRARY}
- 	wt 
-	wtfcgi 
+	${Boost_DATE_TIME_LIBRARY}
+ 	wt
 	wtext
-	pqxx 
+	pqxx
 	grib_api
 )
 
-SET_TARGET_PROPERTIES(
-    flightpred_web.fcgi
-  PROPERTIES
+ADD_EXECUTABLE(flightpred_web.fcgi ${FLP_WEB_SRC})
+TARGET_LINK_LIBRARIES(flightpred_web.fcgi ${FLP_WEB_LIB} wtfcgi)
+SET_TARGET_PROPERTIES(flightpred_web.fcgi PROPERTIES
     VERSION ${VERSION_SERIES}.${VERSION_MAJOR}.${VERSION_MINOR}
     SOVERSION ${flightpred_web_SOVERSION}
     DEBUG_POSTFIX "d"
-  )
+)
+
+ADD_EXECUTABLE(flightpred_http ${FLP_WEB_SRC})
+TARGET_LINK_LIBRARIES(flightpred_http ${FLP_WEB_LIB} wthttp)
+SET_TARGET_PROPERTIES(flightpred_http PROPERTIES
+    VERSION ${VERSION_SERIES}.${VERSION_MAJOR}.${VERSION_MINOR}
+    SOVERSION ${flightpred_web_SOVERSION}
+    DEBUG_POSTFIX "d"
+)
 
 IF(NOT EXISTS /etc/flightpred/wt_config.xml)
 	INSTALL(FILES ${flightpred_MAIN_DIR}/scripts/wt_config.xml DESTINATION /etc/flightpred/)

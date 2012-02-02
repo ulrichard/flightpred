@@ -1,3 +1,9 @@
+flightpred (0.0.34~oneiric) oneiric; urgency=low
+
+  * explicitly linking libboost_date_time in the web app
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu, 02 Feb 2012 20:43:00 +0100
+
 flightpred (0.0.33~oneiric) oneiric; urgency=low
 
   * newer package dependencies again

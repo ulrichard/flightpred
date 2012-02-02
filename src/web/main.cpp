@@ -43,6 +43,14 @@ int main(int argc, char *argv[])
 //    bindtextdomain("flightpred", "/usr/share/locale");
     textdomain("flightpred");
 
+    // provide default arguments if we got nothing
+    if(argc == 1 && strstr(argv[0], "flightpred_http"))
+    {
+        const char* argmod[] = {argv[0], "--docroot", "/usr/share/Wt", "--http-address", "0.0.0.0", "--http-port", "8081"};
+
+        return Wt::WRun(7, const_cast<char**>(argmod), &createApplication);
+    }
+
 	return Wt::WRun(argc, argv, &createApplication);
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -58,6 +66,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
     {
         // assemble the database connection information
         string db_host = "localhost";
+//        string db_host = "192.168.2.47";
         Wt::WApplication::readConfigurationProperty("db-host", db_host);
         string db_port = "5432";
         Wt::WApplication::readConfigurationProperty("db-port", db_port);
