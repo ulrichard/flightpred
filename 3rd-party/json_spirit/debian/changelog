@@ -1,3 +1,15 @@
+libjsonspirit (4.5.0~precise) precise; urgency=low
+
+  * updated from codeproject
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Thu, 02 Feb 2012 21:15:03 +0100
+
+libjsonspirit (4.2.1~precise) precise; urgency=low
+
+  * precise
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Mon, 05 Dec 2011 23:59:03 +0100
+
 libjsonspirit (4.2.1~oneiric) oneiric; urgency=low
 
   * oneiric

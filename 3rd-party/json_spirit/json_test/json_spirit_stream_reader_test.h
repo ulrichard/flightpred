@@ -1,5 +1,5 @@
-#ifndef JSON_SPIRIT_WRITER_TEST
-#define JSON_SPIRIT_WRITER_TEST
+#ifndef JSON_SPIRIT_STREAM_READER_TEST
+#define JSON_SPIRIT_STREAM_READER_TEST
 
 //          Copyright John W. Wilkinson 2007 - 2011
 // Distributed under the MIT License, see accompanying file LICENSE.txt
@@ -12,7 +12,7 @@
 
 namespace json_spirit
 {
-    void test_writer();
+    void test_stream_reader();
 }
 
 #endif

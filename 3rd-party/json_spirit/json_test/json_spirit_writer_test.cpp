@@ -1,12 +1,12 @@
-//          Copyright John W. Wilkinson 2007 - 2009.
+//          Copyright John W. Wilkinson 2007 - 2011
 // Distributed under the MIT License, see accompanying file LICENSE.txt
 
-// json spirit version 4.02
+// json spirit version 4.05
 
 #include "json_spirit_writer_test.h"
+#include "utils_test.h"
 #include "json_spirit_writer.h"
 #include "json_spirit_value.h" 
-#include "utils_test.h"
 
 #include <sstream>
 #include <boost/integer_traits.hpp>
@@ -36,6 +36,15 @@ namespace
             return ::to_str< String_type >( c_str );
         }
  
+        String_type zero_str()
+        {
+#ifdef WIN32
+            return to_str( "0.00000000000000000" );
+#else
+            return to_str( "0.0000000000000000" );
+#endif
+        }
+
         void add_value( Object_type& obj, const char* c_name, const Value_type& value )
         {
             Config_type::add( obj, to_str( c_name ), value );
@@ -46,21 +55,41 @@ namespace
             add_value( obj, c_name, to_str( c_value ) );
         }
 
+        void check_eq( const Value_type& value, const String_type& expected_result )
+        {
+           assert_eq( write( value ), expected_result );
+        }
+
         void check_eq( const Value_type& value, const char* expected_result )
         {
-            assert_eq( write( value ), to_str( expected_result ) );
+           check_eq( value, to_str( expected_result ) );
         }
 
         void check_eq_pretty( const Value_type& value, const char* expected_result )
         {
             assert_eq( write_formatted( value ), to_str( expected_result ) );
+            assert_eq( write( value, pretty_print ), to_str( expected_result ) );
+        }
+
+        void check_eq_single_line_arrays( const Value_type& value, const char* expected_result )
+        {
+            assert_eq( write( value, single_line_arrays ), to_str( expected_result ) );
+        }
+
+        void check_eq( const Value_type& value, const String_type& expected_result , unsigned int options )
+        {
+            assert_eq( write( value, options ), expected_result );
+        }
+
+        void check_eq( const Value_type& value, const char* expected_result, unsigned int options )
+        {
+            check_eq( value, to_str( expected_result ), options );
         }
 
         void test_empty_obj()
         {
             check_eq( Object_type(), "{}" );
-            check_eq_pretty( Object_type(), "{\n"
-                                         "}" );
+            check_eq_pretty( Object_type(), "{\n}" );
         }
 
         void test_obj_with_one_member()
@@ -210,15 +239,15 @@ namespace
         {
             Object_type obj;
 
-            add_value( obj, "name_1", 1.0 );
-            add_value( obj, "name_2", 1.234567890123456e-108 );
-            add_value( obj, "name_3", -1234567890.123456 );
+            add_value( obj, "name_1", 0.0 );
+            add_value( obj, "name_2", 1.234567890123456789e-108 );
+            add_value( obj, "name_3", -1234567890.123456789 );
             add_value( obj, "name_4", -1.2e-126 );
      
-            check_eq( obj, "{\"name_1\":1.000000000000000,"
-                           "\"name_2\":1.234567890123456e-108,"
-                           "\"name_3\":-1234567890.123456,"
-                           "\"name_4\":-1.200000000000000e-126}" );
+            check_eq( obj, to_str( "{\"name_1\":" ) + zero_str() + to_str( ","
+                           "\"name_2\":1.2345678901234567e-108,"
+                           "\"name_3\":-1234567890.1234567,"
+                           "\"name_4\":-1.2000000000000000e-126}" ) );
         }
 
         void test_objs_with_null_pairs()
@@ -237,6 +266,7 @@ namespace
             check_eq( Array_type(), "[]" );
             check_eq_pretty( Array_type(), "[\n"
                                         "]" );
+            check_eq_single_line_arrays( Array_type(), "[ ]" );
         }
 
         void test_array_with_one_member()
@@ -249,6 +279,7 @@ namespace
             check_eq_pretty( arr, "[\n"
                                   "    \"value\"\n"
                                   "]" );
+            check_eq_single_line_arrays( arr, "[ \"value\" ]" );
         }
 
         void test_array_with_two_members()
@@ -263,6 +294,7 @@ namespace
                                   "    \"value_1\",\n"
                                   "    1\n"
                                   "]" );
+            check_eq_single_line_arrays( arr, "[ \"value_1\", 1 ]" );
         }
 
         void test_array_with_n_members()
@@ -276,15 +308,16 @@ namespace
             arr.push_back( false );
             arr.push_back( Value_type() );
 
-            check_eq       ( arr, "[\"value_1\",123,123.4560000000000,true,false,null]" );
+            check_eq       ( arr, "[\"value_1\",123,123.45600000000000,true,false,null]" );
             check_eq_pretty( arr, "[\n"
                                   "    \"value_1\",\n"
                                   "    123,\n"
-                                  "    123.4560000000000,\n" 
+                                  "    123.45600000000000,\n" 
                                   "    true,\n"
                                   "    false,\n"
                                   "    null\n"
                                   "]" );
+            check_eq_single_line_arrays( arr, "[ \"value_1\", 123, 123.45600000000000, true, false, null ]" );
         }
 
         void test_array_with_one_empty_child_array()
@@ -298,6 +331,9 @@ namespace
                                   "    [\n"
                                   "    ]\n"
                                   "]" );
+            check_eq_single_line_arrays( arr, "[\n"
+                                              "    [ ]\n"
+                                              "]" );
         }
 
         void test_array_with_one_child_array()
@@ -318,6 +354,10 @@ namespace
                                    "        2\n"
                                    "    ]\n"
                                    "]" );
+            check_eq_single_line_arrays( root, "[\n"
+                                               "    1,\n"
+                                               "    [ 2 ]\n"
+                                               "]" );
         }
 
         void test_array_with_grandchild_array()
@@ -349,6 +389,15 @@ namespace
                                    "    ],\n"
                                    "    2\n"
                                    "]" );
+            check_eq_single_line_arrays( root, "[\n"
+                                   "    1,\n"
+                                   "    [ 11 ],\n"
+                                   "    [\n"
+                                   "        22,\n"
+                                   "        [ 33 ]\n"
+                                   "    ],\n"
+                                   "    2\n"
+                                   "]" );
         }
 
         void test_array_and_objs()
@@ -370,6 +419,12 @@ namespace
                                 "        \"a\" : 1\n"
                                 "    }\n"
                                 "]" );
+            check_eq_single_line_arrays( a, "[\n"
+                                            "    11,\n"
+                                            "    {\n"
+                                            "        \"a\" : 1\n"
+                                            "    }\n"
+                                            "]" );
 
             add_value( obj, "b", 2 );
 
@@ -390,6 +445,18 @@ namespace
                                 "        \"b\" : 2\n"
                                 "    }\n"
                                 "]" );
+            check_eq_single_line_arrays( a, "[\n"
+                                            "    11,\n"
+                                            "    {\n"
+                                            "        \"a\" : 1\n"
+                                            "    },\n"
+                                            "    22,\n"
+                                            "    33,\n"
+                                            "    {\n"
+                                            "        \"a\" : 1,\n"
+                                            "        \"b\" : 2\n"
+                                            "    }\n"
+                                            "]" );
         }
 
         void test_obj_and_arrays()
@@ -401,40 +468,61 @@ namespace
             Array_type a;
 
             a.push_back( 11 );
+            a.push_back( 12 );
 
             add_value( obj, "b", a );
 
-            check_eq       ( obj, "{\"a\":1,\"b\":[11]}" );
+            check_eq       ( obj, "{\"a\":1,\"b\":[11,12]}" );
             check_eq_pretty( obj, "{\n"
                                   "    \"a\" : 1,\n"
                                   "    \"b\" : [\n"
-                                  "        11\n"
+                                  "        11,\n"
+                                  "        12\n"
                                   "    ]\n"
                                   "}" );
+            check_eq_single_line_arrays( obj, "{\n"
+                                              "    \"a\" : 1,\n"
+                                              "    \"b\" : [ 11, 12 ]\n"
+                                              "}" );
 
             a.push_back( obj );
 
             add_value( obj, "c", a );
 
-            check_eq       ( obj, "{\"a\":1,\"b\":[11],\"c\":[11,{\"a\":1,\"b\":[11]}]}" );
+            check_eq       ( obj, "{\"a\":1,\"b\":[11,12],\"c\":[11,12,{\"a\":1,\"b\":[11,12]}]}" );
             check_eq_pretty( obj, "{\n"
                                   "    \"a\" : 1,\n"
                                   "    \"b\" : [\n"
-                                  "        11\n"
+                                  "        11,\n"
+                                  "        12\n"
                                   "    ],\n"
                                   "    \"c\" : [\n"
                                   "        11,\n"
+                                  "        12,\n"
                                   "        {\n"
                                   "            \"a\" : 1,\n"
                                   "            \"b\" : [\n"
-                                  "                11\n"
+                                  "                11,\n"
+                                  "                12\n"
                                   "            ]\n"
                                   "        }\n"
                                   "    ]\n"
                                   "}" );
+            check_eq_single_line_arrays( obj, "{\n"
+                                              "    \"a\" : 1,\n"
+                                              "    \"b\" : [ 11, 12 ],\n"
+                                              "    \"c\" : [\n"
+                                              "        11,\n"
+                                              "        12,\n"
+                                              "        {\n"
+                                              "            \"a\" : 1,\n"
+                                              "            \"b\" : [ 11, 12 ]\n"
+                                              "        }\n"
+                                              "    ]\n"
+                                              "}" );
         }
 
-        void test_escape_char( const char* esc_str_in, const char* esc_str_out )
+        void test_escape_char( const char* esc_str_in, const char* esc_str_out, unsigned int option = 0 )
         {
             Object_type obj;
 
@@ -444,7 +532,7 @@ namespace
 
             const string out_str( string( "{\"" ) + esc_str_out + "name\":\"value" + esc_str_out + "\"}" );
 
-            check_eq( obj, out_str.c_str() );
+            check_eq( obj, out_str.c_str(), option );
         }
 
         void test_escape_chars()
@@ -461,24 +549,33 @@ namespace
             test_escape_char( "\x7F", "\\u007F" );
         }
 
+        void test_disabling_nonprintable_esc_chars()
+        {
+            test_escape_char( "\t", "\\t", raw_utf8 );
+            test_escape_char( "\x01",     "\x01", raw_utf8 );
+            test_escape_char( "\x01\x12", "\x01\x12", raw_utf8 );
+        }
+
         void test_to_stream()
         {
             basic_ostringstream< Char_type > os;
 
             Array_type arr;
 
-            arr.push_back( 1 );
-            arr.push_back( 2 );
+            arr.push_back( 111 );
+            arr.push_back( 222 );
+
+            os << hex;  // the code should handle this, i.e. output decimal 
 
             write( arr, os );
 
-            assert_eq( os.str(), to_str( "[1,2]" ) );
+            assert_eq( os.str(), to_str( "[111,222]" ) );
         }
 
         void test_values()
         {
             check_eq( 123, "123" );
-            check_eq( 1.234, "1.234000000000000" );
+            check_eq( 1.234, "1.2340000000000000" );
             check_eq( to_str( "abc" ), "\"abc\"" );
             check_eq( false, "false" );
             check_eq( Value_type::null, "null" );
@@ -501,6 +598,50 @@ namespace
             check_eq( Value_type( uint64_t( max_int64 ) ), "9223372036854775807" );
 
             check_eq( Value_type( max_uint64 ), "18446744073709551615" );
+        }
+
+        void test_ios_state_saved()
+        {
+            basic_ostringstream< Char_type > os;
+
+            os << 0.123456789;
+
+            Array_type arr;
+
+            arr.push_back( 0.123456789 );
+
+            write( arr, os );
+
+            os << 0.123456789;
+
+            assert_eq( os.str(), to_str( "0.123457"
+                                         "[0.12345678900000000]"
+                                         "0.123457" ) );
+        }
+
+        void check_remove_trailing_zeros( const double value, const String_type& expected_str_with, const String_type& expected_str_without )
+        {
+            check_eq( value, expected_str_with, 0 );
+            check_eq( value, expected_str_without, remove_trailing_zeros );
+        }
+
+        void check_remove_trailing_zeros( const double value, const char* expected_str_with, const char* expected_str_without )
+        {
+            check_remove_trailing_zeros( value, to_str( expected_str_with ), to_str( expected_str_without ) );
+        }
+
+        void test_remove_trailing_zeros()
+        {
+#ifdef WIN32
+            const String_type exp = to_str( "099" );
+#else
+            const String_type exp = to_str( "99" );
+#endif
+            check_remove_trailing_zeros( 0.0,           zero_str(),  to_str( "0.0" ) );
+            check_remove_trailing_zeros( 1.2,           "1.2000000000000000",  "1.2" );
+            check_remove_trailing_zeros( 0.123456789,   "0.12345678900000000",  "0.123456789" );
+            check_remove_trailing_zeros( 1.2e-99,       to_str( "1.2000000000000000e-" ) + exp,  to_str( "1.2e-" ) + exp );
+            check_remove_trailing_zeros( 1.23456789e99, to_str( "1.2345678900000001e+" ) + exp,  to_str( "1.23456789e+" ) + exp );
         }
 
         void run_tests()
@@ -526,13 +667,16 @@ namespace
             test_array_and_objs();
             test_obj_and_arrays();
             test_escape_chars();
+            test_disabling_nonprintable_esc_chars();
             test_to_stream();
             test_values();
             test_uint64();
+            test_ios_state_saved();
+            test_remove_trailing_zeros();
         }
     };
 
-#ifndef BOOST_NO_STD_WSTRING
+#if defined( JSON_SPIRIT_WVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
     void test_wide_esc_u( wchar_t c, const wstring& result)
     {
         const wstring s( 1, c );
@@ -556,24 +700,30 @@ namespace
         return iswprint( unsigned_c ) != 0;
     }
 
+#ifdef JSON_SPIRIT_VALUE_ENABLED
     void test_extended_ascii()
     {
         const string expeced_result( is_printable( 'ä' ) ? "[\"äöüß\"]" : "[\"\\u00E4\\u00F6\\u00FC\\u00DF\"]" );
 
         assert_eq( write( Array( 1, "äöüß" ) ), expeced_result );
     }
+#endif
 }
 
 void json_spirit::test_writer()
 {
+#ifdef JSON_SPIRIT_VALUE_ENABLED
     Test_runner< Config  >().run_tests();
+    test_extended_ascii();
+#endif
+#ifdef JSON_SPIRIT_MVALUE_ENABLED
     Test_runner< mConfig >().run_tests();
-
-#ifndef BOOST_NO_STD_WSTRING
+#endif
+#if defined( JSON_SPIRIT_WVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
     Test_runner< wConfig  >().run_tests();
-    Test_runner< wmConfig >().run_tests();
     test_wide_esc_u();
 #endif
-
-    test_extended_ascii();
+#if defined( JSON_SPIRIT_WMVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
+    Test_runner< wmConfig >().run_tests();
+#endif
 }

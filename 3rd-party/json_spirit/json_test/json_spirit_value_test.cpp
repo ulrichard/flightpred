@@ -1,13 +1,13 @@
-//          Copyright John W. Wilkinson 2007 - 2009.
+//          Copyright John W. Wilkinson 2007 - 2011
 // Distributed under the MIT License, see accompanying file LICENSE.txt
 
-// json spirit version 4.02
+// json spirit version 4.05
 
 #include "json_spirit_value_test.h"
-#include "json_spirit_value.h"
 #include "utils_test.h"
+#include "json_spirit_value.h"
 #include <limits.h>
-
+#include <list>
 #include <boost/assign/list_of.hpp>
 #include <boost/integer_traits.hpp>
 
@@ -18,6 +18,8 @@ using namespace boost::assign;
 
 namespace
 {
+#ifdef JSON_SPIRIT_VALUE_ENABLED
+
     const int64_t max_int64   = integer_traits< int64_t  >::max();
     const uint64_t max_uint64 = integer_traits< uint64_t >::max();
 
@@ -269,7 +271,7 @@ namespace
         Object o;
         check_pair_typedefs( o );
         
-#ifndef BOOST_NO_STD_WSTRING
+#if defined( JSON_SPIRIT_WVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
         wObject wo;
         check_pair_typedefs( wo );
 #endif
@@ -277,6 +279,7 @@ namespace
 
     void test_obj_map_implemention()
     {
+#ifdef JSON_SPIRIT_MVALUE_ENABLED
         mObject obj;
 
         obj[ "name 1" ] = 1;
@@ -286,6 +289,7 @@ namespace
 
         assert_eq( obj.find( "name 1" )->second.get_int(), 1 );
         assert_eq( obj.find( "name 2" )->second.get_str(), "two" );
+#endif
     }
 
     template< typename Int >
@@ -315,10 +319,175 @@ namespace
         check_an_int_is_a_real( max_int64,  9223372036854775800.0 );
         check_an_int_is_a_real( max_uint64, 18446744073709552000.0 );
     }
+
+    template< typename T >
+    void check_wrong_type_exceptions( const Value_type vtype )
+    {
+        Value v;
+
+        assert_eq( v.type(), null_type );
+
+        try
+        {
+            v.get_value< T >();
+
+            assert( false );
+        }
+        catch( const runtime_error& e )
+        {
+            ostringstream os;
+
+            os << "value type is " << null_type << " not " << vtype;
+
+            assert_eq( e.what(), os.str() );
+        }
+    }
+
+    void test_wrong_type_exceptions()
+    {
+        check_wrong_type_exceptions< Object >( obj_type );
+        check_wrong_type_exceptions< Array >( array_type );
+        check_wrong_type_exceptions< string >( str_type );
+        check_wrong_type_exceptions< bool >( bool_type );
+        check_wrong_type_exceptions< boost::int64_t >( int_type );
+        check_wrong_type_exceptions< int >( int_type );
+        check_wrong_type_exceptions< double >( real_type );
+    }
+#endif
+
+    template< class Config_type >
+    class Container_constructor_runner
+    {
+    public:
+
+        Container_constructor_runner()
+        {
+            vector< double > vd = list_of( 1.2 )( 1.3 );  test_container_constructor( vd );
+            vector< int >    vi = list_of( 1 );           test_container_constructor( vi );
+                             vi = list_of( 1 )( 2 );      test_container_constructor( vi );
+                             vi = list_of( 1 )( 2 )( 3 ); test_container_constructor( vi );
+            list< double >   ld = list_of( 1.2 )( 1.3 );  test_container_constructor( ld );
+            list< int >      li = list_of( 1 );           test_container_constructor( li );
+                             li = list_of( 1 )( 2 );      test_container_constructor( li );
+                             li = list_of( 1 )( 2 )( 3 ); test_container_constructor( li );
+        }
+
+    private:
+
+        typedef typename Config_type::Array_type Array_type;
+        typedef typename Config_type::Value_type Value_type;
+
+        template< class Cont >
+        void test_container_constructor( const Cont& cont )
+        {
+            typedef typename Cont::value_type Cont_value_type;
+            const Value_type val( cont.begin(), cont.end() );
+            const Array_type& arr = val.get_array();
+            Cont result;
+            for( unsigned int i = 0; i < arr.size(); ++i )
+            {
+                result.push_back( arr[i].template get_value< Cont_value_type>() );
+            }
+            assert_eq( result, cont );
+        }
+    };
+
+    void test_container_constructor()
+    {
+#ifdef JSON_SPIRIT_VALUE_ENABLED
+       Container_constructor_runner< Config  >();
+#endif
+#ifdef JSON_SPIRIT_MVALUE_ENABLED
+       Container_constructor_runner< mConfig >();
+#endif
+#if defined( JSON_SPIRIT_WVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
+        Container_constructor_runner< wConfig  >();
+#endif
+#if defined( JSON_SPIRIT_WMVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
+        Container_constructor_runner< wmConfig >();
+#endif
+    }
+
+    template< class Config_type >
+    class Variant_constructor_runner
+    {
+    public:
+
+        Variant_constructor_runner()
+        {
+            test_variant_constructor< variant< int, double > >( 1.23 );
+            test_variant_constructor< variant< int, double > >( 123 );
+            test_variant_constructor< variant< int, double, String_type > >( to_str< String_type >( "foo" ) );
+            test_variant_constructor< variant< int, double, String_type, bool > >( true );
+            test_variant_constructor< variant< int, double, String_type, bool, boost::int64_t > >( boost::int64_t( 123 ) );
+            test_variant_constructor< variant< int, double, String_type, bool, boost::uint64_t > >( boost::uint64_t( 123 ) );
+
+            {
+                variant< int, Null > variant = Null();
+                const Value_type val( variant );
+                assert( val.is_null() );
+            }
+            
+            vector< double > vd = list_of( 1.2 )( 1.3 );   test_variant_array_constructor< double > ( vd );
+            vector< int >    vi = list_of( 1 );            test_variant_array_constructor< int >( vi );
+                             vi = list_of( 1 )( 2 );       test_variant_array_constructor< int >( vi );
+                             vi = list_of( 1 )( 2 )( 3 );  test_variant_array_constructor< int >( vi );
+            list< double >   ld = list_of( 1.2 )( 1.3 );   test_variant_array_constructor< double >( ld );
+            list< int >      li = list_of( 1 );            test_variant_array_constructor< int >( li );
+                             li = list_of( 1 )( 2 );       test_variant_array_constructor< int >( li );
+                             li = list_of( 1 )( 2 )( 3 );  test_variant_array_constructor< int >( li );
+        }
+
+    private:
+
+        typedef typename Config_type::String_type String_type;
+        typedef typename Config_type::Array_type Array_type;
+        typedef typename Config_type::Value_type Value_type;
+
+        template< class Variant_t, typename T >
+        void test_variant_constructor( const T& t )
+        {
+            const Variant_t variant( t );
+            const Value_type val( variant );
+            assert_eq( val.template get_value< T >(), t );
+        }
+
+        template< typename T, typename A, template< typename, typename > class Cont >
+        void test_variant_array_constructor( const Cont< T, A >& cont )
+        {
+            const variant< int, Cont< T, A > > variant = cont;
+            const Value_type val( variant );
+            const Array_type& arr = val.get_array();
+            Cont< T, A > result;
+            for( unsigned int i = 0; i < arr.size(); ++i )
+            {
+                result.push_back( arr[i].template get_value< T >() );
+            }
+            assert_eq( result, cont );
+        }
+    };
+
+    void test_variant_constructor()
+    {
+#ifdef JSON_SPIRIT_VALUE_ENABLED
+        Variant_constructor_runner< Config  >();
+#endif
+#ifdef JSON_SPIRIT_MVALUE_ENABLED
+        Variant_constructor_runner< mConfig >();
+
+#endif
+#if defined( JSON_SPIRIT_WVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
+        Variant_constructor_runner< wConfig  >();
+#endif
+#if defined( JSON_SPIRIT_WMVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
+       Variant_constructor_runner< wmConfig >();
+#endif
+    }
 }
 
 void json_spirit::test_value()
 {
+#ifdef JSON_SPIRIT_VALUE_ENABLED
     Object obj;
     Value value_str ( "value" );
     Value value_obj ( obj );
@@ -358,4 +527,8 @@ void json_spirit::test_value()
     test_obj_map_implemention();
     test_is_uint64();
     test_an_int_is_a_real();
+    test_wrong_type_exceptions();
+#endif
+    test_container_constructor();
+    test_variant_constructor();
 }

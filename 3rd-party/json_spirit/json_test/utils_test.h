@@ -1,16 +1,17 @@
-#ifndef JASON_SPIRIT_TEST_UTILS
-#define JASON_SPIRIT_TEST_UTILS
+#ifndef JSON_SPIRIT_TEST_UTILS
+#define JSON_SPIRIT_TEST_UTILS
 
-//          Copyright John W. Wilkinson 2007 - 2009.
+//          Copyright John W. Wilkinson 2007 - 2011
 // Distributed under the MIT License, see accompanying file LICENSE.txt
 
-// json spirit version 4.02
+// json spirit version 4.05
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
 # pragma once
 #endif
 
 #include <cassert>
+#include <cmath>
 
 // these functions allow you to inspect the values that caused a test to fail
 
@@ -29,5 +30,7 @@ void assert_neq( const T1& t1, const T2& t2 )
 
     assert( false );
 }
+
+void assert_eq( const double d1, const double d2, const double abs_error );
 
 #endif

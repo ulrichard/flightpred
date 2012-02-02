@@ -1,13 +1,13 @@
-//          Copyright John W. Wilkinson 2007 - 2009.
+//          Copyright John W. Wilkinson 2007 - 2011
 // Distributed under the MIT License, see accompanying file LICENSE.txt
 
-// json spirit version 4.02
+// json spirit version 4.05
 
 #include "json_spirit_reader_test.h"
+#include "utils_test.h"
 #include "json_spirit_reader.h"
 #include "json_spirit_value.h" 
 #include "json_spirit_writer.h" 
-#include "utils_test.h"
 
 #include <limits.h>
 #include <sstream>
@@ -317,16 +317,6 @@ namespace
                             "    \"name_4\" : -567\n"
                             "}" );
 
-            check_reading( "{\n"
-                            "    \"name 1\" : \"value 1\",\n"
-                            "    \"name 2\" : 1.200000000000000,\n"
-                            "    \"name 3\" : \"value 3\",\n"
-                            "    \"name_4\" : 1.234567890123456e+125,\n"
-                            "    \"name_5\" : -1.234000000000000e-123,\n"
-                            "    \"name_6\" : 1.000000000000000e-123,\n"
-                            "    \"name_7\" : 1234567890.123456\n"
-                            "}" );
-
             check_reading( "[\n]" );
 
             check_reading( "[\n"
@@ -335,7 +325,7 @@ namespace
 
             check_reading( "[\n"
                            "    1,\n"
-                           "    1.200000000000000,\n"
+                           "    1.2000000000000000,\n"
                            "    \"john]\",\n"
                            "    true,\n"
                            "    false,\n"
@@ -426,6 +416,31 @@ namespace
 
             check_reading( INT_MIN, INT_MAX );
             check_reading( LLONG_MIN, LLONG_MAX );
+        }
+
+        void test_reading_reals()
+        {
+            Value_type value;
+
+            const String_type in_s = to_str( "[1.200000000000000,1.234567890123456e+125,-1.234000000000000e-123,"
+                                             " 1.000000000000000e-123,1234567890.123456,123]" );
+
+            basic_istringstream< Char_type > is( in_s );
+
+            const bool ok = read( is, value );
+
+            assert_eq( ok, true );
+            assert_eq( value.type(), array_type );
+
+            const Array_type arr = value.get_array();
+
+            assert_eq( arr.size(), 6 );
+            assert_eq( arr[0].get_real(), 1.200000000000000, 1e-16 );
+            assert_eq( arr[1].get_real(), 1.234567890123456e+125, 1e+110 );
+            assert_eq( arr[2].get_real(), -1.234000000000000e-123, 1e+108 );
+            assert_eq( arr[3].get_real(), 1.000000000000000e-123, 1e+108 );
+            assert_eq( arr[4].get_real(), 1234567890.123456, 1e-7 );
+            assert_eq( arr[5].get_real(), 123.0, 1e-13 );
         }
 
         void test_from_stream( const char* json_str, bool expected_success,
@@ -681,19 +696,9 @@ namespace
             check_array( value, expected_size );
         }
 
-        void test_sequence_of_values()
+        void check_reading_arrays( const char* arrays_str )
         {
-            check_value_sequence( "",   Ints(), false );
-            check_value_sequence( " ",  Ints(), false );
-            check_value_sequence( "  ", Ints(), false );
-            check_value_sequence( "     10 ",      list_of( 10 ), false );
-            check_value_sequence( "     10 11 ",   list_of( 10 )( 11 ), false );
-            check_value_sequence( "     10 11 12", list_of( 10 )( 11 )( 12 ), true);
-            check_value_sequence( "10 11 12",      list_of( 10 )( 11 )( 12 ), true);
-
-            // 
-
-            const String_type str( to_str( "[] [ 1 ] [ 1, 2 ]  [ 1, 2, 3 ]" ) );
+            const String_type str( to_str( arrays_str ) );
 
             Iter_type       begin = str.begin();
             const Iter_type end   = str.end();
@@ -709,6 +714,23 @@ namespace
             check_reading_array( is, 1 );
             check_reading_array( is, 2 );
             check_reading_array( is, 3 );
+        }
+
+        void test_sequence_of_values()
+        {
+            check_value_sequence( "",   Ints(), false );
+            check_value_sequence( " ",  Ints(), false );
+            check_value_sequence( "  ", Ints(), false );
+            check_value_sequence( "     10 ",      list_of( 10 ), false );
+            check_value_sequence( "     10 11 ",   list_of( 10 )( 11 ), false );
+            check_value_sequence( "     10 11 12", list_of( 10 )( 11 )( 12 ), true);
+            check_value_sequence( "10 11 12",      list_of( 10 )( 11 )( 12 ), true);
+
+            // 
+
+            check_reading_arrays( "[] [ 1 ] [ 1, 2 ] [ 1, 2, 3 ]" );
+ //         check_reading_arrays( "[][1][1,2][1,2,3]" );  // fails due to multi_pass iterator bug,
+                                                          // use stream_reader class instead
         }
 
         void test_uint64( const char* value_str, int expected_int, int64_t expected_int64, uint64_t expected_uint64 )
@@ -748,11 +770,12 @@ namespace
             assert_eq( a[4].get_real(), 12.3 );
             assert_eq( a[5].is_null(), true );
         }
-
+        
         void run_tests()
         {
             test_syntax();
             test_reading();
+            test_reading_reals();
             test_from_stream();
             test_escape_chars();
             test_values();
@@ -763,7 +786,7 @@ namespace
         }
     };
 
-#ifndef BOOST_NO_STD_WSTRING
+#if defined( JSON_SPIRIT_WVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
     void test_wide_esc_u()
     {
         wValue value;
@@ -777,6 +800,7 @@ namespace
     }
 #endif
 
+#ifdef JSON_SPIRIT_VALUE_ENABLED
     void test_extended_ascii( const string& s )
     {
         Value value;
@@ -791,22 +815,28 @@ namespace
         test_extended_ascii( "\\u00E4\\u00F6\\u00FC\\u00DF" );
         test_extended_ascii( "äöüß" );
     }
+#endif
 }
 
 //#include <fstream>
 
 void json_spirit::test_reader()
 {
+#ifdef JSON_SPIRIT_VALUE_ENABLED
     Test_runner< Config  >().run_tests();
+    test_extended_ascii();
+#endif
+#ifdef JSON_SPIRIT_MVALUE_ENABLED
     Test_runner< mConfig >().run_tests();
-
-#ifndef BOOST_NO_STD_WSTRING
+#endif
+#if defined( JSON_SPIRIT_WVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
     Test_runner< wConfig  >().run_tests();
-    Test_runner< wmConfig >().run_tests();
     test_wide_esc_u();
 #endif
+#if defined( JSON_SPIRIT_WMVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
+    Test_runner< wmConfig >().run_tests();
+#endif
 
-    test_extended_ascii();
 
 #ifndef _DEBUG
     //ifstream ifs( "test.txt" );

@@ -3,15 +3,17 @@
 
 // json spirit version 4.05
 
-// This demo shows you how to read and write JSON objects and arrays.
-// In this demo objects are stored as a map of names to values.
+// This demo shows you how to read and write JSON objects and arrays 
+// using header files only, i.e. not linking to the JSON Spirit object library.
+// In this demo objects are stored as a vector of name/value pairs.
 
-#include "json_spirit.h"
+#include "json_spirit_reader_template.h"
+#include "json_spirit_writer_template.h"
 #include <cassert>
 #include <fstream>
 
-#ifndef JSON_SPIRIT_MVALUE_ENABLED
-#error Please define JSON_SPIRIT_MVALUE_ENABLED for the mValue type to be enabled 
+#ifndef JSON_SPIRIT_VALUE_ENABLED
+#error Please define JSON_SPIRIT_VALUE_ENABLED for the Value type to be enabled 
 #endif
 
 using namespace std;
@@ -35,45 +37,62 @@ bool operator==( const Address& a1, const Address& a2 )
            ( a1.country_      == a2.country_ );
 }
 
-void write_address( mArray& a, const Address& addr )
+void write_address( Array& a, const Address& addr )
 {
-    mObject addr_obj;
+    Object addr_obj;
 
-    addr_obj[ "house_number" ] = addr.house_number_;
-    addr_obj[ "road"         ] = addr.road_;
-    addr_obj[ "town"         ] = addr.town_;
-    addr_obj[ "county"       ] = addr.county_;
-    addr_obj[ "country"      ] = addr.country_;
+    addr_obj.push_back( Pair( "house_number", addr.house_number_ ) );
+    addr_obj.push_back( Pair( "road",         addr.road_ ) );
+    addr_obj.push_back( Pair( "town",         addr.town_ ) );
+    addr_obj.push_back( Pair( "county",       addr.county_ ) );
+    addr_obj.push_back( Pair( "country",      addr.country_ ) );
 
     a.push_back( addr_obj );
 }
 
-const mValue& find_value( const mObject& obj, const string& name  )
-{
-    mObject::const_iterator i = obj.find( name );
-
-    assert( i != obj.end() );
-    assert( i->first == name );
-
-    return i->second;
-}
-
-Address read_address( const mObject& obj )
+Address read_address( const Object& obj )
 {
     Address addr;
 
-    addr.house_number_ = find_value( obj, "house_number" ).get_int();
-    addr.road_         = find_value( obj, "road"         ).get_str();
-    addr.town_         = find_value( obj, "town"         ).get_str();
-    addr.county_       = find_value( obj, "county"       ).get_str();
-    addr.country_      = find_value( obj, "country"      ).get_str();
+    for( Object::size_type i = 0; i != obj.size(); ++i )
+    {
+        const Pair& pair = obj[i];
+
+        const string& name  = pair.name_;
+        const Value&  value = pair.value_;
+
+        if( name == "house_number" )
+        {
+            addr.house_number_ = value.get_int();
+        }
+        else if( name == "road" )
+        {
+            addr.road_ = value.get_str();
+        }
+        else if( name == "town" )
+        {
+            addr.town_ = value.get_str();
+        }
+        else if( name == "county" )
+        {
+            addr.county_ = value.get_str();
+        }
+        else if( name == "country" )
+        {
+            addr.country_ = value.get_str();
+        }
+        else
+        {
+            assert( false );
+        }
+    }
 
     return addr;
 }
 
 void write_addrs( const char* file_name, const Address addrs[] )
 {
-    mArray addr_array;
+    Array addr_array;
 
     for( int i = 0; i < 5; ++i )
     {
@@ -82,7 +101,7 @@ void write_addrs( const char* file_name, const Address addrs[] )
 
     ofstream os( file_name );
 
-    write_formatted( addr_array, os );
+    write_stream( Value( addr_array ), os, pretty_print );  // NB need to convert Array to a Value
 
     os.close();
 }
@@ -91,15 +110,15 @@ vector< Address > read_addrs( const char* file_name )
 {
     ifstream is( file_name );
 
-    mValue value;
+    Value value;
 
-    read( is, value );
+    read_stream( is, value );
 
-    const mArray& addr_array = value.get_array();
+    const Array& addr_array = value.get_array();
 
     vector< Address > addrs;
 
-    for( vector< Address >::size_type i = 0; i < addr_array.size(); ++i )
+    for( unsigned int i = 0; i < addr_array.size(); ++i )
     {
         addrs.push_back( read_address( addr_array[i].get_obj() ) );
     }
@@ -130,4 +149,3 @@ int main()
 
 	return 0;
 }
-;

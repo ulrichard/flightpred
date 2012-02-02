@@ -1,11 +1,11 @@
-//          Copyright John W. Wilkinson 2007 - 2009.
+//          Copyright John W. Wilkinson 2007 - 2011
 // Distributed under the MIT License, see accompanying file LICENSE.txt
 
-// json spirit version 4.02
+// json spirit version 4.05
 
 #include "json_spirit_utils_test.h"
-#include "json_spirit_utils.h"
 #include "utils_test.h"
+#include "json_spirit_utils.h"
 
 #include <boost/assign/list_of.hpp>
 
@@ -133,9 +133,11 @@ namespace
 
 void json_spirit::test_utils()
 {
+#ifdef JSON_SPIRIT_VALUE_ENABLED
     Test_runner< Object, Mapped_obj >().run_tests();
+#endif
 
-#ifndef BOOST_NO_STD_WSTRING
+#if defined( JSON_SPIRIT_WVALUE_ENABLED ) && !defined( BOOST_NO_STD_WSTRING )
     Test_runner< wObject, wMapped_obj >().run_tests();
 #endif
 }
