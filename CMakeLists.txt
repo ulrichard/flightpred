@@ -19,10 +19,6 @@ SET(RUNDIR "/usr/flightpred/run" CACHE PATH "Default path for wt session managem
 SET(CONFIGDIR "/etc/flightpred" CACHE STRING "Path for the configuration files")
 SET(CONFIGDIRAPACHE /etc/apache2 CACHE STRING "Path for the apache2 configuration files")
 SET(DEPLOYROOT /var/www/localhost/htdocs/flightpred CACHE PATH "Path to deploy into)")
-SET(BOOST_DIR /usr CACHE PATH "Boost installation path prefix")
-SET(BOOST_COMPILER gcc CACHE STRING "Boost libraries compiler signature")
-SET(BOOST_VERSION "1_42" CACHE STRING "Boost libraries version signature")
-
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release CACHE STRING
@@ -30,12 +26,17 @@ IF(NOT CMAKE_BUILD_TYPE)
       FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-MARK_AS_ADVANCED( CONFIGDIR )
+MARK_AS_ADVANCED(CONFIGDIR)
 SET(CONFIGURATION "${CONFIGDIR}/wt_config.xml" CACHE PATH "Path to the wt configuration file")
 
 SET(WEBUSER www-data CACHE STRING "Webserver username (e.g. apache or www)")
 SET(WEBGROUP www-data CACHE STRING "Webserver groupname (e.g. apache or www or users)")
 
+# Setup output Directories
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin CACHE PATH "Single Directory for all Libraries")
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin CACHE PATH "Single Directory for all Executables.")
+SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin CACHE PATH "Single Directory for all static libraries.")
+MARK_AS_ADVANCED(CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
 
 SUBDIRS(src scripts)
 

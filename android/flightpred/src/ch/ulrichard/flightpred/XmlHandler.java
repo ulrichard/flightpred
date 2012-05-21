@@ -16,6 +16,9 @@ public class XmlHandler extends DataHandlerBase {
 	
 	protected void load() {
 		try {
+			preddata_  = new TreeMap<String, TreeMap<Date, Float>>();
+			locations_ = new TreeMap<String, GeoPoint>(); 
+
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			Document dom = builder.parse(fileurl_.openConnection().getInputStream());

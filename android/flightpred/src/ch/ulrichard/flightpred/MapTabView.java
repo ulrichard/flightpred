@@ -16,11 +16,9 @@ import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.google.android.maps.GeoPoint;
 
-
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.widget.TextView;
 
 public class MapTabView extends MapActivity {
 
@@ -83,18 +81,19 @@ public class MapTabView extends MapActivity {
 			cal.add(Calendar.DATE, 1);
 			preddates.put(cal.getTime(), pntBlue);
 			
-			Drawable sigma = this.getResources().getDrawable(R.drawable.sigma);
-			MapCircleOverlay itemizedoverlay = new MapCircleOverlay(sigma, this);
-			
 			for(Map.Entry<String, TreeMap<Date, Float>> ent : preddata.entrySet()) {
 				String sitename = ent.getKey();
 				Set<Date> days = ent.getValue().keySet();
 				GeoPoint location = DataHandlerBase.inst().getLocation(sitename);
 				
+				// draw the paraglider
+				Drawable sigma = this.getResources().getDrawable(R.drawable.sigma);
+				MapCircleOverlay itemizedoverlay = new MapCircleOverlay(sigma, this);
 				OverlayItem overlayitem = new OverlayItem(location, sitename, sitename);
 				itemizedoverlay.addOverlay(overlayitem);
 				mapOverlays.add(itemizedoverlay);
 				
+				// draw the circles
 				for(Map.Entry<Date, Paint> ent2 : preddates.entrySet()) {
 					day = ent2.getKey();
 					if(days.contains(day)) {

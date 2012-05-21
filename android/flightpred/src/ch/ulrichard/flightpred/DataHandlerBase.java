@@ -11,22 +11,28 @@ public abstract class DataHandlerBase {
 	final URL   fileurl_;
 	protected TreeMap<String, TreeMap<Date, Float>> preddata_;
 	protected TreeMap<String, GeoPoint>             locations_;
+	private   Date lastupdate_;
 	
 	protected DataHandlerBase(String fileurl) {
 		try{
-			this.fileurl_ = new URL(fileurl);
-			this.preddata_  = new TreeMap<String, TreeMap<Date, Float>>();
-			this.locations_ = new TreeMap<String, GeoPoint>();
+			this.fileurl_    = new URL(fileurl);
+			this.lastupdate_ = new Date((new Date()).getTime() - 60 * 60 * 1000);
+			this.preddata_   = new TreeMap<String, TreeMap<Date, Float>>();
+			this.locations_  = new TreeMap<String, GeoPoint>();
 		}catch(MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
 	
 	static public DataHandlerBase inst() {
-		if(inst_ == null) {
-			inst_ = new JsonHandler("http://flightpred.homelinux.org/forecast.php?format=json");
-			inst_.load();
-		}
+		
+		if(inst_ == null)
+			inst_ = new JsonHandler("http://flightpred.ulrichard.ch/forecast.php?format=json");
+		
+		final Date tenMinAgo = new Date((new Date()).getTime() - 10 * 60 * 1000);
+		if(inst_.lastupdate_.before(tenMinAgo)) // reload if the data is older then 10 minutes
+			inst_.doload();
+
 		return inst_;
 	}
 	
@@ -40,5 +46,8 @@ public abstract class DataHandlerBase {
 	
 	abstract protected void load();
 	
-	
+	private void doload() {
+		load();
+		lastupdate_ = new Date();
+	}
 }

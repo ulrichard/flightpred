@@ -25,6 +25,8 @@ public class JsonHandler extends DataHandlerBase {
 
 	protected void load() {
 		try {
+			preddata_  = new TreeMap<String, TreeMap<Date, Float>>();
+			locations_ = new TreeMap<String, GeoPoint>(); 
 			JSONObject json;
 			try {
 				json = getJSONObject(fileurl_.toString());
@@ -78,6 +80,7 @@ public class JsonHandler extends DataHandlerBase {
 	private JSONObject getJSONObject(String url)
 	{
 		HttpClient httpClient = new DefaultHttpClient();
+		httpClient.getParams().setParameter(HttpMethodParams.USER_AGENT, "Flightpred/1.7 FlightpredForAndroid");
 		HttpGet httpGet = new HttpGet(url);
 	
 		try {
