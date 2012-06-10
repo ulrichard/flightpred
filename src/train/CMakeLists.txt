@@ -2,7 +2,7 @@ PROJECT(flightpred_train)
 SET(CMAKE_MODULE_PATH ${flightpred_train_SOURCE_DIR})
 
 ADD_EXECUTABLE(flightpred_train area_mgr.cpp main.cpp)
-TARGET_LINK_LIBRARIES(flightpred_train 
+TARGET_LINK_LIBRARIES(flightpred_train
 	flightpred_common
 	${Boost_FILESYSTEM_LIBRARY}
 	${Boost_SYSTEM_LIBRARY}
@@ -12,10 +12,10 @@ TARGET_LINK_LIBRARIES(flightpred_train
 	${Boost_REGEX_LIBRARY}
 	${Boost_SERIALIZATION_LIBRARY}
 	${Boost_IOSTREAMS_LIBRARY}
-	jsonspirit
-	pqxx 
-	grib_api 
-	evocosm 
+	json_spirit
+	pqxx
+	grib_api
+	evocosm
 	coyotl
 )
 
