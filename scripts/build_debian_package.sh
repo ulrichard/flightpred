@@ -1,8 +1,5 @@
 #!/bin/sh
 # build a debian sourcepackage and upload it to the launchpad ppa
-export GPGKEY=DA94BB53
-export DEBEMAIL="richi@paraeasy.ch"
-export DEBFULLNAME="Richard Ulrich"
 rm -r builddeb
 mkdir builddeb
 cd builddeb
