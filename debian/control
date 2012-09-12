@@ -2,11 +2,7 @@ Source: flightpred
 Section: web
 Priority: optional
 Maintainer: Richard Ulrich <richi@paraeasy.ch>
-<<<<<<< .mine
-Build-Depends: libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev, libboost-test-dev, libboost-iostreams-dev, postgresql-contrib, debhelper (>= 7), libfcgi0ldbl, libwt-dev(>=3.1.5), libwtext-dev, libwtfcgi-dev, libwthttp-dev, postgis, libpqxx3-dev, proj (>=4.6.0), adduser, libgrib-api-dev (>=1.7.0), cmake (>= 2.8), libevocosm-dev, libcoyotl-dev, libjsonspirit
-=======
 Build-Depends: libboost-regex-dev, libboost-program-options-dev, libboost-date-time-dev, libboost-signals-dev, libboost-thread-dev, libboost-system-dev, libboost-filesystem-dev, libboost-serialization-dev, libboost-test-dev, libboost-iostreams-dev, postgresql-contrib, debhelper (>= 7), libfcgi0ldbl, libwt-dev(>=3.1.5), libwtext-dev, libwtfcgi-dev, libwthttp-dev, postgis, libpqxx-dev | libpqxx3-dev, proj (>=4.6.0), adduser, libgrib-api-dev (>=1.7.0), cmake (>= 2.8), libevocosm-dev, libcoyotl-dev, libjsonspirit
->>>>>>> .r332
 standards-Version: 3.8.1.0
 Homepage: http://sourceforge.net/projects/flightpred
 
