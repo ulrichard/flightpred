@@ -1,3 +1,9 @@
+flightpred (0.0.35~precise) precise; urgency=low
+
+  * packaging for precise
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Wed, 12 Sep 2012 23:01:18 +0200
+
 flightpred (0.0.34~oneiric) oneiric; urgency=low
 
   * explicitly linking libboost_date_time in the web app
