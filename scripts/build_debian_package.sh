@@ -13,7 +13,7 @@ do
 	rm -r 3rd-party/dclib/examples/*
 	rm -r 3rd-party/ggl/libs/*
 	rm -r 3rd-party/ggl/other/*
-	dpkg-buildpackage -rfakeroot -S
+	dpkg-buildpackage -rfakeroot -k${GPGKEY} -S
 	cd ..
 	rm -r flightpred-$FLIGHTPREDVERSIONSTR
 	dput ppa:richi-paraeasy/ppa ./flightpred_${FLIGHTPREDVERSIONSTR}_source.changes
