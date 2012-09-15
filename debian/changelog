@@ -1,3 +1,9 @@
+flightpred (0.0.36~precise) precise; urgency=low
+
+  * added the FindWt.cmake from witty as it no longer ships with the libwt deb package.
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Sat, 15 Sep 2012 22:13:57 +0200
+
 flightpred (0.0.35~precise) precise; urgency=low
 
   * packaging for precise
