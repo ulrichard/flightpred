@@ -1,5 +1,4 @@
 PROJECT(flightpred_web)
-SET(CMAKE_MODULE_PATH ${flightpred_web_SOURCE_DIR})
 
 FIND_PACKAGE(Wt 3.0 REQUIRED)
 

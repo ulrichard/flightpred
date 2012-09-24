@@ -1,7 +1,3 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-
-PROJECT(flightpred)
-SET(CMAKE_MODULE_PATH ${flightpred_SOURCE_DIR})
 
 FIND_PACKAGE(Boost 1.42 COMPONENTS system filesystem iostreams unit_test_framework date_time thread regex serialization program_options signals REQUIRED)
 
