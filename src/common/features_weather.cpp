@@ -9,14 +9,13 @@
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
-#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 #include <boost/geometry/extensions/gis/latlong/detail/graticule.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/extensions/gis/geographic/strategies/vincenty.hpp>
+// boost
 #include <boost/geometry/algorithms/comparable_distance.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
-// boost
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/bind.hpp>
@@ -105,7 +104,7 @@ vector<features_weather::point_ll_deg> features_weather::get_locations_around_si
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 features_weather::feat_desc  features_weather::get_random_feature(const point_ll_deg &site_location)
 {
-    report(DEBUGING) << "features_weather::get_random_feature(" << boost::geometry::make_wkt(site_location) << ")";
+    report(DEBUGING) << "features_weather::get_random_feature(" << boost::geometry::wkt(site_location) << ")";
     feat_desc fd;
 
     const vector<point_ll_deg> locations_near = get_locations_around_site(site_location,  6, 1.0); // todo : get the resolution from the database
@@ -124,7 +123,7 @@ features_weather::feat_desc  features_weather::get_random_feature(const point_ll
     assert(itloc != locations.end());
     fd.location = *itloc;
     const bool is_near_location = std::find(locations_near.begin(), locations_near.end(), fd.location) != locations_near.end();
-    report(DEBUGING) << "new location (" << boost::geometry::make_wkt(fd.location) << ") is " << (is_near_location ? "near" : "far") << " [" << advloc << "/" << locations.size() << "]";
+    report(DEBUGING) << "new location (" << boost::geometry::wkt(fd.location) << ") is " << (is_near_location ? "near" : "far") << " [" << advloc << "/" << locations.size() << "]";
 
     // pick an altitude level
     static const std::set<string> levels = grib_grabber::get_std_levels(is_near_location);
@@ -288,7 +287,7 @@ vector<double> features_weather::get_features(const set<features_weather::feat_d
         {
             if(it != locations.begin())
                 sstr << ", ";
-            sstr << "ST_GeomFromText('" << boost::geometry::make_wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
+            sstr << "ST_GeomFromText('" << boost::geometry::wkt(*it) << "', " << PG_SIR_WGS84 << ") ";
         }
         sstr << ")";
         boost::timer btim;
@@ -446,7 +445,7 @@ std::ostream & flightpred::operator<<(std::ostream &ostr, const features_weather
 {
     ostr << "FEATURE(" << feat.model
          << " " << bpt::to_simple_string(feat.reltime)
-         << " " << boost::geometry::make_wkt(feat.location)
+         << " " << boost::geometry::wkt(feat.location)
          << " " << feat.level
          << " " << feat.param << ")";
     return ostr;

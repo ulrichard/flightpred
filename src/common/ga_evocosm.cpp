@@ -6,9 +6,8 @@
 #include <libevocosm/roulette.h>
 // postgre
 #include <pqxx/pqxx>
-// ggl (boost sandbox)
-#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
+#include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
