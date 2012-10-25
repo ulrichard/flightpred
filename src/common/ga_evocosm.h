@@ -4,10 +4,11 @@
 // flightpred
 #include "solution_config.h"
 // evocosm
+#include <libevocosm/listener.h>
 #include <libevocosm/organism.h>
 #include <libevocosm/mutator.h>
 #include <libevocosm/landscape.h>
-#include <libevocosm/reporter.h>
+//#include <libevocosm/reporter.h>
 #include <libevocosm/reproducer.h>
 #include <libevocosm/evocosm.h>
 #include <libevocosm/evoreal.h>
@@ -39,7 +40,7 @@ public:
     /** organisms with less error come before ones with bigger error. */
     virtual bool operator<(const libevocosm::organism<solution_config> &rhs) const
     {
-        return (m_fitness < rhs.fitness());
+        return (fitness < rhs.fitness);
     }
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
@@ -111,7 +112,7 @@ private:
 class landscape : public libevocosm::landscape<organism>
 {
 public:
-    landscape(boost::function<double(const solution_config&)> eval_fitness, libevocosm::listener &lstnr)
+    landscape(boost::function<double(const solution_config&)> eval_fitness, libevocosm::listener<organism> &lstnr)
         : libevocosm::landscape<organism>(lstnr), eval_fitness_(eval_fitness) { }
     landscape(const landscape &org)
         : libevocosm::landscape<organism>(org), eval_fitness_(org.eval_fitness_) { }
@@ -126,8 +127,8 @@ public:
     /** performs fitness testing */
     virtual double test(organism &orgn, bool verbose = false) const
     {
-        orgn.fitness() = eval_fitness_(orgn.genes());
-        return orgn.fitness();
+        orgn.fitness = eval_fitness_(orgn.genes);
+        return orgn.fitness;
     }
     /** performs fitness testing */
     virtual double test(std::vector<organism> &population) const;
@@ -139,18 +140,20 @@ private:
 /** @brief Reports the state of a population of solutions.
     A simple reporter for diaplying information about the populations
     as it evolves.*/
+/*
 class reporter : public libevocosm::reporter<organism, landscape>
 {
 public:
     reporter() : libevocosm::reporter<organism, landscape>(listener_) { }
 
-    /** @brief say something about a population */
+    /// @brief say something about a population
     virtual bool report(const std::vector<std::vector<organism> > &population, size_t iteration, double &fitness, bool finished = false);
 
 protected:
     libevocosm::listener_stdout listener_;
 
 };
+*/
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /** @brief A generic optimizer
     Using instances of the other classes, this class binds together the pieces to
