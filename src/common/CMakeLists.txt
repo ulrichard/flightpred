@@ -1,7 +1,7 @@
-PROJECT(flightpred_common)
-SET(CMAKE_MODULE_PATH ${flightpred_common_SOURCE_DIR})
 
-SET(libsources 
+INCLUDE_DIRECTORIES(${CURRENT_SOURCE_DIR})
+
+SET(libsources
 	features_weather.cpp
 	flightpred_globals.cpp
 	forecast.cpp

@@ -1,5 +1,6 @@
-PROJECT(flightpred_train)
-SET(CMAKE_MODULE_PATH ${flightpred_train_SOURCE_DIR})
+
+INCLUDE_DIRECTORIES(${CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CURRENT_SOURCE_DIR}/common)
 
 ADD_EXECUTABLE(flightpred_train area_mgr.cpp main.cpp)
 TARGET_LINK_LIBRARIES(flightpred_train

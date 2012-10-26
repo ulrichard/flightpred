@@ -7,16 +7,15 @@
 #include "solution_manager.h"
 #include "GenGeomLibSerialize.h"
 // grib api
-#include "grib_api.h"
+#include <grib_api.h>
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-//#include <boost/geometry/geometry.hpp>
-#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
-#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
+//#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 #include <boost/geometry/extensions/gis/geographic/strategies/vincenty.hpp>
 // boost
+#include <boost/geometry/io/wkt/wkt.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>

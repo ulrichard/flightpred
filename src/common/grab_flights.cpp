@@ -1,12 +1,11 @@
 // flightpred
 #include "grab_flights.h"
-#include "common/flightpred_globals.h"
-#include "common/reporter.h"
+#include "flightpred_globals.h"
+#include "reporter.h"
 // postgre
 #include <pqxx/pqxx>
-// ggl (boost sandbox)
-#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost
+#include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -175,7 +174,7 @@ void flight_grabber::write_flight_to_db(const flight &fl)
         const size_t PG_SIR_WGS84 = 4326;
         std::stringstream sstr;
         sstr << "INSERT INTO sites (site_name, location, country) values ('"
-             << fl.takeoff_name << "', GeomFromText('" << boost::geometry::make_wkt(fl.pos) << "', "
+             << fl.takeoff_name << "', GeomFromText('" << boost::geometry::wkt(fl.pos) << "', "
              << PG_SIR_WGS84 << "), '" << fl.takeoff_country << "') " << "RETURNING site_id";
         res = trans.exec(sstr.str());
         res[0]["site_id"].to(site_id);

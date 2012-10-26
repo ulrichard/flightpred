@@ -112,7 +112,7 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
     // construct a fitness wheel
     vector<double> wheel_weights;
     for(vector<organism>::const_iterator it = old_population.begin(); it != old_population.end(); ++it)
-        wheel_weights.push_back(1.0 / it->fitness());
+        wheel_weights.push_back(1.0 / it->fitness);
     libevocosm::roulette_wheel fitness_wheel(wheel_weights);
 
     // create children
@@ -125,7 +125,7 @@ vector<organism> reproducer::breed(const vector<organism> &old_population, size_
         genes_index = std::min(genes_index, old_population.size() - 1);
         const organism &child = old_population[genes_index];
 
-        solution_config sol(child.genes());
+        solution_config sol(child.genes);
         report(DEBUGING) << sol.get_short_description();
         solution_descriptions_.insert(sol.get_description());
         while(solution_descriptions_.find(sol.get_description()) != solution_descriptions_.end())
@@ -163,7 +163,7 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
 //        report(DEBUGING) << "old : " << algo_desc;
         boost::trim(nbr);
         double val = lexical_cast<double>(nbr);
-        const double rval = (g_random.get_rand() % 1000) / 1000.0;
+        const double rval = g_random.get_real();
         if(rval <= mutation_rate_)
         {
             double newval = 0.0;
@@ -191,7 +191,7 @@ solution_config reproducer::make_mutated_clone(const solution_config &src)
         string nbr = regxmatch[0];
         boost::trim(nbr);
         double val = lexical_cast<double>(nbr);
-        const double rval = (g_random.get_rand() % 1000) / 1000.0;
+        const double rval = g_random.get_real();
         if(rval <= mutation_rate_)
             val = evoreal_.mutate(val);
 
@@ -250,8 +250,8 @@ double landscape::test(std::vector<organism> &population) const
 
     for(vector<organism>::iterator solution = population.begin(); solution != population.end(); ++solution)
     {
-        solution->fitness() = eval_fitness_(solution->genes());
-        result += solution->fitness();
+        solution->fitness = eval_fitness_(solution->genes);
+        result += solution->fitness;
     }
 
     return result / population.size();
@@ -259,6 +259,7 @@ double landscape::test(std::vector<organism> &population) const
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // say something about a population
+/*
 bool reporter::report(const vector<vector<organism> > &populations, size_t iteration, double & fitness, bool finished)
 {
     // search for best chromosome; there will be only one population for this application
@@ -285,13 +286,14 @@ bool reporter::report(const vector<vector<organism> > &populations, size_t itera
 
     return true;
 }
+*/
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 // constructor
 optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitness,
                      boost::function<organism(void)> a_init,
                      boost::function<std::vector<shared_ptr<solution_config> >(void)> init_population,
-                     size_t population,
+                     size_t population_size,
                      double mutation_rate,
                      size_t iterations,
                      size_t pred_site_id)
@@ -299,19 +301,37 @@ optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitnes
     mutator_(mutation_rate),
     reproducer_(pred_site_id, mutation_rate, current_generation_),
     scaler_(),
-    migrator_(),
-    selector_(population / 10),
-    reporter_(),
+//    migrator_(),
+    selector_(population_size / 10),
+//    reporter_(),
+    listener_(),
+    landscape_(eval_fitness, listener_),
+    analyzer_(listener_, iterations),
     evocosm_(NULL),
     iterations_(iterations),
     init_(a_init),
     init_population_(init_population),
-    eval_fitness_(eval_fitness),
-    listener_()
+    eval_fitness_(eval_fitness)
+
+
 {
     report(DEBUGING) << "optimizer::optimizer() gen " << current_generation_;
 
-    evocosm_ = new libevocosm::evocosm<organism, landscape>(listener_,
+    for(size_t i=0; i<population_size; ++i)
+        population_.push_back(a_init());
+
+    evocosm_ = new libevocosm::evocosm<organism>(population_,
+                                                 landscape_,
+                                                 mutator_,
+                                                 reproducer_,
+                                                 scaler_,
+                                                 selector_,
+                                                 analyzer_,
+                                                 listener_);
+
+
+/*
+    evocosm_ = new libevocosm::evocosm<organism>(listener_,
                                                  population,    // population size
                                                  1,             // number of populations
                                                  0,             // number_of_unique_landscapes
@@ -319,11 +339,12 @@ optimizer::optimizer(boost::function<double(const solution_config&)> eval_fitnes
                                                  mutator_,
                                                  reproducer_,
                                                  scaler_,
-                                                 migrator_,
+//                                                 migrator_,
                                                  selector_,
-                                                 reporter_,
+//                                                 reporter_,
                                                  *this,         // organism factory
                                                  *this);        // landscape factory
+*/
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 void optimizer::run()
@@ -336,8 +357,7 @@ void optimizer::run()
         report(INFO) << "\ngeneration " << current_generation_ << std::endl;
 
         // run a generation
-        double dummy;
-        evocosm_->run_generation(true, dummy);
+        evocosm_->run_generation();
     }
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A

@@ -1,9 +1,10 @@
-PROJECT(flightpred_test)
-SET(CMAKE_MODULE_PATH ${flightpred_test_SOURCE_DIR})
+
+INCLUDE_DIRECTORIES(${CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CURRENT_SOURCE_DIR}/common)
 
 ADD_EXECUTABLE(flightpred_test main.cpp serialization_test.cpp)
-TARGET_LINK_LIBRARIES(flightpred_test 
-	flightpred_common 
+TARGET_LINK_LIBRARIES(flightpred_test
+	flightpred_common
 	${Boost_FILESYSTEM_LIBRARY}
 	${Boost_SYSTEM_LIBRARY}
 	${Boost_DATE_TIME_LIBRARY}
@@ -11,10 +12,10 @@ TARGET_LINK_LIBRARIES(flightpred_test
 	${Boost_REGEX_LIBRARY}
 	${Boost_SERIALIZATION_LIBRARY}
 	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-	${Boost_IOSTREAMS_LIBRARY} 
-	pqxx 
-	grib_api 
-	evocosm 
+	${Boost_IOSTREAMS_LIBRARY}
+	pqxx
+	grib_api
+	evocosm
 	coyotl
 )
 

@@ -159,7 +159,7 @@ protected:
     Using instances of the other classes, this class binds together the pieces to
     create a complete optimizer. A user of this class defines two functions
     -- a solution initializer and a fitness test -- that define the target problem.*/
-class optimizer : protected libevocosm::organism_factory<organism>, protected libevocosm::landscape_factory<landscape>
+class optimizer //: protected libevocosm::organism_factory<organism>, protected libevocosm::landscape_factory<landscape>
 {
 public:
     /** @brief Constructor
@@ -202,16 +202,20 @@ private:
     mutator                                mutator_;
     reproducer                             reproducer_;
     libevocosm::null_scaler<organism>      scaler_;
-    libevocosm::null_migrator<organism>    migrator_;
+//    libevocosm::null_migrator<organism>    migrator_;
     libevocosm::elitism_selector<organism> selector_;
-    reporter                               reporter_;
+//    reporter                               reporter_;
 
-    libevocosm::evocosm<organism, landscape> * evocosm_; // the evocosm binds it all together; kinda like the "one ring" Bilbo found!
+    libevocosm::null_listener<organism>     listener_;     // null listener -> does nothing at the event points
+    std::vector<organism>                   population_;
+    landscape                               landscape_;
+    libevocosm::analyzer<organism>          analyzer_;
+
+    libevocosm::evocosm<organism>*          evocosm_; // the evocosm binds it all together;
     const size_t iterations_; // number of iterations to run
     boost::function<organism(void)> init_;  // a function that provides initialized, random solutions
     boost::function<std::vector<boost::shared_ptr<solution_config> >(void)> init_population_;  // a function that generates the initial population
     boost::function<double(const solution_config&)> eval_fitness_;  // the function to be optimized
-    libevocosm::null_listener listener_;     // null listener -> does nothing at the event points
 };
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
 } // namespace evolution
