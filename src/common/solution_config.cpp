@@ -5,8 +5,6 @@
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
-// ggl (boost sandbox)
-//#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>

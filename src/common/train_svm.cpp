@@ -7,9 +7,8 @@
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
-// ggl (boost sandbox)
-#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
+#include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/timer.hpp>

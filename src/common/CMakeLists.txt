@@ -1,5 +1,5 @@
 
-INCLUDE_DIRECTORIES(${CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(libsources
 	features_weather.cpp
@@ -17,7 +17,9 @@ SET(libsources
 )
 
 ADD_LIBRARY(flightpred_common ${libsources})
-TARGET_LINK_LIBRARIES(flightpred_common ${BOOST_WT_LIBRARIES} )
+TARGET_LINK_LIBRARIES(flightpred_common
+    ${BOOST_WT_LIBRARIES}
+)
 
 SET_TARGET_PROPERTIES(
     flightpred_common

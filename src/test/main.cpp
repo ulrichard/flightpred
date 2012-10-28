@@ -7,9 +7,8 @@
 #include "../common/train_svm.h"
 #include "../common/GenGeomLibSerialize.h"
 #include "../common/reporter.h"
-// ggl (boost sandbox)
-#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost
+#include <boost/geometry/io/wkt/wkt.hpp>
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -399,7 +398,7 @@ void locations_around_site_testfunc(const point_ll_deg& pos, const size_t num, c
         else
         {
             std::stringstream sstr;
-            sstr << boost::geometry::make_wkt(pos);
+            sstr << boost::geometry::wkt(pos);
             BOOST_CHECK_EQUAL(sstr.str(), "ExpectedButNotFound");
         }
     }
@@ -407,7 +406,7 @@ void locations_around_site_testfunc(const point_ll_deg& pos, const size_t num, c
     BOOST_FOREACH(const point_ll_deg& pos, pnts)
     {
         std::stringstream sstr;
-        sstr << boost::geometry::make_wkt(pos);
+        sstr << boost::geometry::wkt(pos);
         BOOST_CHECK_EQUAL(sstr.str(), "FoundButNotExpected");
     }
 }

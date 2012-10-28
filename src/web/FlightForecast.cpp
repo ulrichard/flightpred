@@ -19,8 +19,8 @@
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
 #include <boost/geometry/extensions/gis/latlong/latlong.hpp>
-#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 // boost
+#include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/date_facet.hpp>

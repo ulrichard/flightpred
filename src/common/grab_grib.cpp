@@ -11,7 +11,6 @@
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-//#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
 #include <boost/geometry/extensions/gis/geographic/strategies/vincenty.hpp>
 // boost
 #include <boost/geometry/io/wkt/wkt.hpp>

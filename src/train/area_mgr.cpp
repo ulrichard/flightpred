@@ -5,14 +5,11 @@
 // postgre
 #include <pqxx/pqxx>
 // ggl (boost sandbox)
-//#include <boost/geometry/geometry.hpp>
-#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
-//#include <boost/geometry/strategies/geographic/geo_distance.hpp>
+//#include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 #include <boost/geometry/extensions/gis/geographic/strategies/vincenty.hpp>
-#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
-#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/math/constants/constants.hpp>
@@ -77,14 +74,14 @@ void area_mgr::add_area(const string &name, const point_ll_deg &pos, double area
         {
             sstr.str("");
             sstr << "INSERT INTO pred_sites (site_name, location) VALUES ('" << name << "', "
-                 << "GeomFromText('" << boost::geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << "))";
+                 << "GeomFromText('" << boost::geometry::wkt(pos) << "', " << PG_SIR_WGS84 << "))";
             trans.exec(sstr.str());
         }
         else if(pos.lat() || pos.lon())
         {
             sstr.str("");
             sstr << "UPDATE pred_sites SET location="
-                 << "GeomFromText('" << boost::geometry::make_wkt(pos) << "', " << PG_SIR_WGS84 << ") WHERE "
+                 << "GeomFromText('" << boost::geometry::wkt(pos) << "', " << PG_SIR_WGS84 << ") WHERE "
                  << "site_name='" << name << "'";
             trans.exec(sstr.str());
         }

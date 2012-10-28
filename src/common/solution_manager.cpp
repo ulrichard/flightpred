@@ -9,10 +9,8 @@
 // postgre
 #include <pqxx/pqxx>
 #include <pqxx/largeobject>
-// ggl (boost sandbox)
-#include <boost/geometry/extensions/gis/io/wkt/read_wkt.hpp>
-#include <boost/geometry/extensions/gis/io/wkt/write_wkt.hpp>
 // boost
+#include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -260,7 +258,7 @@ vector<shared_ptr<solution_config> > solution_manager::initialize_population()
 
         population.clear();
         BOOST_FOREACH(evolution::organism &orga, organisms)
-            population.push_back(shared_ptr<solution_config>(new solution_config(orga.genes())));
+            population.push_back(shared_ptr<solution_config>(new solution_config(orga.genes)));
     }
     else
     {
@@ -676,7 +674,7 @@ void solution_manager::do_import(ArchiveT& ia, const std::string &site_name)
         std::stringstream sstr;
         sstr << "INSERT INTO pred_sites (site_name, country, location) VALUES ('"
              << site_name << "', '" << country << "', "
-             << "ST_GeomFromText('" << boost::geometry::make_wkt(location) << "', " << PG_SIR_WGS84 << "))";
+             << "ST_GeomFromText('" << boost::geometry::wkt(location) << "', " << PG_SIR_WGS84 << "))";
         trans.exec(sstr.str());
 
         sstr.str("");
