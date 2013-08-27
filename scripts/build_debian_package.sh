@@ -3,12 +3,12 @@
 rm -r builddeb
 mkdir builddeb
 cd builddeb
-for DISTRIBUTION in precise #oneiric # natty maverick 
+for DISTRIBUTION in raring # precise oneiric # natty maverick 
 do
-	FLIGHTPREDVERSIONSTR=0.0.36~${DISTRIBUTION}
+	FLIGHTPREDVERSIONSTR=0.0.37~${DISTRIBUTION}
 	svn export https://flightpred.svn.sourceforge.net/svnroot/flightpred/trunk flightpred-$FLIGHTPREDVERSIONSTR
 	cd flightpred-$FLIGHTPREDVERSIONSTR
-	sed -i  -e "s/maverick/${DISTRIBUTION}/g" -e "s/natty/${DISTRIBUTION}/g" -e "s/oneiric/${DISTRIBUTION}/g" debian/changelog
+	sed -i  -e "s/raring/${DISTRIBUTION}/g" -e "s/precise/${DISTRIBUTION}/g" -e "s/oneiric/${DISTRIBUTION}/g" debian/changelog
 	rm -r 3rd-party/dclib/docs/*
 	rm -r 3rd-party/dclib/examples/*
 	rm -r 3rd-party/ggl/libs/*

@@ -1,3 +1,9 @@
+flightpred (0.0.37~raring) raring; urgency=low
+
+  * recompiling with new gribapi
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Wed, 28 Aug 2013 21:15:55 +0200
+
 flightpred (0.0.36~precise) precise; urgency=low
 
   * added the FindWt.cmake from witty as it no longer ships with the libwt deb package.
