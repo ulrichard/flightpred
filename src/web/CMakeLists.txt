@@ -24,6 +24,7 @@ SET(FLP_WEB_LIB
 	wtext
 	pqxx
 	grib_api
+	pthread
 )
 
 ADD_EXECUTABLE(flightpred_web.fcgi ${FLP_WEB_SRC})

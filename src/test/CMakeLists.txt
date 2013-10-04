@@ -21,6 +21,7 @@ TARGET_LINK_LIBRARIES(flightpred_test
 	grib_api
 	evocosm
 	coyotl
+	pthread
 )
 
 SET_TARGET_PROPERTIES(
