@@ -1,8 +1,6 @@
 #ifndef GRAB_FLIGHTS_H_INCLUDED
 #define GRAB_FLIGHTS_H_INCLUDED
 
-// json_spirit
-#include <json_spirit_reader.h>
 // ggl (boost sandbox)
 #include <boost/geometry/extensions/gis/latlong/latlong.hpp>
 // boost
@@ -13,6 +11,10 @@
 // standard library
 #include <string>
 
+namespace Json
+{
+    class Value;
+}
 
 namespace flightpred
 {
@@ -45,12 +47,12 @@ public:
     ~flight_grabber() {}
 
     static std::string get_contest_name(Contest cont);
-    void grab_flights(const boost::gregorian::date &from, const boost::gregorian::date &to);
+    void grab_flights(const boost::gregorian::date& from, const boost::gregorian::date& to);
 
 private:
-    void read_json(const boost::filesystem::path &jsonfile);
-    void read_flight(const json_spirit::mObject &flObj);
-    void write_flight_to_db(const flight &fl);
+    void read_json(const boost::filesystem::path& jsonfile);
+    void read_flight(const Json::Value& flObj);
+    void write_flight_to_db(const flight& fl);
     static char replace_char(unsigned char cc);
 
     const Contest cont_;

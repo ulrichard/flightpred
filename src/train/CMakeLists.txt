@@ -18,7 +18,8 @@ TARGET_LINK_LIBRARIES(flightpred_train
 	${Boost_SERIALIZATION_LIBRARY}
 	${Boost_IOSTREAMS_LIBRARY}
 	${LIBBRAHE_LIBRARIES}
-	json_spirit
+	jsoncpp
+	pthread
 	pqxx
 	grib_api
 	evocosm

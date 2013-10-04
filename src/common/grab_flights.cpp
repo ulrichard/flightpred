@@ -2,6 +2,8 @@
 #include "grab_flights.h"
 #include "flightpred_globals.h"
 #include "reporter.h"
+// libjsoncpp
+#include <jsoncpp/json/reader.h>
 // postgre
 #include <pqxx/pqxx>
 // boost
@@ -61,39 +63,42 @@ void flight_grabber::read_json(const bfs::path &jsonfile)
 {
     assert(bfs::exists(jsonfile));
     boost::timer btim;
-    bfs::ifstream is(jsonfile);
-    json_spirit::mValue val;
-    report(INFO) << "Reading json file : " << jsonfile << std::endl;
-    json_spirit::read(is, val);
+//    bfs::ifstream is(jsonfile);
 
+    report(INFO) << "Reading json file : " << jsonfile << std::endl;
+    Json::Value root;   // will contain the root value after parsing.
+    Json::Reader reader;
+    bool parsingSuccessful = reader.parse(jsonfile.string(), root);
+    if(!parsingSuccessful)
+        throw std::runtime_error(("Failed to parse json file" + jsonfile.string()).c_str());
     report(INFO) << "json file read in " << btim.elapsed() << "sec" << std::endl;
-    const json_spirit::mArray flights = val.get_obj().find("items")->second.get_array();
+    const Json::Value flights = root["items"];
     btim.restart();
     report(INFO) << "start processing " << flights.size() << " records (flights)" << std::endl;
-    for(json_spirit::mArray::const_iterator it = flights.begin(); it != flights.end(); ++it)
-        read_flight(it->get_obj());
-     report(INFO) << "\nprocessed in " << btim.elapsed() << "sec";
+    for(int i=0; i<flights.size(); ++i)
+        read_flight(flights[i]);
+    report(INFO) << "\nprocessed in " << btim.elapsed() << "sec";
 }
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8/////////9/////////A
-void flight_grabber::read_flight(const json_spirit::mObject &flObj)
+void flight_grabber::read_flight(const Json::Value &flObj)
 {
     flight fl;
 
     try
     {
-        fl.id               = flObj.find("id")->second.get_int();
-        fl.pilot_name       = flObj.find("pilot")->second.get_obj().find("name")->second.get_str();
-        fl.pilot_country    = flObj.find("pilot")->second.get_obj().find("countryIso")->second.get_str();
-        fl.takeoff_name     = flObj.find("takeoff")->second.get_obj().find("name")->second.get_str();
-        fl.takeoff_country  = flObj.find("takeoff")->second.get_obj().find("countryIso")->second.get_str();
-        if(flObj.find("pointStart") == flObj.end())
+        fl.id               = flObj["id"].asInt();
+        fl.pilot_name       = flObj["pilot"]["name"].asString();
+        fl.pilot_country    = flObj["pilot"]["countryIso"].asString();
+        fl.takeoff_name     = flObj["takeoff"]["name"].asString();
+        fl.takeoff_country  = flObj["takeoff"]["countryIso"].asString();
+        if(!flObj["pointStart"].isNull())
         {
-            fl.pos.lat(flObj.find("pointStart")->second.get_obj().find("latitude")->second.get_real());
-            fl.pos.lon(flObj.find("pointStart")->second.get_obj().find("longitude")->second.get_real());
+            fl.pos.lat(flObj["pointStart"]["latitude"].asDouble());
+            fl.pos.lon(flObj["pointStart"]["longitude"].asDouble());
         }
         else
         {
-            string link = flObj.find("takeoff")->second.get_obj().find("link")->second.get_str();
+            string link = flObj["takeoff"]["link"].asString();
             const string srchstr = "filter[point]=";
             const size_t pos = link.find(srchstr);
             if(string::npos == pos)
@@ -105,10 +110,10 @@ void flight_grabber::read_flight(const json_spirit::mObject &flObj)
             fl.pos.lon(lon);
             fl.pos.lat(lat);
         }
-        fl.distance         = flObj.find("league")->second.get_obj().find("route")->second.get_obj().find("distance")->second.get_real();
-        fl.score            = flObj.find("league")->second.get_obj().find("route")->second.get_obj().find("points")->second.get_real();
-        fl.day              = bgreg::from_string(flObj.find("pointStart")->second.get_obj().find("time")->second.get_str().substr(0, 10));
-        const string durstr = flObj.find("stats")->second.get_obj().find("duration")->second.get_str();  // format : "PT01H54M36S"
+        fl.distance         = flObj["league"]["route"]["distance"].asDouble();
+        fl.score            = flObj["league"]["route"]["points"].asDouble();
+        fl.day              = bgreg::from_string(flObj["pointStart"]["time"].asString().substr(0, 10));
+        const string durstr = flObj["stats"]["duration"].asString();  // format : "PT01H54M36S"
 
         std::stringstream sstr(durstr);
         boost::posix_time::time_input_facet* inpfac = new boost::posix_time::time_input_facet();
