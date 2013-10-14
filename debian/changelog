@@ -1,3 +1,9 @@
+flightpred (0.0.38~saucy) saucy; urgency=low
+
+  * using libjsoncpp instead of libjsonspirit
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Mon, 14 Oct 2013 21:32:15 +0200
+
 flightpred (0.0.37~raring) raring; urgency=low
 
   * recompiling with new gribapi
