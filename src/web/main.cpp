@@ -60,7 +60,7 @@ FlightpredApp::FlightpredApp(const Wt::WEnvironment& env)
 {
 	setTitle(_("free flight prediction system")); // application title
 	useStyleSheet("flightpred.css");
-    std::cout << "create a new session. locale is : " << locale() << std::endl;
+//    std::cout << "create a new session. locale is : " << locale() << std::endl;
 
     try
     {
