@@ -60,9 +60,8 @@ case "$1" in
 		# register with apache
 		a2enmod fastcgi
 		echo "register flightpred with apache"
-		a2ensite flightpred.local 
-		a2ensite flightpred.homelinux.org 
-		a2ensite flightpred.ulrichard.ch 
+		a2ensite flightpred.local.conf
+		a2ensite flightpred.ulrichard.ch.conf
 
 		db_stop
 		if which invoke-rc.d >/dev/null 2>&1; then

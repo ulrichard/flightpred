@@ -1,4 +1,10 @@
-flightpred (0.0.38~saucy) saucy; urgency=low
+flightpred (0.0.39~trusty) trusty; urgency=medium
+
+  * the apache site files now apparently need a conf extension
+
+ -- Richard Ulrich <richi@paraeasy.ch>  Fri, 25 Apr 2014 22:01:42 +0200
+
+flightpred (0.0.38~trusty) trusty; urgency=low
 
   * using libjsoncpp instead of libjsonspirit
 

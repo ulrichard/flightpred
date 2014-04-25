@@ -8,7 +8,8 @@ case "$1" in
 		# do here pre removes
 		#
 		echo "remove flightpred from apache"
-		a2dissite flightpred.local
+		a2dissite flightpred.local.conf
+		a2dissite flightpred.ulrichard.ch.conf
 		/etc/init.d/apache2 reload
 		;;
 	failed-upgrade)
