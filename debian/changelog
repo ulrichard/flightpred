@@ -1,4 +1,4 @@
-flightpred (0.0.39~trusty) trusty; urgency=medium
+flightpred (0.0.40~trusty) trusty; urgency=medium
 
   * the apache site files now apparently need a conf extension
 
